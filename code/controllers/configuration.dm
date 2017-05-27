@@ -76,6 +76,7 @@ var/list/gamemode_cache = list()
 	var/load_jobs_from_txt = 0
 	var/ToRban = 0
 	var/automute_on = 0					//enables automuting/spam prevention
+	var/macro_trigger = 5				// The grace period between messages before it's counted as abusing a macro.
 	var/jobs_have_minimal_access = 0	//determines whether jobs use minimal access or expanded access.
 
 	var/cult_ghostwriter = 1               //Allows ghosts to write in blood in cult rounds...
@@ -253,10 +254,30 @@ var/list/gamemode_cache = list()
 	var/api_rate_limit = 50
 	var/list/api_rate_limit_whitelist = list()
 
+	// Subsystems.
+	var/obj/effect/statclick/statclick
+
+	// Master Controller settings.
+	var/mc_init_tick_limit = TICK_LIMIT_MC_INIT_DEFAULT
+
 	//UDP GELF Logging
 	var/log_gelf_enabled = 0
 	var/log_gelf_ip = ""
 	var/log_gelf_port = ""
+
+	//IP Intel vars
+	var/ipintel_email
+	var/ipintel_rating_bad = 1
+	var/ipintel_rating_kick = 0
+	var/ipintel_save_good = 12
+	var/ipintel_save_bad = 1
+	var/ipintel_domain = "check.getipintel.net"
+
+	// Access control/Panic bunker settings.
+	var/access_deny_new_players = 0
+	var/access_deny_new_accounts = -1
+	var/access_deny_vms = 0
+	var/access_warn_vms = 0
 
 /datum/configuration/New()
 	var/list/L = typesof(/datum/game_mode) - /datum/game_mode
@@ -608,6 +629,9 @@ var/list/gamemode_cache = list()
 				if("automute_on")
 					automute_on = 1
 
+				if("macro_trigger")
+					macro_trigger = text2num(value)
+
 				if("usealienwhitelist")
 					usealienwhitelist = 1
 
@@ -796,14 +820,39 @@ var/list/gamemode_cache = list()
 				if("api_rate_limit_whitelist")
 					config.api_rate_limit_whitelist = text2list(value, ";")
 
+
+				if("mc_ticklimit_init")
+					config.mc_init_tick_limit = text2num(value) || TICK_LIMIT_MC_INIT_DEFAULT
+
 				if("log_gelf_enabled")
 					config.log_gelf_enabled = text2num(value)
-				
+
 				if("log_gelf_ip")
 					config.log_gelf_ip = value
-				
+
 				if("log_gelf_port")
 					config.log_gelf_port = value
+
+				if("ipintel_email")
+					if (value != "ch@nge.me")
+						ipintel_email = value
+				if("ipintel_rating_bad")
+					ipintel_rating_bad = text2num(value)
+				if("ipintel_rating_kick")
+					ipintel_rating_kick = text2num(value)
+				if("ipintel_domain")
+					ipintel_domain = value
+				if("ipintel_save_good")
+					ipintel_save_good = text2num(value)
+				if("ipintel_save_bad")
+					ipintel_save_bad = text2num(value)
+
+				if("access_deny_new_accounts")
+					access_deny_new_accounts = text2num(value) >= 0 ? text2num(value) : -1
+				if("access_deny_vms")
+					access_deny_vms = text2num(value)
+				if("access_warn_vms")
+					access_warn_vms = text2num(value)
 
 				else
 					log_misc("Unknown setting in configuration: '[name]'")

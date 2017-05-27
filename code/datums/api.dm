@@ -786,9 +786,6 @@ proc/api_update_command_database()
 	log_and_message_admins("World restart initiated remotely by [senderkey].")
 	feedback_set_details("end_error","remote restart")
 
-	if (blackbox)
-		blackbox.save_all_data_to_sql()
-
 	spawn(50)
 		log_game("Rebooting due to remote command.")
 		world.Reboot(10)
@@ -837,7 +834,7 @@ proc/api_update_command_database()
 		rank = "Admin"
 
 	var/message =	"<font color='red'>[rank] PM from <b><a href='?discord_msg=[queryparams["senderkey"]]'>[queryparams["senderkey"]]</a></b>: [queryparams["msg"]]</font>"
-	var/amessage =	"<font color='blue'>[rank] PM from <a href='?discord_msg=[queryparams["senderkey"]]'>[queryparams["senderkey"]]</a> to <b>[key_name(C)]</b> : [queryparams["msg"]]</font>"
+	var/amessage =	"<font color='blue'>[rank] PM from <a href='?discord_msg=[queryparams["senderkey"]]'>[queryparams["senderkey"]]</a> to <b>[key_name(C, highlight_special = 1)]</b> : [queryparams["msg"]]</font>"
 
 	C.received_discord_pm = world.time
 	C.discord_admin = queryparams["senderkey"]
