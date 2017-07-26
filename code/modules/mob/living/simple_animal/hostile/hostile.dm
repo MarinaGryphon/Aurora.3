@@ -154,7 +154,9 @@
 		return 0
 	if(client)
 		return 0
+	ai_act()
 
+/mob/living/simple_animal/hostile/proc/ai_act()
 	if(!stat)
 		switch(stance)
 			if(HOSTILE_STANCE_IDLE)
