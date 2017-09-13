@@ -1,4 +1,4 @@
-"a" = (/turf/simulated/floor/grass,/area/space)
+"a" = (/turf/simulated/open,/area/space)
 "b" = (/obj/structure/grille,/obj/structure/window/reinforced/full,/turf/simulated/floor,/area/space)
 "c" = (/turf/simulated/wall,/area/space)
 "d" = (/obj/structure/window/reinforced/full,/obj/structure/grille,/turf/simulated/floor,/area/space)
@@ -6,44 +6,11 @@
 "f" = (/turf/simulated/shuttle/wall,/area/space)
 "g" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (NORTH)"; icon_state = "ramptop"; dir = 1},/area/space)
 "h" = (/obj/structure/lattice/catwalk/indoor,/turf/simulated/open,/area/space)
-"i" = (/obj/machinery/door/airlock/glass_science,/turf/simulated/floor/tiled/freezer,/area/space)
-"j" = (/turf/simulated/open,/area/space)
-"k" = (/turf/simulated/floor/plating,/area/space)
-"l" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (WEST)"; icon_state = "ramptop"; dir = 8},/area/space)
-"m" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (EAST)"; icon_state = "ramptop"; dir = 4},/area/space)
-"n" = (/obj/machinery/door/airlock/lift,/turf/simulated/floor/tiled/freezer,/area/space)
-"o" = (/turf/simulated/floor/tiled/white,/area/space)
-"p" = (/obj/structure/stairs/north,/turf/simulated/floor/tiled/freezer,/area/space)
-"q" = (/turf/simulated/floor/tiled/ramp,/area/space)
-"r" = (/turf/simulated/floor/tiled/ramp/bottom,/area/space)
-"s" = (/obj/machinery/door/airlock/engineering,/turf/simulated/floor/tiled/freezer,/area/space)
-"t" = (/obj/machinery/door/airlock/highsecurity,/turf/simulated/floor/tiled/freezer,/area/space)
-"u" = (/obj/structure/closet/secure_closet/security/science,/turf/simulated/floor/tiled/freezer,/area/space)
-"v" = (/obj/item/modular_computer/console/preset/security,/turf/simulated/floor/tiled/freezer,/area/space)
-"w" = (/obj/structure/bed/chair/office/light{tag = "icon-officechair_white (EAST)"; icon_state = "officechair_white"; dir = 4},/turf/simulated/floor/tiled/freezer,/area/space)
-"x" = (/obj/structure/table/glass,/turf/simulated/floor/tiled/freezer,/area/space)
-"y" = (/obj/structure/bed/chair/office/light{tag = "icon-officechair_white (WEST)"; icon_state = "officechair_white"; dir = 8},/turf/simulated/floor/tiled/freezer,/area/space)
-"z" = (/obj/machinery/door/airlock/glass_security,/turf/simulated/floor/tiled/freezer,/area/space)
-"A" = (/obj/machinery/door/airlock/multi_tile/glass{tag = "icon-door_closed"; icon_state = "door_closed"; dir = 2},/turf/simulated/floor/tiled/freezer,/area/space)
-"B" = (/obj/effect/floor_decal/industrial/warning{tag = "icon-warning (NORTH)"; icon_state = "warning"; dir = 1},/turf/simulated/floor/tiled/freezer,/area/space)
-"C" = (/obj/structure/table/glass,/turf/simulated/floor/tiled/white,/area/space)
-"D" = (/obj/structure/bed/chair/office/bridge,/turf/simulated/floor/tiled/white,/area/space)
-"E" = (/obj/structure/filingcabinet/filingcabinet,/turf/simulated/floor/tiled/white,/area/space)
-"F" = (/obj/item/modular_computer/console/preset/civilian,/turf/simulated/floor/tiled/white,/area/space)
-"G" = (/obj/structure/bed{buckle_dir = 1; buckle_lying = -1; desc = "This is used to sit or lie on."; dir = 1; name = "bench"},/turf/simulated/floor/tiled/white,/area/space)
-"H" = (/obj/structure/flora/pottedplant{tag = "icon-plant-21"; icon_state = "plant-21"},/obj/structure/window/basic{tag = "icon-window (WEST)"; icon_state = "window"; dir = 8},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
-"I" = (/obj/structure/flora/pottedplant{tag = "icon-plant-22"; icon_state = "plant-22"},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
-"J" = (/obj/structure/flora/pottedplant{tag = "icon-plant-21"; icon_state = "plant-21"},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (EAST)"; icon_state = "window"; dir = 4},/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
-"K" = (/obj/structure/bed{buckle_lying = -1; desc = "This is used to sit or lie on."; name = "bench"; pixel_y = 13; step_y = 0},/turf/simulated/floor/tiled/white,/area/space)
-"L" = (/obj/structure/bed{buckle_lying = -1; desc = "This is used to sit or lie on."; name = "bench"; pixel_y = 13; step_y = 0},/turf/simulated/floor/tiled/white,/area/space)
-"M" = (/obj/structure/bed{buckle_lying = -1; desc = "This is used to sit or lie on."; name = "bench"; pixel_y = 13; step_y = 0},/turf/simulated/floor/tiled/white,/area/space)
-"N" = (/obj/machinery/door/airlock/multi_tile/glass{tag = "icon-door_closed (NORTH)"; icon_state = "door_closed"; dir = 1},/turf/simulated/floor/tiled/white,/area/space)
-"O" = (/turf/simulated/floor/tiled/ramp/bottom{tag = "icon-rampbot (NORTH)"; icon_state = "rampbot"; dir = 1},/area/space)
-"P" = (/turf/simulated/floor/tiled/ramp/bottom{tag = "icon-rampbot (WEST)"; icon_state = "rampbot"; dir = 8},/area/space)
-"Q" = (/obj/machinery/hologram/holopad,/turf/simulated/floor/greengrid,/area/space)
-"R" = (/obj/structure/flora/pottedplant/random,/turf/simulated/floor/tiled/white,/area/space)
-"S" = (/obj/structure/stairs/west,/turf/simulated/floor/tiled/freezer,/area/space)
-"T" = (/obj/vehicle/bike{desc = "There's a label on it that reads 'Property of Echo Labs'."; dir = 8; icon_state = "bike_off"; land_speed = 1; name = "Echo's bike"; space_speed = 0; tag = "icon-bike_off (WEST)"},/obj/effect/floor_decal/industrial/warning{tag = "icon-warning (NORTH)"; icon_state = "warning"; dir = 1},/turf/simulated/floor/tiled/freezer,/area/space)
+"i" = (/turf/simulated/floor/plating,/area/space)
+"j" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (WEST)"; icon_state = "ramptop"; dir = 8},/area/space)
+"k" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (EAST)"; icon_state = "ramptop"; dir = 4},/area/space)
+"l" = (/obj/machinery/door/airlock/lift,/turf/simulated/floor/tiled/freezer,/area/space)
+"m" = (/turf/simulated/floor/tiled/ramp,/area/space)
 
 (1,1,1) = {"
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -64,36 +31,36 @@ aaaaaaaaabeeeeceeeeeeeeeeeeeeeeeeceeedaaaaaaaaaaaa
 aaaaaaaabeeeeeceffffffffffffffffeceeeedaaaaaaaaaaa
 aaaaaaabeeeeeecefeeeegeeeegeeeefeceeeeedaaaaaaaaaa
 aaaaaabeeeeeeecefehhhhhhhhhhhhefeceeeeeedaaaaaaaaa
-aaaaabeieeeeeecefehjjhjjjjhjjhefeceeeeeeedaaaaaaaa
-aaaabeeecccccccefehjjhjjjjhjjhefeceeeeeeeedaaaaaaa
-aaabeeeeckkkkkceflhhhhhhhhhhhhmfeceeeeeeeeedaaaaaa
-aabeeeeeckkkkkcefehjjhhhhhhjjhefeceeeeeeeeeedaaaaa
-abeeeeeeckkkkknefehjjhhjjhhjjhefeceeeeeeeeeeedaaaa
-abeeeeeeckkkkknefehjjhhjjhhjjhefeceeeeeeeeeeeedaaa
-aceeeeeeckkkkkcefehjjhhhhhhjjhefeceeeeeeeeeeeeedaa
-aceeeeeeckkkkkceflhhhhhhhhhhhhmfeceeeeeeeeeeeeedaa
-aceeeeeecccccccefehjjhjjjjhjjhefeccceeccccccccccaa
-aceeeeeecooooocefehjjhjjjjhjjhefeccceeckkkkkkkkcaa
-acccceeccooooocefehhhhhhhhhhhhefeccceeckkkkkkkkcaa
-acppceecoooooocefeeeeqeeeeqeeeefecmeeeckkkkkkkkcaa
-aceeceeoooooooceffffffffffffffffecmeeeckkkkkkkkcaa
-accrceecooooooceeeeeeeeeeeeeeeeeeccceeckkkkkkkkcaa
-accsceeccccccccccccccccceecccccccccceenkkkkkkkkcaa
-aseeceeeeeeeeeccccccccccttcccccccccceenkkkkkkkkcaa
-aceeceeeeeeeeeceeeuuevecqqccceeeeeeeeeckkkkkkkkcaa
-aceecccccccceecwxeeeexycttccceeeeeeeeeckkkkkkkkcaa
-aceeeeeeeeeeeeceveeeeeecttccceecccccccccccccccccaa
-aeeeeecccccceecccczzccccttccceecccccceeeeceeeeecaa
-aAeeeecoooooooooooooooooooooooooooooceeeeeeeeeecaa
-acBeeBcooooooooooooooooCDECoooooooooceeeeeeeeeecaa
-acBeeBcoooooCDFCoooooooCCCCooooGGGoocccccceeeeecaa
-acBeeBcoooooCCCCoooooooooooooooHIJooeeeeeeeeeeecaa
-acBeeBcooooooooooooooooooooooooKLMoNeeeeeeeeeecaaa
-acBeeBcooooooooooooOooooooooooooooooceeeeeeeecaaaa
-acBeeBcoooooooooooPQOoooooooooooooooccceeeeecaaaaa
-acBeeBcoooooooooooorooooooooooooccccceeeeeecaaaaaa
-acBeeBcooRooRoooooooooooooRooRoocSeeeeeeeecaaaaaaa
-acTeeBcooooooooooooooooooooooooocSeeeeeeecaaaaaaaa
-acccccccccoocccccccccccccccooccccccccccccaaaaaaaaa
+aaaaabeeeeeeeecefehaahaaaahaahefeceeeeeeedaaaaaaaa
+aaaabeeecccccccefehaahaaaahaahefeceeeeeeeedaaaaaaa
+aaabeeeeciiiiicefjhhhhhhhhhhhhkfeceeeeeeeeedaaaaaa
+aabeeeeeciaaaicefehaahhhhhhaahefeceeeeeeeeeedaaaaa
+abeeeeeeciaaailefehaahhaahhaahefeceeeeeeeeeeedaaaa
+abeeeeeeciaaailefehaahhaahhaahefeceeeeeeeeeeeedaaa
+aceeeeeeciaaaicefehaahhhhhhaahefeceeeeeeeeeeeeedaa
+aceeeeeeciiiiicefjhhhhhhhhhhhhkfeceeeeeeeeeeeeedaa
+accccecccccccccefehaahaaaahaahefeccmmmcccceeccccaa
+aceeeeeceeeeeecefehaahaaaahaahefecceeeciiiiiiiicaa
+acecceeceeeeeecefehhhhhhhhhhhhefecceeeciaaaaaaicaa
+aceeceeceeeeeecefeeeemeeeemeeeefecceeeciaaaaaaicaa
+aceeceeeeeeeeeceffffffffffffffffecceeeciaaaaaaicaa
+acceceeceeeeeeceeeeeeeeeeeeeeeeeecceeeciaaaaaaicaa
+acceceeccccccccccccccccceeccccccccceeeciaaaaaaicaa
+aceeeeeeeeeeeeeeeeeeeeeeeeeeecccccceeeciaaaaaaicaa
+aceeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeciaaaaaaicaa
+acccccccceccccecccccccecceeeeeeeeeeeeeciiiiiiiicaa
+aceeeeeececeeeeeeeeeeeeeeceeecccccceeccccceeccccaa
+aceeeeeececeeeeeeeeeeeeeeeceeceeeeceeeeeeceeceecaa
+aceeeeeeeeceeeeeeeeeeeeeeeceeeeeeeceeeeeeceeceecaa
+aceeeeeececeeeeeeeeeeeeeecceecccccceeccccceeccccaa
+aceeeeeececcccccceccccccccceeceeeeceeceeeeeeeeedaa
+acccccccceceeeeeeeeeeeeceeceeceeeeceeceeeeeeeeedaa
+aceeeeeececeeeeeeeeeeeeceeceeceeeeceeceeeeeeeedaaa
+aceeeeeececeeeeeeeeeeeeceeceeceeeeceeeeeeeeeedaaaa
+aceeeeeeeeceeeeeeeeeeeeceeceeeeeeeceeeeeeeeedaaaaa
+aceeeeeececcccccccceccccecceeccccccecceeeeedaaaaaa
+aceeeeeeceeeeeeeeeeeeeeeeeeeeeeceeeeeceeeedaaaaaaa
+aceeeeeeceeeeeeeeeeeeeeeeeeeeeeceeeeeceeedaaaaaaaa
+acccccccccccccccccccccccccccccccccccccdddaaaaaaaaa
 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 "}
