@@ -258,14 +258,14 @@
 /turf/simulated/floor/tiled,
 /area/maintenance/arrivals)
 "aD" = (
-/obj/machinery/door/airlock/centcom{
-	icon_state = "door_locked";
-	locked = 1;
-	name = "IT Department"
-	},
 /obj/item/tape/engineering{
 	icon_state = "engineering_door";
 	layer = 4
+	},
+/obj/machinery/door/airlock/maintenance_hatch{
+	icon_state = "door_locked";
+	locked = 1;
+	name = "IT Department"
 	},
 /turf/simulated/floor/tiled,
 /area/maintenance/arrivals)
@@ -1647,6 +1647,19 @@
 	},
 /obj/structure/lattice/catwalk,
 /turf/simulated/open,
+/area/maintenance/library)
+"da" = (
+/obj/machinery/door/airlock/maintenance{
+	req_access = list(50)
+	},
+/obj/machinery/door/firedoor,
+/obj/structure/cable{
+	d1 = 1;
+	d2 = 2;
+	icon_state = "1-2";
+	pixel_y = 0
+	},
+/turf/simulated/floor/plating,
 /area/maintenance/library)
 
 (1,1,1) = {"
@@ -27020,7 +27033,7 @@ cw
 cw
 cw
 cK
-cN
+da
 cO
 cO
 cO

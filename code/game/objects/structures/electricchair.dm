@@ -12,7 +12,7 @@
 	return
 
 /obj/structure/bed/chair/e_chair/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
+	if(iswrench(W))
 		var/obj/structure/bed/chair/C = new /obj/structure/bed/chair(loc)
 		playsound(loc, 'sound/items/Ratchet.ogg', 50, 1)
 		C.set_dir(dir)
@@ -33,6 +33,7 @@
 		icon_state = "echair0"
 	else
 		on = 1
+		shock()
 		icon_state = "echair1"
 	usr << "<span class='notice'>You switch [on ? "on" : "off"] [src].</span>"
 	return
@@ -58,7 +59,7 @@
 		return
 	A.use_power(EQUIP, 5000)
 	var/light = A.power_light
-	A.updateicon()
+	A.update_icon()
 
 	flick("echair1", src)
 	spark(src, 12, alldirs)
@@ -71,5 +72,5 @@
 	visible_message("<span class='danger'>The electric chair goes off!</span>", "<span class='danger'>You hear a deep sharp shock!</span>")
 
 	A.power_light = light
-	A.updateicon()
+	A.update_icon()
 	return
