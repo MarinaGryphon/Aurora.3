@@ -6,6 +6,7 @@
 /mob/eye/aiEye
 	name = "Inactive AI Eye"
 	icon_state = "AI-eye"
+	simulated = 0
 
 /mob/eye/aiEye/New()
 	..()
