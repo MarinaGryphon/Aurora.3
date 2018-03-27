@@ -19,6 +19,7 @@
 	set_trait(TRAIT_PLANT_ICON,"bush2")
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 7)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/chili/ice
 	name = "icechili"
@@ -33,6 +34,8 @@
 	set_trait(TRAIT_MATURATION,4)
 	set_trait(TRAIT_PRODUCTION,4)
 	set_trait(TRAIT_PRODUCT_COLOUR,"#00EDC6")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 // Berry plants/variants.
 /datum/seed/berry
@@ -56,6 +59,8 @@
 	set_trait(TRAIT_PLANT_ICON,"bush")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/berry/blue
 	name = "blueberries"
@@ -93,6 +98,8 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#c9fa16")
 	set_trait(TRAIT_WATER_CONSUMPTION, 3)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.25)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 /datum/seed/berry/poison
 	name = "poisonberries"
@@ -106,6 +113,7 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#6DC961")
 	set_trait(TRAIT_WATER_CONSUMPTION, 3)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.25)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 /datum/seed/berry/poison/death
 	name = "deathberries"
@@ -120,6 +128,7 @@
 	set_trait(TRAIT_POTENCY,50)
 	set_trait(TRAIT_PRODUCT_COLOUR,"#7A5454")
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.35)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_RED)
 
 // Nettles/variants.
 /datum/seed/nettle
@@ -142,6 +151,8 @@
 	set_trait(TRAIT_PLANT_ICON,"bush5")
 	set_trait(TRAIT_PRODUCT_ICON,"nettles")
 	set_trait(TRAIT_PRODUCT_COLOUR,"#728A54")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/nettle/death
 	name = "deathnettle"
@@ -157,6 +168,7 @@
 	set_trait(TRAIT_YIELD,2)
 	set_trait(TRAIT_PRODUCT_COLOUR,"#8C5030")
 	set_trait(TRAIT_PLANT_COLOUR,"#634941")
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 //Tomatoes/variants.
 /datum/seed/tomato
@@ -181,6 +193,7 @@
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.25)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/tomato/blood
 	name = "bloodtomato"
@@ -219,6 +232,8 @@
 	..()
 	set_trait(TRAIT_PRODUCT_COLOUR,"#4D86E8")
 	set_trait(TRAIT_PLANT_COLOUR,"#070AAD")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/tomato/blue/teleport
 	name = "bluespacetomato"
@@ -255,6 +270,7 @@
 	set_trait(TRAIT_PLANT_ICON,"bush4")
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 7)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 //Placeholder mutation for the eggplant. Not as fun as the other mutations but better than nothing.
 /datum/seed/realeggplant
 	name = "huge eggplant"
@@ -275,6 +291,7 @@
 	set_trait(TRAIT_PLANT_ICON,"bush4")
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 7)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 //Apples/varieties.
 /datum/seed/apple
@@ -297,6 +314,7 @@
 	set_trait(TRAIT_PLANT_ICON,"tree2")
 	set_trait(TRAIT_FLESH_COLOUR,"#E8E39B")
 	set_trait(TRAIT_IDEAL_LIGHT, 4)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/apple/poison
 	name = "poisonapple"
@@ -318,6 +336,7 @@
 	set_trait(TRAIT_YIELD,3)
 	set_trait(TRAIT_PRODUCT_COLOUR,"#FFDD00")
 	set_trait(TRAIT_PLANT_COLOUR,"#D6B44D")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 //Ambrosia/varieties.
 /datum/seed/ambrosia
@@ -339,6 +358,8 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#9FAD55")
 	set_trait(TRAIT_PLANT_ICON,"ambrosia")
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/ambrosia/deus
 	name = "ambrosiadeus"
@@ -352,6 +373,8 @@
 	..()
 	set_trait(TRAIT_PRODUCT_COLOUR,"#A3F0AD")
 	set_trait(TRAIT_PLANT_COLOUR,"#2A9C61")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 //Mushrooms/varieties.
 /datum/seed/mushroom
@@ -614,6 +637,7 @@
 	set_trait(TRAIT_PLANT_COLOUR,"#6B8C5E")
 	set_trait(TRAIT_PLANT_ICON,"flower")
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
 
 /datum/seed/flower/poppy
 	name = "poppies"
@@ -634,6 +658,7 @@
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_WATER_CONSUMPTION, 0.5)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/flower/sunflower
 	name = "sunflowers"
@@ -671,6 +696,7 @@
 	set_trait(TRAIT_PLANT_ICON,"vine")
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
 
 /datum/seed/grapes/green
 	name = "greengrapes"
@@ -682,6 +708,7 @@
 /datum/seed/grapes/green/setup_traits()
 	..()
 	set_trait(TRAIT_PRODUCT_COLOUR,"42ed2f")
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 //Everything else
 /datum/seed/peanuts
@@ -702,6 +729,7 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#C4AE7A")
 	set_trait(TRAIT_PLANT_ICON,"bush2")
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
 
 /datum/seed/cabbage
 	name = "cabbage"
@@ -724,6 +752,8 @@
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/banana
 	name = "banana"
@@ -746,6 +776,7 @@
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 7)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
 
 /datum/seed/corn
 	name = "corn"
@@ -768,6 +799,8 @@
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/potato
 	name = "potato"
@@ -787,6 +820,8 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#D4CAB4")
 	set_trait(TRAIT_PLANT_ICON,"bush2")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/soybean
 	name = "soybean"
@@ -805,6 +840,8 @@
 	set_trait(TRAIT_PRODUCT_ICON,"bean")
 	set_trait(TRAIT_PRODUCT_COLOUR,"#EBE7C0")
 	set_trait(TRAIT_PLANT_ICON,"stalk")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/wheat
 	name = "wheat"
@@ -825,6 +862,8 @@
 	set_trait(TRAIT_PLANT_ICON,"stalk2")
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/rice
 	name = "rice"
@@ -845,6 +884,7 @@
 	set_trait(TRAIT_PLANT_ICON,"stalk2")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 /datum/seed/carrots
 	name = "carrot"
@@ -863,6 +903,8 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#FFDB4A")
 	set_trait(TRAIT_PLANT_ICON,"carrot")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/weeds
 	name = "weeds"
@@ -899,6 +941,7 @@
 	set_trait(TRAIT_PLANT_COLOUR,"#4D8F53")
 	set_trait(TRAIT_PLANT_ICON,"carrot2")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 /datum/seed/sugarcane
 	name = "sugarcane"
@@ -918,12 +961,14 @@
 	set_trait(TRAIT_PLANT_COLOUR,"#6BBD68")
 	set_trait(TRAIT_PLANT_ICON,"stalk3")
 	set_trait(TRAIT_IDEAL_HEAT, 298)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/watermelon
 	name = "watermelon"
 	seed_name = "watermelon"
 	display_name = "watermelon vine"
 	chems = list("nutriment" = list(1,6), "watermelonjuice" = list(10,6))
+	
 
 /datum/seed/watermelon/setup_traits()
 	..()
@@ -941,6 +986,7 @@
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_YELLOW)
 
 /datum/seed/pumpkin
 	name = "pumpkin"
@@ -961,6 +1007,7 @@
 	set_trait(TRAIT_PLANT_COLOUR,"#BAE8C1")
 	set_trait(TRAIT_PLANT_ICON,"vine2")
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_BLUE)
 
 /datum/seed/citrus
 	name = "lime"
@@ -981,6 +1028,7 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#3AF026")
 	set_trait(TRAIT_PLANT_ICON,"tree")
 	set_trait(TRAIT_FLESH_COLOUR,"#3AF026")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 /datum/seed/citrus/lemon
 	name = "lemon"
@@ -995,6 +1043,7 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#F0E226")
 	set_trait(TRAIT_FLESH_COLOUR,"#F0E226")
 	set_trait(TRAIT_IDEAL_LIGHT, 6)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/citrus/orange
 	name = "orange"
@@ -1007,6 +1056,7 @@
 	..()
 	set_trait(TRAIT_PRODUCT_COLOUR,"#FFC20A")
 	set_trait(TRAIT_FLESH_COLOUR,"#FFC20A")
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)
 
 /datum/seed/grass
 	name = "grass"
@@ -1027,6 +1077,7 @@
 	set_trait(TRAIT_PLANT_ICON,"grass")
 	set_trait(TRAIT_WATER_CONSUMPTION, 0.5)
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.15)
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 /datum/seed/cocoa
 	name = "cocoa"
@@ -1046,6 +1097,7 @@
 	set_trait(TRAIT_PLANT_ICON,"tree2")
 	set_trait(TRAIT_IDEAL_HEAT, 298)
 	set_trait(TRAIT_WATER_CONSUMPTION, 6)
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_YELLOW)
 
 /datum/seed/cherries
 	name = "cherry"
@@ -1067,6 +1119,7 @@
 	set_trait(TRAIT_PRODUCT_COLOUR,"#A80000")
 	set_trait(TRAIT_PLANT_ICON,"tree2")
 	set_trait(TRAIT_PLANT_COLOUR,"#2F7D2D")
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_BLUE)
 
 /datum/seed/kudzu
 	name = "kudzu"

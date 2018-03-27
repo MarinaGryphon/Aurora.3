@@ -15,6 +15,8 @@
 	var/nutrilevel = 10        // Nutrient (max 10)
 	var/pestlevel = 0          // Pests (max 10)
 	var/weedlevel = 0          // Weeds (max 10)
+	
+	var/list/vitamins = list()
 
 	var/maxWaterLevel = 100
 	var/maxNutriLevel = 10
@@ -129,6 +131,9 @@
 		"mutagen" = 15
 		)
 
+/obj/machinery/portable_atmospherics/hydroponics/proc/get_vitamin(var/vitamin)
+	return vitamins["[vitamin]"]
+		
 /obj/machinery/portable_atmospherics/hydroponics/AltClick()
 	if (istype(usr, /mob/living/carbon/alien/diona))//A diona alt+clicking feeds the plant
 
@@ -193,6 +198,9 @@
 	temp_chem_holder.create_reagents(10)
 	temp_chem_holder.flags |= OPENCONTAINER
 	create_reagents(200)
+	vitamins[VITAMIN_RED] = 10;
+	vitamins[VITAMIN_YELLOW] = 10;
+	vitamins[VITAMIN_BLUE] = 10;
 	if(mechanical)
 		connect()
 	update_icon()

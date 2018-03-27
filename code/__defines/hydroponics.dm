@@ -59,3 +59,10 @@
 #define TRAIT_FLESH_COLOUR         39
 #define TRAIT_SPOROUS              40
 #define TRAIT_BIOLUM_PWR           41
+#define TRAIT_VITAMIN_IN           42
+#define TRAIT_VITAMIN_OUT          43
+
+//Definitions for plant vitamins
+#define VITAMIN_RED                1
+#define VITAMIN_YELLOW             2
+#define VITAMIN_BLUE               3

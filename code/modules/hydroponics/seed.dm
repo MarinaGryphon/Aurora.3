@@ -64,6 +64,8 @@
 	set_trait(TRAIT_IDEAL_HEAT,           293)          // Preferred temperature in Kelvin.
 	set_trait(TRAIT_NUTRIENT_CONSUMPTION, 0.25)         // Plant eats this much per tick.
 	set_trait(TRAIT_PLANT_COLOUR,         "#46B543")    // Colour of the plant icon.
+	set_trait(TRAIT_VITAMIN_IN, VITAMIN_RED)            // The vitamin consumed by the plant.
+	set_trait(TRAIT_VITAMIN_OUT, VITAMIN_RED)           // The vitamin released by the plant.
 
 	setup_traits()
 

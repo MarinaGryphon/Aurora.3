@@ -54,6 +54,11 @@
 		nutrilevel -= max(0,seed.get_trait(TRAIT_NUTRIENT_CONSUMPTION) * HYDRO_SPEED_MULTIPLIER)
 	if(seed.get_trait(TRAIT_WATER_CONSUMPTION) > 0 && waterlevel > 0 && prob(25))
 		waterlevel -= max(0,seed.get_trait(TRAIT_WATER_CONSUMPTION) * HYDRO_SPEED_MULTIPLIER)
+		
+	// Use and release nutrients into the tray.
+	if((seed.get_trait(TRAIT_VITAMIN_IN) != seed.get_trait(TRAIT_VITAMIN_OUT)) && seed.get_trait(TRAIT_NUTRIENT_CONSUMPTION))
+		get_vitamin(seed.get_trait(TRAIT_VITAMIN_IN)) -= max(0,seed.get_trait(TRAIT_NUTRIENT_CONSUMPTION) * HYDRO_SPEED_MULTIPLIER)
+		get_vitamin(seed.get_trait(TRAIT_VITAMIN_OUT)) += max(0,seed.get_trait(TRAIT_NUTRIENT_CONSUMPTION) * HYDRO_SPEED_MULTIPLIER)
 
 	// Make sure the plant is not starving or thirsty. Adequate
 	// water and nutrients will cause a plant to become healthier.
@@ -62,6 +67,8 @@
 		health += (nutrilevel < 2 ? -healthmod : healthmod)
 	if(seed.get_trait(TRAIT_REQUIRES_WATER) && prob(35))
 		health += (waterlevel < 10 ? -healthmod : healthmod)
+	if(seed.get_trait(TRAIT_REQUIRE_NUTRIENTS) && (seed.get_trait(TRAIT_VITAMIN_IN) != seed.get_trait(TRAIT_VITAMIN_OUT)))
+		health += (vitamins["[seed.get_trait(TRAIT_VITAMIN_IN)]"] == 0 ? -healthmod : healthmod)
 
 	// Check that pressure, heat and light are all within bounds.
 	// First, handle an open system or an unconnected closed system.
