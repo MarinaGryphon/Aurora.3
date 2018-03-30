@@ -1,0 +1,112 @@
+"aa" = (/turf/simulated/floor/grass,/area/space)
+"ab" = (/obj/structure/grille,/obj/structure/window/reinforced/full,/turf/simulated/floor,/area/space)
+"ac" = (/turf/simulated/wall,/area/space)
+"ad" = (/obj/structure/window/reinforced/full,/obj/structure/grille,/turf/simulated/floor,/area/space)
+"ae" = (/obj/structure/filingcabinet/filingcabinet{desc = "A large cabinet with drawers. There seems to be a layer of dust covering it."},/turf/simulated/floor/tiled/freezer,/area/space)
+"af" = (/obj/structure/filingcabinet/security{desc = "A large cabinet with hard copy security records."; name = "Security Records"},/turf/simulated/floor/tiled/freezer,/area/space)
+"ag" = (/obj/structure/filingcabinet/medical{desc = "A large cabinet with hard copy medical records."; name = "Medical Records"},/turf/simulated/floor/tiled/freezer,/area/space)
+"ah" = (/turf/simulated/floor/tiled/freezer,/area/space)
+"ai" = (/obj/structure/table/glass,/turf/simulated/floor/tiled/freezer,/area/space)
+"aj" = (/obj/structure/bed/chair/comfy/black{tag = "icon-comfychair_preview (WEST)"; icon_state = "comfychair_preview"; dir = 8},/turf/simulated/floor/tiled/freezer,/area/space)
+"ak" = (/turf/simulated/shuttle/wall,/area/space)
+"al" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (NORTH)"; icon_state = "ramptop"; dir = 1},/area/space)
+"am" = (/obj/structure/lattice/catwalk/indoor,/turf/simulated/open,/area/space)
+"an" = (/obj/machinery/door/airlock/glass_science,/turf/simulated/floor/tiled/freezer,/area/space)
+"ao" = (/obj/structure/bookcase{name = "bookcase (Reference)"},/turf/simulated/floor/tiled/freezer,/area/space)
+"ap" = (/obj/structure/bookcase{name = "bookcase (Non-Fiction)"},/turf/simulated/floor/tiled/freezer,/area/space)
+"aq" = (/turf/simulated/open,/area/space)
+"ar" = (/turf/simulated/floor/plating,/area/space)
+"as" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (WEST)"; icon_state = "ramptop"; dir = 8},/area/space)
+"at" = (/turf/simulated/floor/tiled/ramp{tag = "icon-ramptop (EAST)"; icon_state = "ramptop"; dir = 4},/area/space)
+"au" = (/obj/structure/table/woodentable,/turf/simulated/floor/tiled/freezer,/area/space)
+"av" = (/obj/item/weapon/stool/padded,/turf/simulated/floor/tiled/freezer,/area/space)
+"aw" = (/obj/machinery/door/airlock/lift,/turf/simulated/floor/tiled/freezer,/area/space)
+"ax" = (/obj/turbolift_map_holder/aurora{dir = 4; lift_size_y = 5},/turf/simulated/floor/plating,/area/space)
+"ay" = (/obj/structure/toilet,/turf/simulated/floor/tiled/white,/area/space)
+"az" = (/obj/machinery/shower,/turf/simulated/floor/tiled/white,/area/space)
+"aA" = (/obj/machinery/door/airlock,/turf/simulated/floor/tiled/white,/area/space)
+"aB" = (/obj/structure/curtain/open/shower,/turf/simulated/floor/tiled/white,/area/space)
+"aC" = (/obj/structure/stairs/north,/turf/simulated/floor/tiled/freezer,/area/space)
+"aD" = (/turf/simulated/floor/tiled/white,/area/space)
+"aE" = (/obj/structure/sink{dir = 4; icon_state = "sink"; pixel_x = 11; pixel_y = 0},/turf/simulated/floor/tiled/white,/area/space)
+"aF" = (/obj/structure/mirror{dir = 4},/turf/simulated/wall,/area/space)
+"aG" = (/turf/simulated/floor/tiled/ramp,/area/space)
+"aH" = (/turf/simulated/floor/tiled/ramp/bottom,/area/space)
+"aI" = (/obj/machinery/door/airlock/engineering,/turf/simulated/floor/tiled/freezer,/area/space)
+"aJ" = (/obj/machinery/door/airlock/highsecurity,/turf/simulated/floor/tiled/freezer,/area/space)
+"aK" = (/obj/structure/closet/secure_closet/security/science,/turf/simulated/floor/tiled/freezer,/area/space)
+"aL" = (/obj/item/modular_computer/console/preset/security,/turf/simulated/floor/tiled/freezer,/area/space)
+"aM" = (/obj/structure/bed/chair/office/light{tag = "icon-officechair_white (EAST)"; icon_state = "officechair_white"; dir = 4},/turf/simulated/floor/tiled/freezer,/area/space)
+"aN" = (/obj/structure/bed/chair/office/light{tag = "icon-officechair_white (WEST)"; icon_state = "officechair_white"; dir = 8},/turf/simulated/floor/tiled/freezer,/area/space)
+"aO" = (/obj/machinery/door/airlock/glass_security,/turf/simulated/floor/tiled/freezer,/area/space)
+"aP" = (/obj/machinery/door/airlock/multi_tile/glass{tag = "icon-door_closed"; icon_state = "door_closed"; dir = 2},/turf/simulated/floor/tiled/freezer,/area/space)
+"aQ" = (/obj/effect/floor_decal/industrial/warning{tag = "icon-warning (NORTH)"; icon_state = "warning"; dir = 1},/turf/simulated/floor/tiled/freezer,/area/space)
+"aR" = (/obj/structure/table/glass,/turf/simulated/floor/tiled/white,/area/space)
+"aS" = (/obj/structure/bed/chair/office/bridge,/turf/simulated/floor/tiled/white,/area/space)
+"aT" = (/obj/structure/filingcabinet/filingcabinet,/turf/simulated/floor/tiled/white,/area/space)
+"aU" = (/obj/item/modular_computer/console/preset/civilian,/turf/simulated/floor/tiled/white,/area/space)
+"aV" = (/obj/structure/bed{buckle_dir = 1; buckle_lying = -1; desc = "This is used to sit or lie on."; dir = 1; name = "bench"},/turf/simulated/floor/tiled/white,/area/space)
+"aW" = (/obj/structure/flora/pottedplant{tag = "icon-plant-21"; icon_state = "plant-21"},/obj/structure/window/basic{tag = "icon-window (WEST)"; icon_state = "window"; dir = 8},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
+"aX" = (/obj/structure/flora/pottedplant{tag = "icon-plant-22"; icon_state = "plant-22"},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
+"aY" = (/obj/structure/flora/pottedplant{tag = "icon-plant-21"; icon_state = "plant-21"},/obj/structure/window/basic,/obj/structure/window/basic{tag = "icon-window (EAST)"; icon_state = "window"; dir = 4},/obj/structure/window/basic{tag = "icon-window (NORTH)"; icon_state = "window"; dir = 1},/turf/simulated/floor/grass,/area/space)
+"aZ" = (/obj/structure/bed{buckle_lying = -1; desc = "This is used to sit or lie on."; name = "bench"; pixel_y = 13; step_y = 0},/turf/simulated/floor/tiled/white,/area/space)
+"ba" = (/obj/machinery/door/airlock/multi_tile/glass{tag = "icon-door_closed (NORTH)"; icon_state = "door_closed"; dir = 1},/turf/simulated/floor/tiled/white,/area/space)
+"bb" = (/turf/simulated/floor/tiled/ramp/bottom{tag = "icon-rampbot (NORTH)"; icon_state = "rampbot"; dir = 1},/area/space)
+"bc" = (/turf/simulated/floor/tiled/ramp/bottom{tag = "icon-rampbot (WEST)"; icon_state = "rampbot"; dir = 8},/area/space)
+"bd" = (/obj/machinery/hologram/holopad,/turf/simulated/floor/greengrid,/area/space)
+"be" = (/obj/structure/flora/pottedplant/random,/turf/simulated/floor/tiled/white,/area/space)
+"bf" = (/obj/structure/stairs/west,/turf/simulated/floor/tiled/freezer,/area/space)
+"bg" = (/obj/vehicle/bike{desc = "There's a label on it that reads 'Property of Echo Labs'."; dir = 8; icon_state = "bike_off"; land_speed = 1; name = "Echo's bike"; space_speed = 0; tag = "icon-bike_off (WEST)"},/obj/effect/floor_decal/industrial/warning{tag = "icon-warning (NORTH)"; icon_state = "warning"; dir = 1},/turf/simulated/floor/tiled/freezer,/area/space)
+
+(1,1,1) = {"
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaababacacacacacacacacacacacacacacacacacacacacacadadaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaabaeafagacacacacacacacacacacacacacacacacacacacacahahadaaaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaabahahahahacahahahahahahahahahahahahahahahahahahacahahahadaaaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaabahahaiajahacahakakakakakakakakakakakakakakakakahacahahahahadaaaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaabahahahaiahahacahakahahahahalahahahahalahahahahakahacahahahahahadaaaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaabahahahahahahahacahakahamamamamamamamamamamamamahakahacahahahahahahadaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaabahanahahaoaoapapacahakahamaqaqamaqaqaqaqamaqaqamahakahacahahahahahahahadaaaaaaaaaaaaaaaa
+aaaaaaaaabahahahacacacacacacacahakahamaqaqamaqaqaqaqamaqaqamahakahacahahahahahahahahadaaaaaaaaaaaaaa
+aaaaaaabahahahahacarararararacahakasamamamamamamamamamamamamatakahacahahahahahahahahahadaaaaaaaaaaaa
+aaaaabahahahahahacarararararacahakahamaqaqamamamamamamaqaqamahakahacahahahahahahahahahahadaaaaaaaaaa
+aaabahauahavauavacarararararawahakahamaqaqamamaqaqamamaqaqamahakahacahahahahahahahahahahahadaaaaaaaa
+aaabahauahahauahacarararararawahakahamaqaqamamaqaqamamaqaqamahakahacahahahahahahahahahahahahadaaaaaa
+aaacahahahahahahacarararararacahakahamaqaqamamamamamamaqaqamahakahacahahahahahahahahahahahahahadaaaa
+aaacavauahavauahacaxararararacahakasamamamamamamamamamamamamatakahacahahahahahahahahahahahahahadaaaa
+aaacavauavahauavacacacacacacacahakahamaqaqamaqaqaqaqamaqaqamahakahacacacahahacacacacacacacacacacaaaa
+aaacahahahahahahacayacayacazacahakahamaqaqamaqaqaqaqamaqaqamahakahacacacahahacararararararararacaaaa
+aaacacacacahahacacaAacaAacaBacahakahamamamamamamamamamamamamahakahacacacahahacararararararararacaaaa
+aaacaCaCacahahacaDaDaDaDaDaEaFahakahahahahaGahahahahaGahahahahakahacatahahahacararararararararacaaaa
+aaacahahacahahaAaDaDaDaDaDaEaFahakakakakakakakakakakakakakakakakahacatahahahacararararararararacaaaa
+aaacacaHacahahacaDaDaDaDaDaEaFahahahahahahahahahahahahahahahahahahacacacahahacararararararararacaaaa
+aaacacaIacahahacacacacacacacacacacacacacacacacacahahacacacacacacacacacacahahawararararararararacaaaa
+aaaIahahacahahahahahahahahahacacacacacacacacacacaJaJacacacacacacacacacacahahawararararararararacaaaa
+aaacahahacahahahahahahahahahacahahahaKaKahaLahacaGaGacacacahahahahahahahahahacararararararararacaaaa
+aaacahahacacacacacacacacahahacaMaiahahahahaiaNacaJaJacacacahahahahahahahahahacararararararararacaaaa
+aaacahahahahahahahahahahahahacahaLahahahahahahacaJaJacacacahahacacacacacacacacacacacacacacacacacaaaa
+aaahahahahahacacacacacacahahacacacacaOaOacacacacaJaJacacacahahacacacacacacahahahahacahahahahahacaaaa
+aaaPahahahahacaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDacahahahahahahahahahahacaaaa
+aaacaQahahaQacaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaRaSaTaRaDaDaDaDaDaDaDaDaDacahahahahahahahahahahacaaaa
+aaacaQahahaQacaDaDaDaDaDaRaSaUaRaDaDaDaDaDaDaDaRaRaRaRaDaDaDaDaVaVaVaDaDacacacacacacahahahahahacaaaa
+aaacaQahahaQacaDaDaDaDaDaRaRaRaRaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaWaXaYaDaDahahahahahahahahahahahacaaaa
+aaacaQahahaQacaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaZaZaZaDbaahahahahahahahahahahacaaaaaa
+aaacaQahahaQacaDaDaDaDaDaDaDaDaDaDaDaDbbaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDacahahahahahahahahacaaaaaaaa
+aaacaQahahaQacaDaDaDaDaDaDaDaDaDaDaDbcbdbcaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDacacacahahahahahacaaaaaaaaaa
+aaacaQahahaQacaDaDaDaDaDaDaDaDaDaDaDaDaHaDaDaDaDaDaDaDaDaDaDaDaDacacacacacahahahahahahacaaaaaaaaaaaa
+aaacaQahahaQacaDaDbeaDaDbeaDaDaDaDaDaDaDaDaDaDaDaDaDbeaDaDbeaDaDacbfahahahahahahahahacaaaaaaaaaaaaaa
+aaacbgahahaQacaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDaDacbfahahahahahahahacaaaaaaaaaaaaaaaa
+aaacacacacacacacacacaDaDacacacacacacacacacacacacacacacaDaDacacacacacacacacacacacacaaaaaaaaaaaaaaaaaa
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+"}
