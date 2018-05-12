@@ -582,6 +582,8 @@ var/list/global/random_stock_large = list(
 				new /obj/item/weapon/storage/fancy/cigar(L)
 				new /obj/item/weapon/storage/fancy/cigar(L)
 			else
+				new /obj/item/weapon/storage/fancy/cigarettes/custom(L)
+				new /obj/item/weapon/storage/fancy/cigarettes/custom(L)
 				if (prob(50))
 					new /obj/item/weapon/storage/fancy/cigarettes/dromedaryco(L)
 					new /obj/item/weapon/storage/fancy/cigarettes/dromedaryco(L)
@@ -685,11 +687,9 @@ var/list/global/random_stock_large = list(
 			var/list/allgloves = typesof(/obj/item/clothing/gloves)
 
 			var/list/exclusion = list(/obj/item/clothing/gloves,
-			/obj/item/clothing/gloves/fluff,
 			/obj/item/clothing/gloves/swat/bst,
-			/obj/item/clothing/gloves/swat/fluff/hawk_gloves,
-			/obj/item/clothing/gloves/fluff/stone_ring,
-			/obj/item/clothing/gloves/black/fluff/kathleen_glove,
+			/obj/item/clothing/gloves/swat/fluff,
+			/obj/item/clothing/gloves/black/fluff,
 			/obj/item/clothing/gloves/powerfist,
 			/obj/item/clothing/gloves/claws)
 			exclusion += typesof(/obj/item/clothing/gloves/rig)
