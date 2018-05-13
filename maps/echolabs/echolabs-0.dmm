@@ -1,4 +1,4 @@
-"a" = (/obj/turbolift_map_holder{lift_size_x = 1},/turf/simulated/floor/plating,/area/space)
+"a" = (/obj/structure/displaycase{icon_state = "hub"},/turf/simulated/floor/bluegrid,/area/space)
 "b" = (/turf/unsimulated/mineral,/area/space)
 "c" = (/turf/simulated/wall,/area/space)
 "d" = (/turf/simulated/floor/tiled/freezer,/area/space)
@@ -13,10 +13,12 @@
 "m" = (/turf/simulated/floor/tiled/ramp,/area/space)
 "n" = (/obj/machinery/door/airlock/multi_tile/glass,/turf/simulated/floor/tiled/freezer,/area/space)
 "o" = (/obj/machinery/door/airlock/glass,/turf/simulated/floor/tiled/ramp,/area/space)
-"p" = (/obj/turbolift_map_holder{lift_size_x = 4; lift_size_y = 5},/turf/simulated/floor/plating,/area/space)
+"p" = (/obj/structure/table/standard,/turf/simulated/floor/tiled/freezer,/area/space)
 "q" = (/turf/simulated/floor/bluegrid,/area/space)
 "r" = (/obj/machinery/door/airlock/glass,/turf/simulated/wall,/area/space)
 "s" = (/obj/machinery/door/airlock/multi_tile/glass{tag = "icon-door_closed"; icon_state = "door_closed"; dir = 2},/turf/simulated/floor/tiled/freezer,/area/space)
+"t" = (/obj/item/modular_computer/console/preset/ai,/turf/simulated/floor/tiled/freezer,/area/space)
+"u" = (/obj/item/modular_computer/console/preset/research,/turf/simulated/floor/tiled/freezer,/area/space)
 
 (1,1,1) = {"
 bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
@@ -43,27 +45,27 @@ bbbcccccciiiiicdejggggggggggggkedcccccdcccccbbbbbb
 bbccccccciiiiicdedghhgggggghhgdedcddddddddddcbbbbb
 bcccccccciiiiildedghhgghhgghhgdedcdddddddddddcbbbb
 bcccccccciiiiildedghhgghhgghhgdedcddddddddddddcbbb
-bcccccccciaiiicdedghhgggggghhgdedcdddddddddddddcbb
+bcccccccciiiiicdedghhgggggghhgdedcdddddddddddddcbb
 bcccccccciiiiicdejggggggggggggkedcdddddddddddddcbb
 bccccccccccccccdedghhghhhhghhgdedccmccccccccccccbb
 bccddddddddddccdedghhghhhhghhgdedccmccciiiiiiiicbb
-bccddddddddddccdedggggggggggggdedccmccciiiiiiiicbb
-bccddddddddddccdeddddmddddmddddedckdddciiiiiiiicbb
-bccddddddddddccdeeeeeeeeeeeeeeeedckdddciiiiiiiicbb
+bccdptdddddddccdedggggggggggggdedccmccciiiiiiiicbb
+bccdppddddupdccdeddddmddddmddddedckdddciiiiiiiicbb
+bccdddddddppdccdeeeeeeeeeeeeeeeedckdddciiiiiiiicbb
 bccddddddddddccddddddddddddddddddccmccciiiiiiiicbb
 bccddddddddddcccccccccccndcccccccccmccciiiiiiiicbb
 bccddddddddddcccccccccccddcccccccccmccciiiiiiiicbb
-bccccccndcccccccccccccccndcccccccccocccipiiiiiicbb
+bccccccndcccccccccccccccndcccccccccoccciiiiiiiicbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcciiiiiiiicbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccrrccccbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccddccccbb
+bcqqqaqaqaqaqaqaqaqaqaqaqaqaqaqaqaqqqcccccddccccbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccddccccbb
-bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccddccccbb
-bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqdddddddccccbb
+bcqqqaqaqaqaqaqaqaqaqaqaqaqaqaqaqaqqqdddddddccccbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqsddddddccccbb
-bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqccccccccccbbb
+bcqqqaqaqaqaqaqaqaqaqaqaqaqaqaqaqaqqqccccccccccbbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccccccbbbb
-bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqccccccccbbbbb
+bcqqqaqaqaqaqaqaqaqaqaqaqaqaqaqaqaqqqccccccccbbbbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccccbbbbbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqccccccbbbbbbb
 bcqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqcccccbbbbbbbb
