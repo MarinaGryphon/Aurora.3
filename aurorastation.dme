@@ -2386,4 +2386,6 @@
 #include "maps\exodus\code\exodus_unittest.dm"
 #include "maps\runtime\code\runtime.dm"
 #include "maps\runtime\code\runtime_unittest.dm"
+#include "maps\whiskey\code\whiskey.dm"
+#include "maps\whiskey\code\whiskey_areas.dm"
 // END_INCLUDE
