@@ -13,6 +13,7 @@
 	var/bodytype
 	var/age_min = 17
 	var/age_max = 85
+	var/economic_modifier = 0
 
 	// Icon/appearance vars.
 	var/icobase = 'icons/mob/human_races/r_human.dmi'    // Normal icon set.
@@ -27,9 +28,12 @@
 	var/icon_x_offset = 0
 	var/icon_y_offset = 0
 	var/eyes = "eyes_s"                                  // Icon for eyes.
+	var/eyes_icons = 'icons/mob/human_face/eyes.dmi'     // DMI file for eyes, mostly for none 32x32 species.
 	var/has_floating_eyes                                // Eyes will overlay over darkness (glow)
+	var/eyes_icon_blend = ICON_ADD                       // The icon blending mode to use for eyes.
 	var/blood_color = "#A10808"                          // Red.
 	var/flesh_color = "#FFC896"                          // Pink.
+	var/examine_color                                    // The color of the species' name in the examine text. Defaults to flesh_color if unset.
 	var/base_color                                       // Used by changelings. Should also be used for icon previes..
 	var/tail                                             // Name of tail state in species effects icon file.
 	var/tail_animation                                   // If set, the icon to obtain tail animation states from.
@@ -67,9 +71,12 @@
 	var/radiation_mod = 1                    // Radiation modifier
 	var/flash_mod =     1                    // Stun from blindness modifier.
 	var/fall_mod =      1                    // Fall damage modifier, further modified by brute damage modifier
-	var/vision_flags = DEFAULT_SIGHT              // Same flags as glasses.
-	var/list/breakcuffs = list()                      //used in resist.dm to check if they can break hand/leg cuffs
-
+	var/vision_flags = DEFAULT_SIGHT         // Same flags as glasses.
+	var/inherent_eye_protection              // If set, this species has this level of inherent eye protection.
+	var/eyes_are_impermeable = FALSE         // If TRUE, this species' eyes are not damaged by phoron.
+	var/list/breakcuffs = list()             //used in resist.dm to check if they can break hand/leg cuffs
+	var/natural_climbing = FALSE             //If true, the species always succeeds at climbing.
+	var/climb_coeff = 1.25                   //The coefficient to the climbing speed of the individual = 60 SECONDS * climb_coeff
 	// Death vars.
 	var/meat_type = /obj/item/weapon/reagent_containers/food/snacks/meat/human
 	var/gibber_type = /obj/effect/gibspawner/human
@@ -143,7 +150,9 @@
 	var/sprint_cost_factor = 0.9  	// Multiplier on stamina cost for sprinting
 	var/exhaust_threshold = 50	  	// When stamina runs out, the mob takes oxyloss up til this value. Then collapses and drops to walk
 
-	var/gluttonous                // Can eat some mobs. Values can be GLUT_TINY, GLUT_SMALLER, GLUT_ANYTHING.
+	var/gluttonous                // Can eat some mobs. Boolean.
+	var/mouth_size                // How big the mob's mouth is. Limits how large a mob this species can swallow. Only relevant if gluttonous is TRUE.
+	var/allowed_eat_types = TYPE_ORGANIC
 	var/max_nutrition_factor = 1	//Multiplier on maximum nutrition
 	var/nutrition_loss_factor = 1	//Multiplier on passive nutrition losses
 
@@ -158,6 +167,7 @@
 		"eyes" =     /obj/item/organ/eyes
 		)
 	var/vision_organ              // If set, this organ is required for vision. Defaults to "eyes" if the species has them.
+	var/breathing_organ           // If set, this organ is required to breathe. Defaults to "lungs" if the species has them.
 
 	var/list/has_limbs = list(
 		"chest" =  list("path" = /obj/item/organ/external/chest),
@@ -192,6 +202,10 @@
 	//If the species has eyes, they are the default vision organ
 	if(!vision_organ && has_organ["eyes"])
 		vision_organ = "eyes"
+
+	// Same, but for lungs.
+	if (!breathing_organ && has_organ["lungs"])
+		breathing_organ = "lungs"
 
 	unarmed_attacks = list()
 	for(var/u_type in unarmed_types)
@@ -327,6 +341,8 @@
 	H.mob_push_flags = push_flags
 	H.pass_flags = pass_flags
 	H.mob_size = mob_size
+	H.mouth_size = mouth_size || 2
+	H.eat_types = allowed_eat_types
 	if(!kpg)
 		if(islesserform(H))
 			H.dna.SetSEState(MONKEYBLOCK,1)
@@ -436,18 +452,35 @@
 	else
 		remainder = cost
 
-	H.adjustOxyLoss(remainder*0.25)
+	if(H.disabilities & ASTHMA)
+		H.adjustOxyLoss(remainder*0.15)
+
+	if(H.disabilities & COUGHING)
+		H.adjustHalLoss(remainder*0.1)
+
+	if (breathing_organ && has_organ[breathing_organ])
+		var/obj/item/organ/O = H.internal_organs_by_name[breathing_organ]
+		if(O.is_bruised())
+			H.adjustOxyLoss(remainder*0.15)
+			H.adjustHalLoss(remainder*0.25)
+
 	H.adjustHalLoss(remainder*0.25)
 	H.updatehealth()
-	H.update_oxy_overlay()
+	if((H.halloss >= 10) && prob(H.halloss*2))
+		H.flash_pain()
 
-	if (H.oxyloss >= (exhaust_threshold * 0.8))
+	if ((H.halloss + H.oxyloss) >= (exhaust_threshold * 0.8))
 		H.m_intent = "walk"
 		H.hud_used.move_intent.update_move_icon(H)
 		H << span("danger", "You're too exhausted to run anymore!")
+		H.flash_pain()
 		return 0
+
 	H.hud_used.move_intent.update_move_icon(H)
 	return 1
 
-/datum/species/proc/get_light_color(hair_style)
+/datum/species/proc/get_light_color(mob/living/carbon/human/H)
 	return
+
+/datum/species/proc/can_breathe_water()
+	return FALSE

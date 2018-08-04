@@ -51,7 +51,8 @@
 		/obj/item/weapon/material/minihoe,
 		/obj/item/weapon/material/hatchet,
 		/obj/item/device/analyzer/plant_analyzer,
-		/obj/item/weapon/extinguisher/mini
+		/obj/item/weapon/extinguisher/mini,
+		/obj/item/weapon/pipewrench
 		)
 
 
@@ -82,6 +83,7 @@
 	icon_state = "medicalbelt"
 	item_state = "medical"
 	can_hold = list(
+		/obj/item/device/breath_analyzer,
 		/obj/item/device/healthanalyzer,
 		/obj/item/weapon/dnainjector,
 		/obj/item/weapon/reagent_containers/dropper,
@@ -101,7 +103,8 @@
 		/obj/item/clothing/glasses/hud/health,
 		/obj/item/weapon/crowbar,
 		/obj/item/device/flashlight,
-		/obj/item/weapon/extinguisher/mini
+		/obj/item/weapon/extinguisher/mini,
+		/obj/item/weapon/reagent_containers/inhaler
 		)
 
 /obj/item/weapon/storage/belt/medical/emt
@@ -222,15 +225,18 @@
 	icon_state = "janibelt"
 	item_state = "janibelt"
 	storage_slots = 6
+	w_class = 3
 	max_w_class = 3
-	max_storage_space  = 28
 	can_hold = list(
 		/obj/item/weapon/grenade/chem_grenade/cleaner,
 		/obj/item/device/lightreplacer,
 		/obj/item/device/flashlight,
 		/obj/item/weapon/reagent_containers/spray,
 		/obj/item/weapon/soap,
-		/obj/item/weapon/storage/bag/trash
+		/obj/item/weapon/storage/bag/trash,
+		/obj/item/weapon/screwdriver,
+		/obj/item/weapon/wrench,
+		/obj/item/weapon/crowbar
 		)
 
 /obj/item/weapon/storage/belt/wands
@@ -299,5 +305,5 @@
 		/obj/item/warp_core,
 		/obj/item/weapon/extraction_pack,
 		/obj/item/weapon/rrf,
-		/obj/item/weapon/gun/energy/kinetic_accelerator
+		/obj/item/weapon/gun/custom_ka/
 		)

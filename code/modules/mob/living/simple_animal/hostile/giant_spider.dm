@@ -7,7 +7,7 @@
 //basic spider mob, these generally guard nests
 /mob/living/simple_animal/hostile/giant_spider
 	name = "giant spider"
-	desc = "Furry and black, it makes you shudder to look at it. This one has deep red eyes."
+	desc = "Furry and brown, it makes you shudder to look at it. This one has deep red eyes."
 	icon_state = "guard"
 	icon_living = "guard"
 	icon_dead = "guard_dead"
@@ -38,7 +38,7 @@
 
 //nursemaids - these create webs and eggs
 /mob/living/simple_animal/hostile/giant_spider/nurse
-	desc = "Furry and black, it makes you shudder to look at it. This one has brilliant green eyes."
+	desc = "Furry and beige, it makes you shudder to look at it. This one has brilliant green eyes."
 	icon_state = "nurse"
 	icon_living = "nurse"
 	icon_dead = "nurse_dead"
@@ -66,7 +66,7 @@
 
 /mob/living/simple_animal/hostile/giant_spider/Initialize(mapload, atom/parent)
 	get_light_and_color(parent)
-	..()
+	. = ..()
 
 /mob/living/simple_animal/hostile/giant_spider/AttackingTarget()
 	. = ..()
@@ -89,7 +89,7 @@
 				O.implants += eggs
 				H << "<span class='warning'>The [src] injects something into your [O.name]!</span>"
 
-/mob/living/simple_animal/hostile/giant_spider/Life()
+/mob/living/simple_animal/hostile/giant_spider/think()
 	..()
 	if(!stat)
 		if(stance == HOSTILE_STANCE_IDLE)
@@ -106,15 +106,14 @@
 	stop_automated_movement = 0
 	walk(src, 0)
 
-/mob/living/simple_animal/hostile/giant_spider/nurse/Life()
+/mob/living/simple_animal/hostile/giant_spider/nurse/think()
 	..()
 	if(!stat)
 		if(stance == HOSTILE_STANCE_IDLE)
-			var/list/can_see = view(src, 10)
 			//30% chance to stop wandering and do something
 			if(!busy && prob(30))
 				//first, check for potential food nearby to cocoon
-				for(var/mob/living/C in can_see)
+				for(var/mob/living/C in view(src, world.view))
 					if(C.stat)
 						cocoon_target = C
 						busy = MOVING_TO_TARGET
@@ -140,8 +139,7 @@
 						addtimer(CALLBACK(src, .proc/finalize_eggs), 50, TIMER_UNIQUE)
 					else
 						//fourthly, cocoon any nearby items so those pesky pinkskins can't use them
-						for(var/obj/O in can_see)
-
+						for(var/obj/O in view(src, world.view))
 							if(O.anchored)
 								continue
 
@@ -202,6 +200,7 @@
 					large_cocoon = 1
 					fed++
 					src.visible_message("<span class='warning'>\The [src] sticks a proboscis into \the [cocoon_target] and sucks a viscous substance out.</span>")
+					playsound(get_turf(src), 'sound/effects/lingabsorbs.ogg', 50, 1)
 					M.forceMove(C)
 					C.pixel_x = M.pixel_x
 					C.pixel_y = M.pixel_y

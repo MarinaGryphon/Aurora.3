@@ -23,13 +23,15 @@
 
 	var/safedrop = 0//Used to tell when we should or shouldn't spill if the tray is dropped.
 	//Safedrop is set true when throwing, because it will spill on impact. And when placing on a table
-	var/list/valid = list( /obj/item/weapon/reagent_containers,
+	var/list/valid = list(
+		/obj/item/weapon/reagent_containers,
 		/obj/item/weapon/material/kitchen/utensil,
 		/obj/item/weapon/storage/fancy/cigarettes,
 		/obj/item/clothing/mask/smokable,
 		/obj/item/weapon/storage/box/matches,
 		/obj/item/weapon/flame/match,
-		/obj/item/weapon/material/ashtray)
+		/obj/item/weapon/material/ashtray
+	)
 
 /obj/item/weapon/tray/attack(mob/living/carbon/M as mob, mob/living/carbon/user as mob, var/target_zone)
 
@@ -37,7 +39,6 @@
 
 	// Drop all the things. All of them.
 	spill(user, M.loc)
-
 
 	//Note: Added a robot check to all stun/weaken procs, beccause weakening a robot causes its active modules to bug out
 	if((CLUMSY in user.mutations) && prob(50))              //What if he's a clown?
@@ -213,8 +214,8 @@
 	return 1
 
 /obj/item/weapon/tray/AltClick(var/mob/user)
+	if (use_check(user, show_messages = FALSE)) return
 	unload(user)
-
 
 /obj/item/weapon/tray/proc/attempt_load_item(var/obj/item/I, var/mob/user, var/messages = 1)
 	if( I != src && !I.anchored && !istype(I, /obj/item/projectile) )
@@ -236,10 +237,12 @@
 
 /obj/item/weapon/tray/proc/load_item(var/obj/item/I, var/mob/user)
 	user.remove_from_mob(I)
-	I.loc = src
+	I.forceMove(src)
 	current_weight += I.w_class
 	carrying += I
-	add_overlay(image("icon" = I.icon, "icon_state" = I.icon_state, "layer" = 30 + I.layer, "pixel_x" = I.pixel_x, "pixel_y" = I.pixel_y))
+	var/mutable_appearance/MA = new(I)
+	MA.layer = FLOAT_LAYER
+	add_overlay(MA)
 	//rand(0, (max_offset_y*2)-3)-(max_offset_y)-3
 
 /obj/item/weapon/tray/verb/unload()
@@ -263,7 +266,7 @@
 
 /obj/item/weapon/tray/proc/unload_at_loc(var/turf/dropspot = null, var/mob/user)
 	if (!istype(loc,/turf) && !dropspot)//check that we're not being held by a mob
-		usr << "Place the tray down first!"
+		user << "Place the tray down first!"
 		return
 	else
 		if (!dropspot)
@@ -274,9 +277,8 @@
 			carrying -= I
 
 		cut_overlays()
-		overlays.Cut()
 		current_weight = 0
-		usr.visible_message("[usr] unloads the tray.", "You unload the tray.")
+		user.visible_message("[user] unloads the tray.", "You unload the tray.")
 
 
 /obj/item/weapon/tray/proc/spill(var/mob/user = null, var/turf/dropspot = null)
@@ -315,7 +317,7 @@
 /obj/item/weapon/tray/throw_impact(atom/hit_atom)
 	spill(null, src.loc)
 
-/obj/item/weapon/tray/throw_at(/var/atom/target, var/throw_range, var/throw_speed, /var/mob/user)
+/obj/item/weapon/tray/throw_at(atom/target, throw_range, throw_speed, mob/user)
 	safedrop = 1//we dont want the tray to spill when thrown, it will spill on impact instead
 	..()
 

@@ -81,8 +81,8 @@
 
 	var/list/equipment = new
 	var/obj/item/mecha_parts/mecha_equipment/selected
-	var/max_equip = 3
-	var/datum/events/events
+	var/max_equip = 4
+	var/datum/mecha_events/events
 	var/lastcrash
 	var/crash_cooldown = 30
 
@@ -152,6 +152,7 @@
 
 	if(wreckage)
 		var/obj/effect/decal/mecha_wreckage/WR = new wreckage(loc)
+		WR.icon_state = "[initial_icon]-broken"
 		for(var/obj/item/mecha_parts/mecha_equipment/E in equipment)
 			if(E.salvageable && prob(30))
 				WR.crowbar_salvage += E
@@ -297,7 +298,7 @@
 ////////////////////////////
 ///// Action processing ////
 ////////////////////////////
-/obj/mecha/proc/click_action(atom/target,mob/user)
+/obj/mecha/proc/click_action(atom/target,mob/user, params)
 	if(!src.occupant || src.occupant != user ) return
 	if(user.stat) return
 	if(state)
@@ -317,21 +318,26 @@
 			return
 	if(!target.Adjacent(src))
 		if(selected && selected.is_ranged())
-			selected.action(target)
+			selected.action(target, user, params)
 	else if(selected && selected.is_melee())
-		selected.action(target)
+		selected.action(target, user, params)
 	else
 		src.melee_action(target)
 	return
 
 /obj/mecha/proc/interface_action(obj/machinery/target)
-	if(istype(target, /obj/machinery/access_button))
+	if(istype(target, /obj/machinery/access_button) && target.Adjacent(src))
 		src.occupant_message("<span class='notice'>Interfacing with [target].</span>")
 		src.log_message("Interfaced with [target].")
 		target.attack_hand(src.occupant)
 		return 1
 	if(istype(target, /obj/machinery/embedded_controller))
-		target.ui_interact(src.occupant)
+		if(target in view(2,src))
+			src.occupant_message("<span class='notice'>Interfacing with [target].</span>")
+			src.log_message("Interfaced with [target].")
+			target.ui_interact(src.occupant)
+		else
+			src.occupant_message("<span class='notice'>Unable to interface with [target], target out of range.</span>")
 		return 1
 	return 0
 
@@ -456,7 +462,8 @@
 		playsound(src,'sound/mecha/mechstep.ogg',40,1)
 	return result
 
-/obj/mecha/Bump(var/atom/obstacle)
+/obj/mecha/Collide(var/atom/obstacle)
+	. = ..()
 //	src.inertia_dir = null
 	if(istype(obstacle, /obj))
 		var/obj/O = obstacle
@@ -468,11 +475,11 @@
 		else if(!O.anchored)
 			step(obstacle,src.dir)
 		else //I have no idea why I disabled this
-			obstacle.Bumped(src)
+			obstacle.CollidedWith(src)
 	else if(istype(obstacle, /mob))
 		step(obstacle,src.dir)
 	else
-		obstacle.Bumped(src)
+		obstacle.CollidedWith(src)
 	return
 
 ///////////////////////////////////
@@ -624,7 +631,7 @@
 				src.occupant_message("<span class='notice'>\The [user]'s claws are stopped by the armor.</span>")
 				visible_message("<span class='warning'>\The [user] rebounds off [src.name]'s armor!</span>")
 		else
-			user.visible_message("<span class='danger'>\The [user] hits \the [src]. Nothing happensm</span>","<span class='danger'>You hit \the [src] with no visible effect.</span>")
+			user.visible_message("<span class='danger'>\The [user] hits \the [src]. Nothing happens.</span>","<span class='danger'>You hit \the [src] with no visible effect.</span>")
 			src.log_append_to_last("Armor saved.")
 		return
 	else if ((HULK in user.mutations) && !deflect_hit(is_melee=1))
@@ -768,7 +775,7 @@
 				user << "<span class='warning'>Invalid ID: Access denied.</span>"
 		else
 			user << "<span class='warning'>Maintenance protocols disabled by operator.</span>"
-	else if(istype(W, /obj/item/weapon/wrench))
+	else if(iswrench(W))
 		if(state==1)
 			state = 2
 			user << "You undo the securing bolts."
@@ -778,7 +785,7 @@
 			user << "You tighten the securing bolts."
 			playsound(get_turf(src), 'sound/items/Ratchet.ogg', 50, 1)
 		return
-	else if(istype(W, /obj/item/weapon/crowbar))
+	else if(iscrowbar(W))
 		if(state==2)
 			state = 3
 			user << "You open the hatch to the power unit"
@@ -788,7 +795,7 @@
 			user << "You close the hatch to the power unit"
 			playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
 		return
-	else if(istype(W, /obj/item/stack/cable_coil))
+	else if(iscoil(W))
 		if(state == 3 && hasInternalDamage(MECHA_INT_SHORT_CIRCUIT))
 			var/obj/item/stack/cable_coil/CC = W
 			if(CC.use(2))
@@ -797,7 +804,7 @@
 			else
 				user << "There's not enough wire to finish the task."
 		return
-	else if(istype(W, /obj/item/weapon/screwdriver))
+	else if(isscrewdriver(W))
 		if(hasInternalDamage(MECHA_INT_TEMP_CONTROL))
 			clearInternalDamage(MECHA_INT_TEMP_CONTROL)
 			user << "You repair the damaged temperature controller."
@@ -807,7 +814,7 @@
 
 		return
 
-	else if(istype(W, /obj/item/device/multitool))
+	else if(ismultitool(W))
 		if(state>=3 && src.occupant)
 			user << "You attempt to eject the pilot using the maintenance controls."
 			if(src.occupant.stat)
@@ -831,7 +838,7 @@
 				user << "There's already a powercell installed."
 		return
 
-	else if(istype(W, /obj/item/weapon/weldingtool) && user.a_intent != I_HURT)
+	else if(iswelder(W) && user.a_intent != I_HURT)
 		var/obj/item/weapon/weldingtool/WT = W
 		if (WT.remove_fuel(0,user))
 			if (hasInternalDamage(MECHA_INT_TANK_BREACH))
@@ -976,6 +983,10 @@
 	if (!check_for_support())
 		occupant  << "<span class='warning'>The [src] has no traction! There is nothing solid in reach to launch off.</span>"
 		return 0
+
+	if(state)
+		occupant_message("<span class='warning'>Maintenance protocols in effect.</span>")
+		return
 
 	lastcrash = world.time
 
@@ -1172,6 +1183,8 @@
 		var/mob/living/carbon/C = usr
 		if(C.handcuffed)
 			usr << "<span class='danger'>Kinda hard to climb in while handcuffed don't you think?</span>"
+			return
+		if(!C.IsAdvancedToolUser())
 			return
 	if (src.occupant)
 		usr << "<span class='danger'>The [src.name] is already occupied!</span>"
@@ -1576,10 +1589,10 @@
 		return
 	if(usr.stat > 0)
 		return
-	var/datum/topic_input/filter = new /datum/topic_input(href,href_list)
+	var/datum/topic_input/old_filter = new /datum/topic_input(href,href_list)
 	if(href_list["select_equip"])
 		if(usr != src.occupant)	return
-		var/obj/item/mecha_parts/mecha_equipment/equip = filter.getObj("select_equip")
+		var/obj/item/mecha_parts/mecha_equipment/equip = old_filter.getObj("select_equip")
 		if(equip)
 			src.selected = equip
 			src.occupant_message("You switch to [equip]")
@@ -1610,7 +1623,7 @@
 		return
 	if(href_list["rfreq"])
 		if(usr != src.occupant)	return
-		var/new_frequency = (radio.frequency + filter.getNum("rfreq"))
+		var/new_frequency = (radio.frequency + old_filter.getNum("rfreq"))
 		if ((radio.frequency < PUBLIC_LOW_FREQ || radio.frequency > PUBLIC_HIGH_FREQ))
 			new_frequency = sanitize_frequency(new_frequency)
 		radio.set_frequency(new_frequency)
@@ -1644,7 +1657,7 @@
 		return
 	if(href_list["toggle_maint_access"])
 		if(usr != src.occupant)	return
-		if(state)
+		if(state && src.dna != src.occupant.dna.unique_enzymes)
 			occupant_message("<font color='red'>Maintenance protocols in effect</font>")
 			return
 		maint_access = !maint_access
@@ -1652,11 +1665,11 @@
 		return
 	if(href_list["req_access"] && add_req_access)
 		if(!in_range(src, usr))	return
-		output_access_dialog(filter.getObj("id_card"),filter.getMob("user"))
+		output_access_dialog(old_filter.getObj("id_card"),old_filter.getMob("user"))
 		return
 	if(href_list["maint_access"] && maint_access)
 		if(!in_range(src, usr))	return
-		var/mob/user = filter.getMob("user")
+		var/mob/user = old_filter.getMob("user")
 		if(user)
 			if(state==0)
 				state = 1
@@ -1664,18 +1677,18 @@
 			else if(state==1)
 				state = 0
 				user << "The securing bolts are now hidden."
-			output_maintenance_dialog(filter.getObj("id_card"),user)
+			output_maintenance_dialog(old_filter.getObj("id_card"),user)
 		return
 	if(href_list["set_internal_tank_valve"] && state >=1)
 		if(!in_range(src, usr))	return
-		var/mob/user = filter.getMob("user")
+		var/mob/user = old_filter.getMob("user")
 		if(user)
 			var/new_pressure = input(user,"Input new output pressure","Pressure setting",internal_tank_valve) as num
 			if(new_pressure)
 				internal_tank_valve = new_pressure
 				user << "The internal pressure valve has been set to [internal_tank_valve]kPa."
 	if(href_list["remove_passenger"] && state >= 1)
-		var/mob/user = filter.getMob("user")
+		var/mob/user = old_filter.getMob("user")
 		var/list/passengers = list()
 		for (var/obj/item/mecha_parts/mecha_equipment/tool/passenger/P in contents)
 			if (P.occupant)
@@ -1699,20 +1712,20 @@
 			P.go_out()
 			P.log_message("[occupant] was removed.")
 		return
-	if(href_list["add_req_access"] && add_req_access && filter.getObj("id_card"))
+	if(href_list["add_req_access"] && add_req_access && old_filter.getObj("id_card"))
 		if(!in_range(src, usr))	return
-		operation_req_access += filter.getNum("add_req_access")
-		output_access_dialog(filter.getObj("id_card"),filter.getMob("user"))
+		operation_req_access += old_filter.getNum("add_req_access")
+		output_access_dialog(old_filter.getObj("id_card"),old_filter.getMob("user"))
 		return
-	if(href_list["del_req_access"] && add_req_access && filter.getObj("id_card"))
+	if(href_list["del_req_access"] && add_req_access && old_filter.getObj("id_card"))
 		if(!in_range(src, usr))	return
-		operation_req_access -= filter.getNum("del_req_access")
-		output_access_dialog(filter.getObj("id_card"),filter.getMob("user"))
+		operation_req_access -= old_filter.getNum("del_req_access")
+		output_access_dialog(old_filter.getObj("id_card"),old_filter.getMob("user"))
 		return
 	if(href_list["finish_req_access"])
 		if(!in_range(src, usr))	return
 		add_req_access = 0
-		var/mob/user = filter.getMob("user")
+		var/mob/user = old_filter.getMob("user")
 		user << browse(null,"window=exosuit_add_access")
 		return
 	if(href_list["dna_lock"])
@@ -1745,9 +1758,9 @@
 	/*
 	if(href_list["debug"])
 		if(href_list["set_i_dam"])
-			setInternalDamage(filter.getNum("set_i_dam"))
+			setInternalDamage(old_filter.getNum("set_i_dam"))
 		if(href_list["clear_i_dam"])
-			clearInternalDamage(filter.getNum("clear_i_dam"))
+			clearInternalDamage(old_filter.getNum("clear_i_dam"))
 		return
 	*/
 

@@ -6,7 +6,7 @@
 	var/list/species_restricted = null 				//Only these species can wear this kit.
 	var/gunshot_residue //Used by forensics.
 
-	var/list/accessories = list()
+	var/list/accessories
 	var/list/valid_accessory_slots
 	var/list/restricted_accessory_slots
 
@@ -18,6 +18,26 @@
 	*/
 	var/list/sprite_sheets_refit = null
 
+	//material things
+	var/material/material = null
+	var/applies_material_color = TRUE
+	var/unbreakable = FALSE
+	var/default_material = null // Set this to something else if you want material attributes on init.
+	var/material_armor_modifer = 1 // Adjust if you want seperate types of armor made from the same material to have different protectiveness (e.g. makeshift vs real armor)
+	var/refittable = TRUE // If false doesn't let the clothing be refit in suit cyclers
+
+
+/obj/item/clothing/Initialize(var/mapload, var/material_key)
+	. = ..(mapload)
+	if(!material_key)
+		material_key = default_material
+	if(material_key) // May still be null if a material was not specified as a default.
+		set_material(material_key)
+
+/obj/item/clothing/Destroy()
+	STOP_PROCESSING(SSprocessing, src)
+	return ..()
+
 //Updates the icons of the mob wearing the clothing item, if any.
 /obj/item/clothing/proc/update_clothing_icon()
 	return
@@ -26,6 +46,9 @@
 /obj/item/clothing/clean_blood()
 	. = ..()
 	gunshot_residue = null
+
+/obj/item/proc/negates_gravity()
+	return 0
 
 //BS12: Species-restricted clothing check.
 /obj/item/clothing/mob_can_equip(M as mob, slot)
@@ -61,8 +84,14 @@
 
 	//Set species_restricted list
 	switch(target_species)
-		if("Human", "Skrell", "Baseline Frame", "Shell Frame", "Industrial Frame")	//humanoid bodytypes
-			species_restricted = list("Human", "Skrell", "Baseline Frame", "Shell Frame", "Industrial Frame") //skrell/humans like to share with IPCs
+		if("Human", "Skrell", "Machine", "Zeng-Hu Mobility Frame", "Bishop Accessory Frame")	//humanoid bodytypes
+			species_restricted = list(
+				"Human",
+				"Skrell",
+				"Machine",
+				"Zeng-Hu Mobility Frame",
+				"Bishop Accessory Frame"
+			) //skrell/humans like to share with IPCs
 		else
 			species_restricted = list(target_species)
 
@@ -83,8 +112,8 @@
 
 	//Set species_restricted list
 	switch(target_species)
-		if("Skrell")
-			species_restricted = list("Human", "Skrell", "Baseline Frame", "Shell Frame", "Industrial Frame") // skrell helmets like to share
+		if("Skrell", "Human")
+			species_restricted = list("Human", "Skrell", "Machine") // skrell helmets like to share
 
 		else
 			species_restricted = list(target_species)
@@ -99,6 +128,124 @@
 		icon = sprite_sheets_obj[target_species]
 	else
 		icon = initial(icon)
+
+//material related procs
+
+/obj/item/clothing/get_material()
+	return material
+
+/obj/item/clothing/proc/set_material(var/new_material)
+	material = get_material_by_name(new_material)
+	if(!material)
+		qdel(src)
+	else
+		name = "[material.display_name] [initial(name)]"
+		health = round(material.integrity/10)
+		if(applies_material_color)
+			color = material.icon_colour
+		if(material.products_need_process())
+			START_PROCESSING(SSprocessing, src)
+		update_armor()
+
+// This is called when someone wearing the object gets hit in some form (melee, bullet_act(), etc).
+// Note that this cannot change if someone gets hurt, as it merely reacts to being hit.
+/obj/item/clothing/proc/clothing_impact(var/obj/source, var/damage)
+	if(material && damage)
+		material_impact(source, damage)
+
+/obj/item/clothing/proc/material_impact(var/obj/source, var/damage)
+	if(!material || unbreakable)
+		return
+
+	if(istype(source, /obj/item/projectile))
+		var/obj/item/projectile/P = source
+		if(P.pass_flags & PASSGLASS)
+			if(material.opacity - 0.3 <= 0)
+				return // Lasers ignore 'fully' transparent material.
+
+	if(material.is_brittle())
+		health = 0
+	else if(!prob(material.hardness))
+		health--
+
+	if(health <= 0)
+		shatter()
+
+/obj/item/clothing/proc/shatter()
+	if(!material)
+		return
+	var/turf/T = get_turf(src)
+	T.visible_message("<span class='danger'>\The [src] [material.destruction_desc]!</span>")
+	if(istype(loc, /mob/living))
+		var/mob/living/M = loc
+		M.drop_from_inventory(src)
+		if(material.shard_type == SHARD_SHARD) // Wearing glass armor is a bad idea.
+			var/obj/item/weapon/material/shard/S = material.place_shard(T)
+			M.embed(S)
+
+	playsound(src, "shatter", 70, 1)
+	qdel(src)
+
+/obj/item/clothing/suit/armor/handle_shield(mob/user, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
+	if(!material) // No point checking for reflection.
+		return ..()
+
+	if(material.reflectivity)
+		if(istype(damage_source, /obj/item/projectile/energy) || istype(damage_source, /obj/item/projectile/beam))
+			var/obj/item/projectile/P = damage_source
+
+			var/reflectchance = 40 - round(damage/3)
+			if(!(def_zone in list("chest", "groin")))
+				reflectchance /= 2
+			if(P.starting && prob(reflectchance))
+				visible_message("<span class='danger'>\The [user]'s [src.name] reflects [attack_text]!</span>")
+
+				// Find a turf near or on the original location to bounce to
+				var/new_x = P.starting.x + pick(0, 0, 0, 0, 0, -1, 1, -2, 2)
+				var/new_y = P.starting.y + pick(0, 0, 0, 0, 0, -1, 1, -2, 2)
+
+				// redirect the projectile
+				P.firer = user
+				P.old_style_target(locate(new_x, new_y, P.z))
+
+				return PROJECTILE_CONTINUE // complete projectile permutation
+
+/proc/calculate_material_armor(amount)
+	var/result = 1 - MATERIAL_ARMOR_COEFFICENT * amount / (1 + MATERIAL_ARMOR_COEFFICENT * abs(amount))
+	result = result * 100
+	result = abs(result - 100)
+	return round(result)
+
+
+/obj/item/clothing/proc/update_armor()
+	if(material)
+		var/melee_armor = 0, bullet_armor = 0, laser_armor = 0, energy_armor = 0, bomb_armor = 0
+
+		melee_armor = calculate_material_armor(material.protectiveness * material_armor_modifer)
+
+		bullet_armor = calculate_material_armor((material.protectiveness * (material.hardness / 100) * material_armor_modifer) * 0.7)
+
+		laser_armor = calculate_material_armor((material.protectiveness * (material.reflectivity + 1) * material_armor_modifer) * 0.7)
+		if(material.opacity != 1)
+			laser_armor *= max(material.opacity - 0.3, 0) // Glass and such has an opacity of 0.3, but lasers should go through glass armor entirely.
+
+		energy_armor = calculate_material_armor((material.protectiveness * material_armor_modifer) * 0.4)
+
+		bomb_armor = calculate_material_armor((material.protectiveness * material_armor_modifer) * 0.5)
+
+		// Makes sure the numbers stay capped.
+		for(var/number in list(melee_armor, bullet_armor, laser_armor, energy_armor, bomb_armor))
+			number = between(0, number, 100)
+
+		armor["melee"] = melee_armor
+		armor["bullet"] = bullet_armor
+		armor["laser"] = laser_armor
+		armor["energy"] = energy_armor
+		armor["bomb"] = bomb_armor
+
+		if(!isnull(material.conductivity))
+			siemens_coefficient = between(0, material.conductivity / 10, 10)
+		slowdown = between(0, round(material.weight / 10, 0.1), 6)
 
 ///////////////////////////////////////////////////////////////////////
 // Ears: headsets, earmuffs and tiny objects
@@ -151,8 +298,8 @@
 /obj/item/clothing/ears/offear
 	name = "Other ear"
 	w_class = 5.0
-	icon = 'icons/mob/screen1_Midnight.dmi'
-	icon_state = "block"
+	icon = 'icons/mob/screen/midnight.dmi'
+	icon_state = "blocked"
 	slot_flags = SLOT_EARS | SLOT_TWOEARS
 
 	New(var/obj/O)
@@ -170,37 +317,6 @@
 	slot_flags = SLOT_EARS | SLOT_TWOEARS
 
 ///////////////////////////////////////////////////////////////////////
-//Glasses
-/*
-SEE_SELF  // can see self, no matter what
-SEE_MOBS  // can see all mobs, no matter what
-SEE_OBJS  // can see all objs, no matter what
-SEE_TURFS // can see all turfs (and areas), no matter what
-SEE_PIXELS// if an object is located on an unlit area, but some of its pixels are
-          // in a lit area (via pixel_x,y or smooth movement), can see those pixels
-BLIND     // can't see anything
-*/
-/obj/item/clothing/glasses
-	name = "glasses"
-	icon = 'icons/obj/clothing/glasses.dmi'
-	w_class = 2.0
-	body_parts_covered = EYES
-	slot_flags = SLOT_EYES
-	var/vision_flags = 0
-	var/darkness_view = 0//Base human is 2
-	var/see_invisible = -1
-	sprite_sheets = list(
-		"Vox" = 'icons/mob/species/vox/eyes.dmi',
-		"Resomi" = 'icons/mob/species/resomi/eyes.dmi'
-		)
-	species_restricted = list("exclude","Vaurca Breeder")
-
-/obj/item/clothing/glasses/update_clothing_icon()
-	if (ismob(src.loc))
-		var/mob/M = src.loc
-		M.update_inv_glasses()
-
-///////////////////////////////////////////////////////////////////////
 //Gloves
 /obj/item/clothing/gloves
 	name = "gloves"
@@ -211,10 +327,15 @@ BLIND     // can't see anything
 	var/wired = 0
 	var/obj/item/weapon/cell/cell = 0
 	var/clipped = 0
+	var/fingerprint_chance = 0
+	var/obj/item/clothing/ring/ring = null		//Covered ring
+	var/mob/living/carbon/human/wearer = null	//Used for covered rings when dropping
+	var/punch_force = 0			//How much damage do these gloves add to a punch?
+	var/punch_damtype = BRUTE	//What type of damage does this make fists be?
 	body_parts_covered = HANDS
 	slot_flags = SLOT_GLOVES
 	attack_verb = list("challenged")
-	species_restricted = list("exclude","Unathi","Tajara","Vaurca", "Golem","Vaurca Breeder")
+	species_restricted = list("exclude","Unathi","Tajara","Vaurca", "Golem","Vaurca Breeder","Vaurca Warform")
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/species/vox/gloves.dmi',
 		"Resomi" = 'icons/mob/species/resomi/gloves.dmi'
@@ -231,21 +352,23 @@ BLIND     // can't see anything
 		cell.charge -= 1000 / severity
 		if (cell.charge < 0)
 			cell.charge = 0
+	if(ring)
+		ring.emp_act(severity)
 	..()
 
 // Called just before an attack_hand(), in mob/UnarmedAttack()
-/obj/item/clothing/gloves/proc/Touch(var/atom/A, var/proximity)
+/obj/item/clothing/gloves/proc/Touch(var/atom/A, mob/user, var/proximity)
 	return 0 // return 1 to cancel attack_hand()
 
 /obj/item/clothing/gloves/attackby(obj/item/weapon/W, mob/user)
-	if(istype(W, /obj/item/weapon/wirecutters) || istype(W, /obj/item/weapon/scalpel))
+	if(iswirecutter(W) || istype(W, /obj/item/weapon/scalpel))
 		if (clipped)
-			user << "<span class='notice'>The [src] have already been clipped!</span>"
+			user << "<span class='notice'>\The [src] have already been clipped!</span>"
 			update_icon()
 			return
 
 		playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
-		user.visible_message("<span class='warning'>[user] cuts the fingertips off of the [src].</span>","<span class='warning'>You cut the fingertips off of the [src].</span>")
+		user.visible_message("<span class='warning'>[user] cuts the fingertips off of \the [src].</span>","<span class='warning'>You cut the fingertips off of \the [src].</span>")
 
 		clipped = 1
 		name = "modified [name]"
@@ -255,6 +378,49 @@ BLIND     // can't see anything
 			species_restricted -= "Tajara"
 			species_restricted -= "Vaurca"
 		return
+
+/obj/item/clothing/gloves/mob_can_equip(mob/user, slot)
+	var/mob/living/carbon/human/H = user
+	if(slot && slot == slot_gloves)
+		if(istype(H.gloves, /obj/item/clothing/ring))
+			ring = H.gloves
+			if(!ring.undergloves)
+				to_chat(user, "You are unable to wear \the [src] as \the [H.gloves] are in the way.")
+				ring = null
+				return 0
+			H.drop_from_inventory(ring)	//Remove the ring (or other under-glove item in the hand slot?) so you can put on the gloves.
+			ring.forceMove(src)
+
+	if(!..())
+		if(ring) //Put the ring back on if the check fails.
+			if(H.equip_to_slot_if_possible(ring, slot_gloves))
+				src.ring = null
+		return 0
+
+	if (ring)
+		to_chat(user, "You slip \the [src] on over \the [ring].")
+	wearer = H
+	return 1
+
+/obj/item/clothing/gloves/proc/update_wearer()
+	if(!wearer)
+		return
+
+	var/mob/living/carbon/human/H = wearer
+	if(ring && istype(H))
+		if(!H.equip_to_slot_if_possible(ring, slot_gloves))
+			ring.forceMove(get_turf(src))
+		src.ring = null
+	wearer = null
+
+/obj/item/clothing/gloves/dropped()
+	..()
+	addtimer(CALLBACK(src, .proc/update_wearer), 0)
+
+/obj/item/clothing/gloves/mob_can_unequip()
+	. = ..()
+	if (.)
+		addtimer(CALLBACK(src, .proc/update_wearer), 0)
 
 ///////////////////////////////////////////////////////////////////////
 //Head
@@ -269,7 +435,7 @@ BLIND     // can't see anything
 	slot_flags = SLOT_HEAD
 	w_class = 2.0
 	uv_intensity = 50 //Light emitted by this object or creature has limited interaction with diona
-	species_restricted = list("exclude","Vaurca Breeder")
+	species_restricted = list("exclude","Vaurca Breeder","Vaurca Warform")
 
 	var/light_overlay = "helmet_light"
 	var/light_applied
@@ -377,7 +543,7 @@ BLIND     // can't see anything
 		"Resomi" = 'icons/mob/species/resomi/masks.dmi',
 						"Tajara" = 'icons/mob/species/tajaran/mask.dmi',
 						"Unathi" = 'icons/mob/species/unathi/mask.dmi')
-	species_restricted = list("exclude","Vaurca Breeder")
+	species_restricted = list("exclude","Vaurca Breeder","Vaurca Warform")
 
 	var/voicechange = 0
 	var/list/say_messages
@@ -409,7 +575,7 @@ BLIND     // can't see anything
 	slowdown = SHOES_SLOWDOWN
 	force = 0
 	var/overshoes = 0
-	species_restricted = list("exclude","Unathi","Tajara","Vox","Vaurca","Vaurca Breeder")
+	species_restricted = list("exclude","Unathi","Tajara","Vox","Vaurca","Vaurca Breeder","Vaurca Warform")
 	sprite_sheets = list("Vox" = 'icons/mob/species/vox/shoes.dmi')
 	var/silent = 0
 	sprite_sheets = list(
@@ -431,6 +597,7 @@ BLIND     // can't see anything
 	if(usr.put_in_hands(holding))
 		usr.visible_message("<span class='danger'>\The [usr] pulls \a [holding] out of their boot!</span>")
 		holding = null
+		playsound(get_turf(src), 'sound/items/holster/sheathout.ogg', 25)
 	else
 		usr << "<span class='warning'>Your need an empty, unbroken hand to do that.</span>"
 		holding.forceMove(src)
@@ -483,7 +650,7 @@ BLIND     // can't see anything
 	var/blood_overlay_type = "suit"
 	siemens_coefficient = 0.9
 	w_class = 3
-	species_restricted = list("exclude","Vaurca Breeder")
+	species_restricted = list("exclude","Vaurca Breeder","Vaurca Warform")
 
 	sprite_sheets = list(
 		"Vox" = 'icons/mob/species/vox/suit.dmi',
@@ -523,7 +690,7 @@ BLIND     // can't see anything
 		"Vox" = 'icons/mob/species/vox/uniform.dmi',
 		"Golem" = 'icons/mob/uniform_fat.dmi',
 		"Resomi" = 'icons/mob/species/resomi/uniform.dmi')
-	species_restricted = list("exclude","Vaurca Breeder")
+	species_restricted = list("exclude","Vaurca Breeder","Vaurca Warform")
 
 	//convenience var for defining the icon state for the overlay used when the clothing is worn.
 	//Also used by rolling/unrolling.
@@ -533,24 +700,26 @@ BLIND     // can't see anything
 
 
 /obj/item/clothing/under/attack_hand(var/mob/user)
-	if(accessories && accessories.len)
+	if(LAZYLEN(accessories))
 		..()
 	if ((ishuman(usr) || issmall(usr)) && src.loc == user)
 		return
 	..()
 
-/obj/item/clothing/under/New()
-	..()
+/obj/item/clothing/under/Initialize()
+	. = ..()
 	if(worn_state)
-		if(!item_state_slots)
-			item_state_slots = list()
+		LAZYINITLIST(item_state_slots)
 		item_state_slots[slot_w_uniform_str] = worn_state
 	else
 		worn_state = icon_state
 
 	//autodetect rollability
 	if(rolled_down < 0)
-		if((worn_state + "_d_s") in icon_states('icons/mob/uniform.dmi'))
+		if (!SSicon_cache.uniform_states)
+			SSicon_cache.setup_uniform_mappings()
+
+		if (SSicon_cache.uniform_states["[worn_state]_d_s"])
 			rolled_down = 0
 
 /obj/item/clothing/under/proc/update_rolldown_status()
@@ -717,6 +886,17 @@ BLIND     // can't see anything
 		usr << "<span class='notice'>You roll down your [src]'s sleeves.</span>"
 	update_clothing_icon()
 
-/obj/item/clothing/under/rank/New()
+/obj/item/clothing/under/rank/Initialize()
 	sensor_mode = pick(0,1,2,3)
-	..()
+	. = ..()
+
+
+//Rings
+
+/obj/item/clothing/ring
+	name = "ring"
+	w_class = 1
+	icon = 'icons/obj/clothing/rings.dmi'
+	slot_flags = SLOT_GLOVES
+	gender = NEUTER
+	var/undergloves = 1

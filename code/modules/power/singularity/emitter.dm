@@ -147,11 +147,11 @@
 
 		var/obj/item/projectile/beam/emitter/A = new /obj/item/projectile/beam/emitter( src.loc )
 		A.damage = round(power_per_shot/EMITTER_DAMAGE_POWER_TRANSFER)
-		A.launch( get_step(src.loc, src.dir) )
+		A.launch_projectile(get_step(src, dir))
 
 /obj/machinery/power/emitter/attackby(obj/item/W, mob/user)
 
-	if(istype(W, /obj/item/weapon/wrench))
+	if(iswrench(W))
 		if(active)
 			user << "Turn off [src] first."
 			return
@@ -174,7 +174,7 @@
 				user << "<span class='warning'>\The [src] needs to be unwelded from the floor.</span>"
 		return
 
-	if(istype(W, /obj/item/weapon/weldingtool))
+	if(iswelder(W))
 		var/obj/item/weapon/weldingtool/WT = W
 		if(active)
 			user << "Turn off [src] first."

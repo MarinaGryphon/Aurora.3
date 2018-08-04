@@ -44,7 +44,7 @@ var/global/list/narsie_list = list()
 	..()
 	if(announce)
 		world << "<font size='15' color='red'><b>[uppertext(name)] HAS RISEN</b></font>"
-		world << sound('sound/effects/wind/wind_5_1.ogg')
+		world << sound('sound/effects/narsie.ogg')
 
 	narsie_spawn_animation()
 
@@ -84,14 +84,15 @@ var/global/list/narsie_list = list()
 				M.apply_effect(3, STUN)
 
 
-/obj/singularity/narsie/large/Bump(atom/A)
+/obj/singularity/narsie/large/Collide(atom/A)
+	. = ..()
 	if(!cause_hell) return
 	if(isturf(A))
 		narsiewall(A)
 	else if(istype(A, /obj/structure/cult))
 		qdel(A)
 
-/obj/singularity/narsie/large/Bumped(atom/A)
+/obj/singularity/narsie/large/CollidedWith(atom/A)
 	if(!cause_hell) return
 	if(isturf(A))
 		narsiewall(A)
@@ -323,7 +324,7 @@ var/global/list/narsie_list = list()
 		acquire(pick(cultists))
 		return
 		//no living cultists, pick a living human instead.
-	for(var/mob/dead/observer/ghost in player_list)
+	for(var/mob/abstract/observer/ghost in player_list)
 		if(!ghost.client)
 			continue
 		var/turf/pos = get_turf(ghost)
@@ -379,7 +380,7 @@ var/global/list/narsie_list = list()
 	grav_pull = 0
 
 /obj/singularity/narsie/wizard/eat()
-	for (var/turf/T in trange(consume_range, src))
+	for (var/turf/T in RANGE_TURFS(consume_range, src))
 		consume(T)
 
 /obj/singularity/narsie/proc/narsie_spawn_animation()

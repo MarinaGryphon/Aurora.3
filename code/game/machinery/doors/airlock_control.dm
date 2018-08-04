@@ -4,7 +4,7 @@
 /obj/machinery/door/airlock
 	var/id_tag
 	var/frequency
-	var/tmp/shockedby = list()
+	var/tmp/shockedby
 	var/tmp/datum/radio_frequency/radio_connection
 	var/tmp/cur_command = null	//the command the door is currently attempting to complete
 	var/tmp/waiting_for_roundstart
@@ -129,13 +129,12 @@
 	if(!surpress_send) send_status()
 
 
-/obj/machinery/door/airlock/Bumped(atom/AM)
-	..(AM)
+/obj/machinery/door/airlock/CollidedWith(atom/AM)
+	. = ..()
 	if(istype(AM, /obj/mecha))
 		var/obj/mecha/mecha = AM
 		if(density && radio_connection && mecha.occupant && (src.allowed(mecha.occupant) || src.check_access_list(mecha.operation_req_access)))
 			send_status(1)
-	return
 
 /obj/machinery/door/airlock/proc/set_frequency(new_frequency)
 	SSradio.remove_object(src, frequency)

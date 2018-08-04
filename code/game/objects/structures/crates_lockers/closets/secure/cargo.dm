@@ -15,6 +15,7 @@
 		new /obj/item/device/radio/headset/headset_cargo(src)
 		new /obj/item/clothing/gloves/black(src)
 		new /obj/item/clothing/head/soft(src)
+		new /obj/item/modular_computer/tablet/preset/custom_loadout/advanced/cargo_delivery(src)
 //		new /obj/item/weapon/cartridge/quartermaster(src)
 
 /obj/structure/closet/secure_closet/quartermaster
@@ -38,3 +39,8 @@
 		new /obj/item/clothing/mask/gas(src)
 		new /obj/item/clothing/glasses/meson(src)
 		new /obj/item/clothing/head/soft(src)
+		new /obj/item/modular_computer/tablet/preset/custom_loadout/advanced/cargo_delivery(src)
+
+/obj/structure/closet/secure_closet/merchant
+	name = "merchant locker"
+	req_access = list(access_merchant)

@@ -1,15 +1,3 @@
-
-//Chemical Reagents - Initialises all /datum/reagent into a list indexed by reagent id
-/proc/initialize_chemical_reagents()
-	var/paths = typesof(/datum/reagent) - /datum/reagent
-	chemical_reagents_list = list()
-	for(var/path in paths)
-		var/datum/reagent/D = new path()
-		if(!D.name)
-			continue
-		chemical_reagents_list[D.id] = D
-
-
 /datum/reagent
 	var/name = "Reagent"
 	var/id = "reagent"
@@ -23,6 +11,10 @@
 	var/metabolism = REM // This would be 0.2 normally
 	var/ingest_met = 0
 	var/touch_met = 0
+	var/breathe_met = 0
+	var/ingest_mul = 0.5
+	var/touch_mul = 0
+	var/breathe_mul = 0.75
 	var/dose = 0
 	var/max_dose = 0
 	var/overdose = 0
@@ -34,6 +26,9 @@
 	var/glass_center_of_mass = null
 	var/color = "#000000"
 	var/color_weight = 1
+	var/unaffected_species = IS_DIONA | IS_MACHINE	// Species that aren't affected by this reagent. Does not prevent affect_touch.
+	var/metabolism_min = 0.01 //How much for the medicine to be present in the system to actually have an effect.
+	var/conflicting_reagent //Reagents that conflict with this medicine, and cause adverse effects when in the blood.
 
 /datum/reagent/proc/remove_self(var/amount) // Shortcut
 	if (!holder)
@@ -57,22 +52,32 @@
 		return
 	if(!affects_dead && M.stat == DEAD)
 		return
+	if(alien & unaffected_species && location != CHEM_TOUCH)
+		return
 
 	if(!dose && volume)//If dose is currently zero, we do the first effect
 		initial_effect(M, alien)
 
-	if(overdose && (dose > overdose) && (location != CHEM_TOUCH))
-		overdose(M, alien)
 	var/removed = metabolism
 	if(ingest_met && (location == CHEM_INGEST))
 		removed = ingest_met
 	if(touch_met && (location == CHEM_TOUCH))
 		removed = touch_met
+	if(breathe_met && (location == CHEM_BREATHE))
+		removed = breathe_met
+
 	removed = min(removed, volume)
 	max_dose = max(volume, max_dose)
+
+	if(overdose && (dose > overdose) && (location != CHEM_TOUCH))
+		overdose(M, alien, removed, dose/overdose)
+
 	dose = min(dose + removed, max_dose)
-	//Relaxed this small amount restriction a bit. it gets in the way of gradually digesting creatures
-	if(removed >= (metabolism * 0.01) || removed >= 0.01) // If there's too little chemical, don't affect the mob, just remove it
+
+	for(var/datum/reagent/R in M.bloodstr.reagent_list)
+		if(istype(R, conflicting_reagent))
+			affect_conflicting(M,alien,removed,R)
+	if(removed >= metabolism_min)
 		switch(location)
 			if(CHEM_BLOOD)
 				affect_blood(M, alien, removed)
@@ -80,9 +85,9 @@
 				affect_ingest(M, alien, removed)
 			if(CHEM_TOUCH)
 				affect_touch(M, alien, removed)
+			if(CHEM_BREATHE)
+				affect_breathe(M, alien, removed)
 	remove_self(removed)
-	return
-
 
 //Initial effect is called once when the reagent first starts affecting a mob.
 /datum/reagent/proc/initial_effect(var/mob/living/carbon/M, var/alien)
@@ -91,31 +96,36 @@
 /datum/reagent/proc/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	return
 
+/datum/reagent/proc/affect_conflicting(var/mob/living/carbon/M, var/alien, var/removed, var/datum/reagent/conflicting_reagent)
+	M.adjustToxLoss(removed)
+
 /datum/reagent/proc/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
-	affect_blood(M, alien, removed * 0.5)
-	return
+	if(ingest_mul)
+		affect_blood(M, alien, removed * ingest_mul)
 
 /datum/reagent/proc/affect_touch(var/mob/living/carbon/M, var/alien, var/removed)
-	return
+	if(touch_mul)
+		affect_blood(M, alien, removed * touch_mul)
 
-/datum/reagent/proc/overdose(var/mob/living/carbon/M, var/alien) // Overdose effect. Doesn't happen instantly.
+/datum/reagent/proc/affect_breathe(var/mob/living/carbon/M, var/alien, var/removed)
+	if(breathe_mul)
+		affect_blood(M, alien, removed * breathe_mul)
+
+/datum/reagent/proc/overdose(var/mob/living/carbon/M, var/alien, var/removed = 0, var/scale = 1) // Overdose effect. Doesn't happen instantly.
 	M.adjustToxLoss(REM)
-	return
 
 /datum/reagent/proc/initialize_data(var/newdata) // Called when the reagent is created.
 	if(!isnull(newdata))
 		data = newdata
-	return
 
 /datum/reagent/proc/mix_data(var/newdata, var/newamount) // You have a reagent with data, and new reagent with its own data get added, how do you deal with that?
 	return
 
 /datum/reagent/proc/get_data() // Just in case you have a reagent that handles data differently.
-	if(data && istype(data, /list))
+	if(islist(data))
 		return data.Copy()
 	else if(data)
 		return data
-	return null
 
 /datum/reagent/Destroy() // This should only be called by the holder, so it's already handled clearing its references
 	. = ..()

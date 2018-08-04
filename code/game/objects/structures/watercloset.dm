@@ -45,7 +45,7 @@
 	icon_state = "toilet[open][cistern]"
 
 /obj/structure/toilet/attackby(obj/item/I as obj, mob/living/user as mob)
-	if(istype(I, /obj/item/weapon/crowbar))
+	if(iscrowbar(I))
 		user << "<span class='notice'>You start to [cistern ? "replace the lid on the cistern" : "lift the lid off the cistern"].</span>"
 		playsound(loc, 'sound/effects/stonedoor_openclose.ogg', 50, 1)
 		if(do_after(user, 30))
@@ -72,6 +72,7 @@
 						user.visible_message("<span class='danger'>[user] gives [GM.name] a swirlie!</span>", "<span class='notice'>You give [GM.name] a swirlie!</span>", "You hear a toilet flushing.")
 						if(!GM.internal)
 							GM.adjustOxyLoss(5)
+						SSfeedback.IncrementSimpleStat("swirlies")
 					swirlie = null
 				else
 					user.visible_message("<span class='danger'>[user] slams [GM.name] into the [src]!</span>", "<span class='notice'>You slam [GM.name] into the [src]!</span>")
@@ -133,6 +134,7 @@
 	density = 0
 	anchored = 1
 	use_power = 0
+	var/spray_amount = 20
 	var/on = 0
 	var/obj/effect/mist/mymist = null
 	var/ismist = 0				//needs a var so we can make it linger~
@@ -168,7 +170,7 @@
 /obj/machinery/shower/attackby(obj/item/I as obj, mob/user as mob)
 	if(I.type == /obj/item/device/analyzer)
 		user << "<span class='notice'>The water temperature seems to be [watertemp].</span>"
-	if(istype(I, /obj/item/weapon/wrench))
+	if(iswrench(I))
 		var/newtemp = input(user, "What setting would you like to set the temperature valve to?", "Water Temperature Valve") in temperature_settings
 		user << "<span class='notice'>You begin to adjust the temperature valve with \the [I].</span>"
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
@@ -178,12 +180,12 @@
 			add_fingerprint(user)
 
 /obj/machinery/shower/update_icon()	//this is terribly unreadable, but basically it makes the shower mist up
-	overlays.Cut()					//once it's been on for a while, in addition to handling the water overlay.
+	cut_overlays()					//once it's been on for a while, in addition to handling the water overlay.
 	if(mymist)
 		qdel(mymist)
 
 	if(on)
-		overlays += image('icons/obj/watercloset.dmi', src, "water", MOB_LAYER + 1, dir)
+		add_overlay(image('icons/obj/watercloset.dmi', src, "water", MOB_LAYER + 1, dir))
 		if(temperature_settings[watertemp] < T20C)
 			return //no mist for cold water
 		if(!ismist)
@@ -220,10 +222,10 @@
 /obj/machinery/shower/proc/wash(atom/movable/O as obj|mob)
 	if(!on) return
 
-	if(isliving(O))
-		var/mob/living/L = O
-		L.ExtinguishMob()
-		L.fire_stacks = -20 //Douse ourselves with water to avoid fire more easily
+	var/obj/effect/effect/water/W = new(O)
+	W.create_reagents(spray_amount)
+	W.reagents.add_reagent("water", spray_amount)
+	W.set_up(O, spray_amount)
 
 	if(iscarbon(O))
 		var/mob/living/carbon/M = O
@@ -302,6 +304,17 @@
 	else
 		O.clean_blood()
 
+	if(istype(O, /obj/item/weapon/light))
+		var/obj/item/weapon/light/L = O
+		L.brightness_color = initial(L.brightness_color)
+		L.update()
+	else if(istype(O, /obj/machinery/light))
+		var/obj/machinery/light/L = O
+		L.brightness_color = initial(L.brightness_color)
+		L.update()
+
+	O.color = initial(O.color)
+
 	if(isturf(loc))
 		var/turf/tile = loc
 		loc.clean_blood()
@@ -314,6 +327,7 @@
 	wash_floor()
 	if(!mobpresent)	return
 	for(var/mob/living/L in loc)
+		wash(L) // Why was it not here before?
 		process_heat(L)
 
 /obj/machinery/shower/proc/wash_floor()
@@ -403,7 +417,7 @@
 		var/atype = alert(usr, "Do you want to fill or empty \the [RG] at \the [src]?", "Fill or Empty", "Fill", "Empty", "Cancel")
 
 		if(!usr.Adjacent(src)) return
-		if(RG.loc != usr || (usr.l_hand != RG && usr.r_hand != RG)) return
+		if(RG.loc != usr) return
 		if(busy)
 			usr << "<span class='warning'>Someone's already using \the [src].</span>"
 			return
@@ -506,6 +520,7 @@
 /obj/structure/sink/puddle	//splishy splashy ^_^
 	name = "puddle"
 	icon_state = "puddle"
+	desc = "A small pool of some liquid, ostensibly water."
 
 /obj/structure/sink/puddle/attack_hand(mob/M as mob)
 	icon_state = "puddle-splash"

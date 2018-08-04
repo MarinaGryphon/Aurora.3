@@ -9,6 +9,7 @@
 	invisibility  = INVISIBILITY_LIGHTING
 	simulated     = 0
 	blend_mode    = BLEND_MULTIPLY
+	appearance_flags = NO_CLIENT_COLOR
 
 	var/needs_update = FALSE
 
@@ -17,7 +18,7 @@
 	#endif
 
 /atom/movable/lighting_overlay/New()
-	SSlighting.lighting_overlays += src
+	SSlighting.total_lighting_overlays++
 
 	var/turf/T         = loc // If this runtimes atleast we'll know what's creating overlays in things that aren't turfs.
 	T.lighting_overlay = src
@@ -31,8 +32,7 @@
 		return QDEL_HINT_LETMELIVE	// STOP DELETING ME
 
 	//L_PROF(loc, "overlay_destroy")
-	SSlighting.lighting_overlays -= src
-	SSlighting.overlay_queue     -= src
+	SSlighting.total_lighting_overlays--
 
 	var/turf/T   = loc
 	if (istype(T))
@@ -46,7 +46,7 @@
 
 /atom/movable/lighting_overlay/proc/update_overlay()
 	var/turf/T = loc
-	if (!istype(T)) // Erm...
+	if (!isturf(T)) // Erm...
 		if (loc)
 			warning("A lighting overlay realised its loc was NOT a turf (actual loc: [loc], [loc.type]) in update_overlay() and got deleted!")
 
@@ -93,7 +93,7 @@
 	else if (!luminosity)
 		icon_state = LIGHTING_DARKNESS_ICON_STATE
 		color = null
-	else if (ALL_EQUAL && rr == LIGHTING_DEFAULT_TUBE_R && rg == LIGHTING_DEFAULT_TUBE_G && rb == LIGHTING_DEFAULT_TUBE_B)
+	else if (rr == LIGHTING_DEFAULT_TUBE_R && rg == LIGHTING_DEFAULT_TUBE_G && rb == LIGHTING_DEFAULT_TUBE_B && ALL_EQUAL)
 		icon_state = LIGHTING_STATION_ICON_STATE
 		color = null
 	else
@@ -123,43 +123,12 @@
 			)
 
 	// If we're on an openturf, update the shadower object too.
-	// We could queue an icon update for the entire OT, but this involves less overhead.
-	var/turf/simulated/open/OT = loc:above
-	if (OT)
-		var/atom/movable/openspace/multiplier/shadower = OT.shadower
-		if (!shadower)	// The OT hasn't been initialized yet.
-			OT.update_icon()
-			return
-
-		shadower.appearance = src
-		shadower.plane = OPENTURF_CAP_PLANE
-		shadower.layer = SHADOWER_LAYER
-		shadower.invisibility = 0
-		if (shadower.icon_state == LIGHTING_BASE_ICON_STATE)
-			// We're using a color matrix, so just darken the colors.
-			var/list/c_list = shadower.color
-			c_list[CL_MATRIX_RR] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_RG] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_RB] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_GR] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_GG] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_GB] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_BR] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_BG] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_BB] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_AR] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_AG] *= SHADOWER_DARKENING_FACTOR
-			c_list[CL_MATRIX_AB] *= SHADOWER_DARKENING_FACTOR
-			shadower.color = c_list
+	if (T.above)
+		var/turf/simulated/open/OT = T.above
+		if (OT.shadower)
+			OT.shadower.copy_lighting(src)
 		else
-			shadower.color = list(
-				SHADOWER_DARKENING_FACTOR, 0, 0,
-				0, SHADOWER_DARKENING_FACTOR, 0,
-				0, 0, SHADOWER_DARKENING_FACTOR
-			)
-
-		if (shadower.bound_overlay)
-			shadower.update_above()
+			OT.update_icon()
 
 #undef ALL_EQUAL
 
@@ -187,4 +156,7 @@
 		. = ..()
 
 /atom/movable/lighting_overlay/shuttle_move(turf/loc)
+	return
+
+/atom/movable/lighting_overlay/conveyor_act()
 	return

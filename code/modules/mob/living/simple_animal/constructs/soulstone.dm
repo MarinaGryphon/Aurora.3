@@ -11,13 +11,14 @@
 	slot_flags = SLOT_BELT
 	origin_tech = list(TECH_BLUESPACE = 4, TECH_MATERIAL = 4)
 	var/imprinted = "empty"
+	appearance_flags = NO_CLIENT_COLOR
 
 //////////////////////////////Capturing////////////////////////////////////////////////////////
 
 /obj/item/device/soulstone/attack(mob/living/carbon/human/M as mob, mob/user as mob)
 	if(!istype(M, /mob/living/carbon/human))//If target is not a human.
 		return ..()
-	if(istype(M, /mob/living/carbon/human/dummy))
+	if(istype(M, /mob/living/carbon/human/apparition))
 		return..()
 
 	if(M.has_brain_worms()) //Borer stuff - RR
@@ -88,6 +89,7 @@
 	return
 
 /obj/structure/constructshell/cult
+	appearance_flags = NO_CLIENT_COLOR
 	icon_state = "construct-cult"
 	desc = "This eerie contraption looks like it would come alive if supplied with a missing ingredient."
 
@@ -119,7 +121,7 @@
 
 	var/obj/effect/decal/remains/remains = T.species.remains_type //spawns a skeleton based on the species remain type
 	new remains(T.loc)
-		
+
 	T.invisibility = 101
 
 	var/atom/movable/overlay/animation = new /atom/movable/overlay( T.loc )
@@ -211,7 +213,7 @@
 			Z << "<B>You are still bound to serve your creator, follow their orders and help them complete their goals at all costs.</B>"
 			Z.cancel_camera()
 			qdel(src)
-/obj/item/device/soulstone/proc/transfer_soul(var/choice as text, var/target, var/mob/U as mob).
+/obj/item/device/soulstone/proc/transfer_soul(var/choice as text, var/target, var/mob/U as mob)
 	switch(choice)
 		if("VICTIM")
 			transfer_human(target,U)

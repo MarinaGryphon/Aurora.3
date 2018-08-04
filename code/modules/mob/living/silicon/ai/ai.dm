@@ -81,6 +81,7 @@ var/list/ai_verbs_default = list(
 	var/errored = 0								// Set to 1 if runtime error occurs. Only way of this happening i can think of is admin fucking up with varedit.
 	var/bombing_core = 0						// Set to 1 if core auto-destruct is activated
 	var/bombing_station = 0						// Set to 1 if station nuke auto-destruct is activated
+	var/bombing_time = 1200							// How much time is remaining for the nuke
 	var/override_CPUStorage = 0					// Bonus/Penalty CPU Storage. For use by admins/testers.
 	var/override_CPURate = 0					// Bonus/Penalty CPU generation rate. For use by admins/testers.
 	var/list/cameraRecords = list()				//For storing what is shown to the cameras
@@ -145,17 +146,18 @@ var/list/ai_verbs_default = list(
 		add_ai_verbs(src)
 
 	//Languages
-	add_language("Robot Talk", 1)
-	add_language("Ceti Basic", 1)
-	add_language("Sol Common", 0)
+	add_language(LANGUAGE_ROBOT, 1)
+	add_language(LANGUAGE_TCB, 1)
+	add_language(LANGUAGE_SOL_COMMON, 0)
 	add_language(LANGUAGE_UNATHI, 0)
 	add_language(LANGUAGE_SIIK_MAAS, 0)
 	add_language(LANGUAGE_SKRELLIAN, 0)
-	add_language("Tradeband", 1)
-	add_language("Gutter", 0)
+	add_language(LANGUAGE_TRADEBAND, 1)
+	add_language(LANGUAGE_GUTTER, 0)
 	add_language(LANGUAGE_VAURCA, 0)
-	add_language("Rootsong", 0)
+	add_language(LANGUAGE_ROOTSONG, 0)
 	add_language(LANGUAGE_EAL, 1)
+	add_language(LANGUAGE_YA_SSA, 0)
 
 	if(!safety)//Only used by AIize() to successfully spawn an AI.
 		if (!B)//If there is no player/brain inside.
@@ -278,6 +280,12 @@ var/list/ai_verbs_default = list(
 		aiPDA.owner = pickedName
 		aiPDA.name = pickedName + " (" + aiPDA.ownjob + ")"
 
+	//Set the ID Name
+	if(idcard)
+		idcard.registered_name = pickedName
+		idcard.assignment = "AI"
+		idcard.update_name()
+
 	setup_icon() //this is because the ai custom name is related to the ai name, so, we just call the setup icon after someone named their ai
 
 /*
@@ -391,11 +399,8 @@ var/list/ai_verbs_default = list(
 	if(confirm == "Yes")
 		call_shuttle_proc(src)
 
-	// hack to display shuttle timer
 	if(emergency_shuttle.online())
-		var/obj/machinery/computer/communications/C = locate() in SSmachinery.processing_machines
-		if(C)
-			C.post_status("shuttle")
+		post_display_status("shuttle")
 
 /mob/living/silicon/ai/proc/ai_recall_shuttle()
 	set category = "AI Commands"
@@ -424,12 +429,12 @@ var/list/ai_verbs_default = list(
 	if(emergency_message_cooldown)
 		usr << "<span class='warning'>Arrays recycling. Please stand by.</span>"
 		return
-	var/input = sanitize(input(usr, "Please choose a message to transmit to [boss_short] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", ""))
+	var/input = sanitize(input(usr, "Please choose a message to transmit to [current_map.boss_short] via quantum entanglement.  Please be aware that this process is very expensive, and abuse will lead to... termination.  Transmission does not guarantee a response. There is a 30 second delay before you may send another message, be clear, full and concise.", "To abort, send an empty message.", ""))
 	if(!input)
 		return
 	Centcomm_announce(input, usr)
 	usr << "<span class='notice'>Message transmitted.</span>"
-	log_say("[key_name(usr)] has made an IA [boss_short] announcement: [input]",ckey=key_name(usr))
+	log_say("[key_name(usr)] has made an AI [current_map.boss_short] announcement: [input]",ckey=key_name(usr))
 	emergency_message_cooldown = 1
 	spawn(300)
 		emergency_message_cooldown = 0
@@ -594,16 +599,32 @@ var/list/ai_verbs_default = list(
 	if(alert("Would you like to select a hologram based on a crew member or switch to unique avatar?",,"Crew Member","Unique")=="Crew Member")
 
 		var/personnel_list[] = list()
+		var/current_mobs = list()
 
+		for(var/mob/living/carbon/human/H in human_mob_list)
+			current_mobs[H.real_name] = H
 		for(var/datum/data/record/t in data_core.locked)//Look in data core locked.
 			personnel_list["[t.fields["name"]]: [t.fields["rank"]]"] = t.fields["image"]//Pull names, rank, and image.
+			if(current_mobs[t.fields["name"]])
+				personnel_list["[t.fields["name"]]: [t.fields["rank"]]"] = list("mob" = current_mobs[t.fields["name"]], "image" = t.fields["image"])
 
 		if(personnel_list.len)
 			input = input("Select a crew member:") as null|anything in personnel_list
-			var/icon/character_icon = personnel_list[input]
+			var/selection = personnel_list[input]
+			var/icon/character_icon 
+			if(selection && istype(selection, /list))
+				var/mob/living/carbon/human/H = selection["mob"]
+				if (H.near_camera())
+					character_icon = new('icons/mob/human.dmi', "blank")
+					for(var/renderdir in cardinal)
+						character_icon.Insert(getHologramIcon(getFlatIcon(H, renderdir, always_use_defdir=1)), dir = renderdir)
+				else
+					character_icon = getHologramIcon(icon(selection["image"]))
+			if(selection && istype(selection, /icon))
+				character_icon = getHologramIcon(icon(selection))
 			if(character_icon)
-				qdel(holo_icon)//Clear old icon so we're not storing it in memory.
-				holo_icon = getHologramIcon(icon(character_icon))
+				qdel(holo_icon) // Clear old icon so we're not storing it in memory.
+				holo_icon = character_icon
 		else
 			alert("No suitable records found. Aborting.")
 
@@ -676,7 +697,7 @@ var/list/ai_verbs_default = list(
 		var/obj/item/weapon/aicard/card = W
 		card.grab_ai(src, user)
 
-	else if(istype(W, /obj/item/weapon/wrench))
+	else if(iswrench(W))
 		if(anchored)
 			user.visible_message("<span class='notice'>\The [user] starts to unbolt \the [src] from the plating...</span>")
 			if(!do_after(user,40))

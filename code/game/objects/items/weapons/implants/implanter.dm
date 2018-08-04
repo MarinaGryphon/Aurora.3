@@ -53,6 +53,8 @@
 						imp.part = affected
 
 						BITSET(H.hud_updateflag, IMPLOYAL_HUD)
+					if(istype(src.imp, /obj/item/weapon/implanter/loyalty))
+						M << "<span class ='notice'You feel a sudden surge of loyalty to [current_map.company_name]!</span>"
 
 				src.imp = null
 				update()
@@ -159,7 +161,7 @@
 		return
 
 	var/mob/living/carbon/human/H = M
-	if (!H.species || !isipc(H) || !H.organs_by_name["groin"])
+	if (!H.species || !isipc(H) || !H.organs_by_name["head"])
 		user << "<span class = 'warning'>You cannot use this on a non-synthetic organism!</span>"
 		return
 
@@ -176,9 +178,9 @@
 
 	user.show_message("<span class = 'warning'>You implanted the implant into [M].</span>")
 
-	ipc_tag.replaced(H, H.organs_by_name["groin"])
-
-	qdel(ipc_tag)
+	ipc_tag.replaced(H, H.organs_by_name["head"])
+	
+	ipc_tag = null
 
 	update()
 

@@ -6,7 +6,8 @@ var/list/admin_verbs_default = list(
 	/client/proc/deadmin_self,			/*destroys our own admin datum so we can play as a regular player*/
 	/client/proc/hide_verbs,			/*hides all our adminverbs*/
 	/client/proc/hide_most_verbs,		/*hides all our hideable adminverbs*/
-	/client/proc/cmd_mentor_check_new_players
+	/client/proc/cmd_mentor_check_new_players,
+	/client/proc/notification_add		/*allows everyone to set up player notifications*/
 	)
 var/list/admin_verbs_admin = list(
 	/client/proc/debug_variables,		/*allows us to -see- the variables of any instance in the game.*/
@@ -131,7 +132,9 @@ var/list/admin_verbs_fun = list(
 	/datum/admins/proc/call_drop_pod,
 	/client/proc/show_tip,
 	/client/proc/fab_tip,
-	/client/proc/apply_sunstate
+	/client/proc/apply_sunstate,
+	/client/proc/cure_traumas,
+	/client/proc/add_traumas
 	)
 
 var/list/admin_verbs_spawn = list(
@@ -145,7 +148,7 @@ var/list/admin_verbs_spawn = list(
 	/client/proc/spawn_chemdisp_cartridge
 	)
 var/list/admin_verbs_server = list(
-	/datum/admins/proc/capture_map,
+	/datum/admins/proc/capture_map_part,
 	/client/proc/Set_Holiday,
 	/datum/admins/proc/startnow,
 	/datum/admins/proc/restart,
@@ -213,7 +216,10 @@ var/list/admin_verbs_debug = list(
 	/client/proc/cmd_display_del_log,
 	/client/proc/cmd_display_init_log,
 	/client/proc/cmd_ss_panic,
-	/client/proc/reset_openturf
+	/client/proc/reset_openturf,
+	/datum/admins/proc/capture_map,
+	/client/proc/global_ao_regenerate,
+	/client/proc/add_client_color
 	)
 
 var/list/admin_verbs_paranoid_debug = list(
@@ -302,7 +308,9 @@ var/list/admin_verbs_hideable = list(
 	/client/proc/roll_dices,
 	/proc/possess,
 	/proc/release,
-	/client/proc/toggle_recursive_explosions
+	/client/proc/toggle_recursive_explosions,
+	/client/proc/cure_traumas,
+	/client/proc/add_traumas
 	)
 var/list/admin_verbs_mod = list(
 	/client/proc/cmd_admin_pm_context,	// right-click adminPM interface,
@@ -364,7 +372,8 @@ var/list/admin_verbs_dev = list( //will need to be altered - Ryan784
 	/client/proc/cmd_dev_bst,
 	/client/proc/lighting_show_verbs,
 	/client/proc/cmd_display_del_log,
-	/client/proc/cmd_display_init_log
+	/client/proc/cmd_display_init_log,
+	/client/proc/create_poll //Allows to create polls
 )
 var/list/admin_verbs_cciaa = list(
 	/client/proc/cmd_admin_pm_panel,	/*admin-pm list*/
@@ -374,7 +383,10 @@ var/list/admin_verbs_cciaa = list(
 	/client/proc/returntobody,
 	/client/proc/view_duty_log,
 	/datum/admins/proc/create_admin_fax,
-	/client/proc/check_fax_history
+	/client/proc/check_fax_history,
+	/client/proc/aooc,
+	/client/proc/check_antagonists,
+	/client/proc/spawn_ert_commander
 )
 
 /client/proc/add_admin_verbs()
@@ -457,9 +469,9 @@ var/list/admin_verbs_cciaa = list(
 	set category = "Admin"
 	set name = "Aghost"
 	if(!holder)	return
-	if(istype(mob,/mob/dead/observer))
+	if(istype(mob,/mob/abstract/observer))
 		//re-enter
-		var/mob/dead/observer/ghost = mob
+		var/mob/abstract/observer/ghost = mob
 		if(ghost.can_reenter_corpse)
 			ghost.reenter_corpse()
 		else
@@ -468,12 +480,12 @@ var/list/admin_verbs_cciaa = list(
 
 		feedback_add_details("admin_verb","P") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
-	else if(istype(mob,/mob/new_player))
+	else if(istype(mob,/mob/abstract/new_player))
 		src << "<font color='red'>Error: Aghost: Can't admin-ghost whilst in the lobby. Join or Observe first.</font>"
 	else
 		//ghostize
 		var/mob/body = mob
-		var/mob/dead/observer/ghost = body.ghostize(1)
+		var/mob/abstract/observer/ghost = body.ghostize(1)
 		ghost.admin_ghosted = 1
 		if(body)
 			body.teleop = ghost
@@ -615,6 +627,51 @@ var/list/admin_verbs_cciaa = list(
 			explosion(epicenter, devastation_range, heavy_impact_range, light_impact_range, flash_range)
 	message_admins("<span class='notice'>[ckey] creating an admin explosion at [epicenter.loc].</span>")
 	feedback_add_details("admin_verb","DB") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
+
+/client/proc/cure_traumas(mob/T as mob in mob_list)
+	set category = "Fun"
+	set name = "Cure Traumas"
+	set desc = "Cure the retardations of a given mob."
+
+	if(!istype(T,/mob/living/carbon/human))
+		to_chat(usr, "This can only be done to instances of type /mob/living/carbon/human")
+		return
+
+	var/mob/living/carbon/human/C = T
+
+	C.cure_all_traumas(TRUE, CURE_ADMIN)
+	log_and_message_admins("<span class='notice'>cured [key_name(C)]'s traumas.</span>")
+	feedback_add_details("admin_verb","TB") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!\
+
+/client/proc/add_traumas(mob/T as mob in mob_list)
+	set category = "Fun"
+	set name = "Add Traumas"
+	set desc = "Induces retardations on a given mob."
+
+	if(!istype(T,/mob/living/carbon/human))
+		to_chat(usr, "This can only be done to instances of type /mob/living/carbon/human")
+		return
+
+	var/mob/living/carbon/human/C = T
+
+	var/list/traumas = subtypesof(/datum/brain_trauma)
+	var/result = input(usr, "Choose the brain trauma to apply","Traumatize") as null|anything in traumas
+	var/permanent = alert("Do you want to make the trauma unhealable?", "Permanently Traumatize", "Yes", "No")
+	if(permanent == "Yes")
+		permanent = TRUE
+	else
+		permanent = FALSE
+	if(!usr)
+		return
+	if(!C)
+		to_chat(usr, "Mob doesn't exist anymore")
+		return
+
+	if(result)
+		C.gain_trauma(result, permanent)
+
+	log_and_message_admins("<span class='notice'>gave [key_name(C)] [result].</span>")
+	feedback_add_details("admin_verb","BT") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 /client/proc/give_disease(mob/T as mob in mob_list) // -- Giacom
 	set category = "Fun"
@@ -824,11 +881,10 @@ var/list/admin_verbs_cciaa = list(
 	set category = "Admin"
 
 	if(!check_rights(R_ADMIN))	return
-	var sec_level = input(usr, "It's currently code [get_security_level()].", "Select Security Level")  as null|anything in (list("green","blue","red","delta")-get_security_level())
+	var sec_level = input(usr, "It's currently code [get_security_level()].", "Select Security Level")  as null|anything in (list("green","blue","red", "yellow", "delta")-get_security_level())
 	if(alert("Switch from code [get_security_level()] to code [sec_level]?","Change security level?","Yes","No") == "Yes")
 		set_security_level(sec_level)
 		log_admin("[key_name(usr)] changed the security level to code [sec_level].",admin_key=key_name(usr))
-
 
 //---- bs12 verbs ----
 
@@ -1022,15 +1078,15 @@ var/list/admin_verbs_cciaa = list(
 	if (!check_rights(R_SERVER|R_DEBUG))
 		return
 
-	var/ans = alert(src, "This will force explosions to run in the [config.use_recursive_explosions ? "old manner (non-recursive)" : "new, realistic manner (recursive)"]. Do you want to proceed?", "Switch explosion type", "Yes", "Cancel")
+	var/ans = alert(src, "This will force explosions to run in the [config.use_spreading_explosions ? "old manner (circular)" : "new, realistic manner (spreading)"]. Do you want to proceed?", "Switch explosion type", "Yes", "Cancel")
 
 	if (!ans || ans == "Cancel")
 		src << "<span class='notice'>Cancelled.</span>"
 		return
 
-	config.use_recursive_explosions = !config.use_recursive_explosions
+	config.use_spreading_explosions = !config.use_spreading_explosions
 
-	log_and_message_admins("has toggled explosions to be [config.use_recursive_explosions ? "recursive" : "non-recursive"].")
+	log_and_message_admins("has toggled explosions to be [config.use_spreading_explosions ? "iterative/spreading" : "simple/circular"].")
 	feedback_add_details("admin_verb", "TRE")
 
 /client/proc/wipe_ai()
@@ -1043,7 +1099,7 @@ var/list/admin_verbs_cciaa = list(
 
 	var/mob/living/silicon/ai/target = input("Choose the AI to force-wipe:", "AI Termination") as null|anything in ai_list
 
-	if (alert("Are you sure you want to wipe [target.name]? They will be ghosted and their job slot freed.", "Confirm AI Termination", "No", "No", "Yes") != "Yes")
+	if (!target || alert("Are you sure you want to wipe [target.name]? They will be ghosted and their job slot freed.", "Confirm AI Termination", "No", "No", "Yes") != "Yes")
 		return
 
 	log_and_message_admins("admin-wiped [key_name_admin(target)]'s core.")
@@ -1103,8 +1159,50 @@ var/list/admin_verbs_cciaa = list(
 
 	log_and_message_admins("has regenerated all openturfs.")
 
-	SSopenturf.hard_reset()
+	SSzcopy.hard_reset()
 
+/client/proc/add_client_color(mob/T as mob in mob_list)
+	set category = "Debug"
+	set name = "Add Client Color"
+	set desc = "Adds a client color to a given mob"
+
+	if(!check_rights(R_DEV))
+		return
+
+	if(!ishuman(T))
+		to_chat(usr, "This can only be done to instances of type /mob/living/carbon/human")
+		return
+
+	var/mob/living/carbon/human/C = T
+
+	var/rr = input("Enter color value", "Red-Red") as num|null
+	var/rg = input("Enter color value", "Red-Green") as num|null
+	var/rb = input("Enter color value", "Red-Blue") as num|null
+	var/gr = input("Enter color value", "Green-Red") as num|null
+	var/gg = input("Enter color value", "Green-Green") as num|null
+	var/gb = input("Enter color value", "Green-Blue") as num|null
+	var/br = input("Enter color value", "Blue-Red") as num|null
+	var/bg = input("Enter color value", "Blue-Green") as num|null
+	var/bb = input("Enter color value", "Blue-Blue") as num|null
+	var/priority = input("Enter priority value.", "Priority") as num|null
+	if(!usr)
+		return
+	if(!C)
+		to_chat(usr, "Mob doesn't exist anymore")
+		return
+
+	if(priority)
+		var/datum/client_color/CC = new /datum/client_color()
+		CC.client_color = list(rr,rg,rb, gr,gg,gb, br,bg,bb)
+		CC.priority = priority
+		C.client_colors |= CC
+		sortTim(C.client_colors, /proc/cmp_clientcolor_priority)
+		C.update_client_color()
+
+	log_and_message_admins("<span class='notice'>gave [key_name(C)] a new client color.</span>")
+	feedback_add_details("admin_verb","CR") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
+
+#ifdef ENABLE_SUNLIGHT
 /client/proc/apply_sunstate()
 	set category = "Fun"
 	set name = "Apply Sun Preset"
@@ -1119,3 +1217,9 @@ var/list/admin_verbs_cciaa = list(
 
 	SSsunlight.apply_sun_state(S)
 	log_and_message_admins("has set the sun state to '[S]'.")
+#else
+/client/proc/apply_sunstate()
+	set hidden = TRUE
+
+	usr << "The sunlight system is disabled."
+#endif

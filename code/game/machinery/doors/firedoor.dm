@@ -132,7 +132,7 @@
 				users_to_open_string += ", [users_to_open[i]]"
 		user << "These people have opened \the [src] during an alert: [users_to_open_string]."
 
-/obj/machinery/door/firedoor/Bumped(atom/AM)
+/obj/machinery/door/firedoor/CollidedWith(atom/AM)
 	if(p_open || operating)
 		return
 	if(!density)
@@ -159,14 +159,23 @@
 	for(var/area/A in areas_added)		//Checks if there are fire alarms in any areas associated with that firedoor
 		if(A.fire || A.air_doors_activated)
 			alarmed = 1
-/*
-	var/answer = alert(user, "Would you like to [density ? "open" : "close"] this [src.name]?[ alarmed && density ? "\nNote that by doing so, you acknowledge any damages from opening this\n[src.name] as being your own fault, and you will be held accountable under the law." : ""]",\
-	"\The [src]", "Yes, [density ? "open" : "close"]", "No")
-	if(answer == "No")
-		return*/
 	if(user.incapacitated() || (get_dist(src, user) > 1  && !issilicon(user)))
 		user << "Sorry, you must remain able bodied and close to \the [src] in order to use it."
 		return
+
+	if(ishuman(user))
+		var/mob/living/carbon/human/H = user
+
+		if(H.species.can_shred(H))
+
+			if(src.density)
+				visible_message("<span class='danger'>\The [H] forces \the [src] open!</span>")
+				open(1)
+			else
+				visible_message("<span class='danger'>\The [H] forces \the [src] closed!</span>")
+				close(1)
+			return
+
 	if(density && (stat & (BROKEN|NOPOWER))) //can still close without power
 		user << "\The [src] is not functioning, you'll have to force it open manually."
 		return
@@ -209,7 +218,7 @@
 	add_fingerprint(user)
 	if(operating)
 		return//Already doing something.
-	if(istype(C, /obj/item/weapon/weldingtool) && !repairing)
+	if(iswelder(C) && !repairing)
 		var/obj/item/weapon/weldingtool/W = C
 		if(W.remove_fuel(0, user))
 			blocked = !blocked
@@ -220,14 +229,14 @@
 			update_icon()
 			return
 
-	if(density && istype(C, /obj/item/weapon/screwdriver))
+	if(density && isscrewdriver(C))
 		hatch_open = !hatch_open
 		user.visible_message("<span class='danger'>[user] has [hatch_open ? "opened" : "closed"] \the [src] maintenance panel.</span>",
 									"You have [hatch_open ? "opened" : "closed"] the [src] maintenance panel.")
 		update_icon()
 		return
 
-	if(blocked && istype(C, /obj/item/weapon/crowbar) && !repairing)
+	if(blocked && iscrowbar(C) && !repairing)
 		if(!hatch_open)
 			user << "<span class='danger'>You must open the maintenance panel first!</span>"
 		else
@@ -256,11 +265,11 @@
 		user << "<span class='danger'>\The [src] is welded shut!</span>"
 		return
 
-	if(istype(C, /obj/item/weapon/crowbar) || istype(C,/obj/item/weapon/material/twohanded/fireaxe) || (istype(C, /obj/item/weapon/melee/hammer)))
+	if(iscrowbar(C) || istype(C,/obj/item/weapon/material/twohanded/fireaxe) || (istype(C, /obj/item/weapon/melee/hammer)))
 		if(operating)
 			return
 
-		if(blocked && istype(C, /obj/item/weapon/crowbar))
+		if(blocked && iscrowbar(C))
 			user.visible_message("<span class='danger'>\The [user] pries at \the [src] with \a [C], but \the [src] is welded in place!</span>",\
 			"You try to pry \the [src] [density ? "open" : "closed"], but it is welded in place!",\
 			"You hear someone struggle and metal straining.")
@@ -275,7 +284,7 @@
 				"You start forcing \the [src] [density ? "open" : "closed"] with \the [C]!",\
 				"You hear metal strain.")
 		if(do_after(user,30))
-			if(istype(C, /obj/item/weapon/crowbar) || (istype(C, /obj/item/weapon/melee/hammer)))
+			if(iscrowbar(C) || (istype(C, /obj/item/weapon/melee/hammer)))
 				if(stat & (BROKEN|NOPOWER) || !density)
 					user.visible_message("<span class='danger'>\The [user] forces \the [src] [density ? "open" : "closed"] with \a [C]!</span>",\
 					"You force \the [src] [density ? "open" : "closed"] with \the [C]!",\
@@ -287,7 +296,7 @@
 			if(density)
 				open(1, user)
 			else
-				open(0, user)
+				close()
 			return
 
 	return ..()
@@ -374,6 +383,7 @@
 	return ..()
 
 /obj/machinery/door/firedoor/do_animate(animation)
+	compile_overlays()
 	switch(animation)
 		if("opening")
 			flick("door_opening", src)

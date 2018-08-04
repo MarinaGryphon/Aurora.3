@@ -3,8 +3,12 @@
 	path = /obj/item/weapon/cane
 
 /datum/gear/dice
-	display_name = "d20"
-	path = /obj/item/weapon/dice/d20
+	display_name = "pack of dice"
+	path = /obj/item/weapon/storage/pill_bottle/dice
+
+/datum/gear/dicegaming
+	display_name = "pack of gaming dice"
+	path = /obj/item/weapon/storage/pill_bottle/dice/gaming
 
 /datum/gear/cards
 	display_name = "deck of cards"
@@ -32,7 +36,7 @@
 
 /datum/gear/flask/New()
 	..()
-	gear_tweaks += new/datum/gear_tweak/reagents(lunchables_ethanol_reagents())
+	gear_tweaks += new/datum/gear_tweak/reagents(lunchables_alcohol_reagents())
 
 /datum/gear/vacflask
 	display_name = "vacuum-flask"
@@ -58,3 +62,47 @@
 	sortTim(lunchboxes, /proc/cmp_text_asc)
 	gear_tweaks += new/datum/gear_tweak/path(lunchboxes)
 	gear_tweaks += new/datum/gear_tweak/contents(lunchables_lunches(), lunchables_snacks(), lunchables_drinks())
+
+/datum/gear/banner
+	display_name = "banner selection"
+	path = /obj/item/weapon/flag
+
+/datum/gear/banner/New()
+	..()
+	var/banners = list()
+	banners["banner, SolGov"] = /obj/item/weapon/flag/sol
+	banners["banner, Dominia"] = /obj/item/weapon/flag/dominia
+	banners["banner, Elyra"] = /obj/item/weapon/flag/elyra
+	banners["banner, Hegemony"] = /obj/item/weapon/flag/hegemony
+	banners["banner, Jargon"] = /obj/item/weapon/flag/jargon
+	banners["banner, NanoTrasen"] = /obj/item/weapon/flag/nanotrasen
+	banners["banner, Eridani Fed"] = /obj/item/weapon/flag/eridani
+	banners["banner, Sedantis"] = /obj/item/weapon/flag/vaurca
+	gear_tweaks += new/datum/gear_tweak/path(banners)
+
+/datum/gear/flag
+	display_name = "flag selection"
+	cost = 2
+	path = /obj/item/weapon/flag
+
+/datum/gear/flag/New()
+	..()
+	var/flags = list()
+	flags["flag, SolGov"] = /obj/item/weapon/flag/sol/l
+	flags["flag, Dominia"] = /obj/item/weapon/flag/dominia/l
+	flags["flag, Elyra"] = /obj/item/weapon/flag/elyra/l
+	flags["flag, Hegemony"] = /obj/item/weapon/flag/hegemony/l
+	flags["flag, Jargon"] = /obj/item/weapon/flag/jargon/l
+	flags["flag, NanoTrasen"] = /obj/item/weapon/flag/nanotrasen/l
+	flags["flag, Eridani Fed"] = /obj/item/weapon/flag/eridani/l
+	flags["flag, Sedantis"] = /obj/item/weapon/flag/vaurca/l
+	gear_tweaks += new/datum/gear_tweak/path(flags)
+
+
+/datum/gear/towel
+	display_name = "towel"
+	path = /obj/item/weapon/towel
+
+/datum/gear/towel/New()
+	..()
+	gear_tweaks = list(gear_tweak_free_color_choice)

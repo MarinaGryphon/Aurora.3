@@ -15,6 +15,7 @@
 	var/selection_color = "#ffffff"       // Selection screen color
 	var/idtype = /obj/item/weapon/card/id // The type of the ID the player will have
 	var/list/alt_titles                   // List of alternate titles, if any
+	var/list/title_accesses               // A map of title -> list of accesses to add if the person has this title.
 	var/req_admin_notify                  // If this is set to 1, a text is printed to the player when jobs are assigned, telling him that he should let admins know that he has to disconnect.
 	var/minimal_player_age = 0            // If you have use_age_restriction_for_jobs config option enabled and the database set up, this option will add a requirement for players to be at least minimal_player_age days old. (meaning they first signed in at least that many days before.)
 	var/department = null                 // Does this position have a department tag?
@@ -22,29 +23,37 @@
 	var/minimum_character_age = 17
 	var/ideal_character_age = 30
 
+	var/latejoin_at_spawnpoints = FALSE          //If this job should use roundstart spawnpoints for latejoin (offstation jobs etc)
+
 	var/account_allowed = 1				  // Does this job type come with a station account?
 	var/economic_modifier = 2			  // With how much does this job modify the initial account amount?
+	var/create_record = 1                 // Do we announce/make records for people who spawn on this job?
 
 	var/bag_type = /obj/item/weapon/storage/backpack
 	var/satchel_type = /obj/item/weapon/storage/backpack/satchel_norm
 	var/alt_satchel_type = /obj/item/weapon/storage/backpack/satchel
 	var/duffel_type = /obj/item/weapon/storage/backpack/duffel
+	var/messenger_bag_type = /obj/item/weapon/storage/backpack/messenger
 
 /datum/job/proc/equip(var/mob/living/carbon/human/H)
 	return 1
 
 /datum/job/proc/equip_backpack(var/mob/living/carbon/human/H)
 	var/type_to_spawn
+	var/use_job_specific = H.backbag_style == 1
 	switch (H.backbag)
 		//if (1)	// No bag selected.
+		// Hard-coding bagtype for now since there's only two options.
 		if (2)
-			type_to_spawn = bag_type
+			type_to_spawn = use_job_specific ? bag_type : /obj/item/weapon/storage/backpack
 		if (3)
-			type_to_spawn = satchel_type
+			type_to_spawn = use_job_specific ? satchel_type : /obj/item/weapon/storage/backpack/satchel_norm
 		if (4)
-			type_to_spawn = alt_satchel_type
+			type_to_spawn = use_job_specific ? alt_satchel_type : /obj/item/weapon/storage/backpack/satchel
 		if (5)
-			type_to_spawn = duffel_type
+			type_to_spawn = use_job_specific ? duffel_type : /obj/item/weapon/storage/backpack/duffel
+		if (6)
+			type_to_spawn = use_job_specific ? messenger_bag_type : /obj/item/weapon/storage/backpack/messenger
 
 	if (type_to_spawn)
 		var/obj/item/bag = new type_to_spawn
@@ -63,16 +72,18 @@
 	var/loyalty = 1
 	if(H.client)
 		switch(H.client.prefs.nanotrasen_relation)
-			if(COMPANY_LOYAL)		loyalty = 1.30
-			if(COMPANY_SUPPORTATIVE)loyalty = 1.15
-			if(COMPANY_NEUTRAL)		loyalty = 1
-			if(COMPANY_SKEPTICAL)	loyalty = 0.85
-			if(COMPANY_OPPOSED)		loyalty = 0.70
+			if(COMPANY_LOYAL)        loyalty = 1.30
+			if(COMPANY_SUPPORTATIVE) loyalty = 1.15
+			if(COMPANY_NEUTRAL)      loyalty = 1
+			if(COMPANY_SKEPTICAL)    loyalty = 0.85
+			if(COMPANY_OPPOSED)      loyalty = 0.70
 
 	//give them an account in the station database
-	var/species_modifier = (H.species ? economic_species_modifier[H.species.type] : 2)
-	if(!species_modifier)
-		species_modifier = economic_species_modifier[/datum/species/human]
+	var/species_modifier = (H.species ? H.species.economic_modifier : null)
+	if (!species_modifier)
+		var/datum/species/human_species = global.all_species["Human"]
+		species_modifier = human_species.economic_modifier
+		PROCLOG_WEIRD("species [H.species || "NULL"] did not have a set economic_modifier!")
 
 	var/money_amount = (rand(5,50) + rand(5, 50)) * loyalty * economic_modifier * species_modifier
 	var/datum/money_account/M = create_account(H.real_name, money_amount, null)
@@ -95,11 +106,14 @@
 /datum/job/proc/equip_preview(mob/living/carbon/human/H, var/alt_title)
 	. = equip(H, alt_title)
 
-/datum/job/proc/get_access()
+/datum/job/proc/get_access(selected_title)
 	if(!config || config.jobs_have_minimal_access)
-		return src.minimal_access.Copy()
+		. = minimal_access.Copy()
 	else
-		return src.access.Copy()
+		. = access.Copy()
+
+	if (LAZYLEN(title_accesses) && title_accesses[selected_title])
+		. += title_accesses[selected_title]
 
 /datum/job/proc/apply_fingerprints(var/mob/living/carbon/human/target)
 	if(!istype(target))
@@ -118,8 +132,13 @@
 	return (current_positions < total_positions) || (total_positions == -1)
 
 /datum/job/proc/fetch_age_restriction()
+	if (!config.age_restrictions_from_file)
+		return
+
 	if (config.age_restrictions[lowertext(title)])
 		minimal_player_age = config.age_restrictions[lowertext(title)]
+	else
+		minimal_player_age = 0
 
 /datum/job/proc/late_equip(var/mob/living/carbon/human/H)
 	if(!H)
@@ -128,25 +147,14 @@
 	var/loyalty = 1
 	if(H.client)
 		switch(H.client.prefs.nanotrasen_relation)
-			if(COMPANY_LOYAL)		loyalty = 3
-			if(COMPANY_SUPPORTATIVE)loyalty = 2
-			if(COMPANY_NEUTRAL)		loyalty = 1
-			if(COMPANY_SKEPTICAL)	loyalty = -2
-			if(COMPANY_OPPOSED)		loyalty = -3
+			if(COMPANY_LOYAL)        loyalty = 3
+			if(COMPANY_SUPPORTATIVE) loyalty = 2
+			if(COMPANY_NEUTRAL)      loyalty = 1
+			if(COMPANY_SKEPTICAL)    loyalty = -2
+			if(COMPANY_OPPOSED)      loyalty = -3
 
 	//give them an account in the station database
-	var/species_modifier = 0
-	if(economic_species_modifier[H.species.type])
-		switch(economic_species_modifier[H.species.type])
-			if(/datum/species/human)		species_modifier = 0
-			if(/datum/species/skrell)		species_modifier = 0
-			if(/datum/species/tajaran)		species_modifier = -2
-			if(/datum/species/unathi)		species_modifier = -2
-			if(/datum/species/diona)		species_modifier = -4
-			if(/datum/species/machine)		species_modifier = -4
-			if(/datum/species/bug)			species_modifier = -6
-			else							species_modifier = -3
-
+	var/species_modifier = min((H.species ? H.species.economic_modifier : 0) - 9, 0)
 
 	var/wealth = (loyalty + economic_modifier + species_modifier)
 

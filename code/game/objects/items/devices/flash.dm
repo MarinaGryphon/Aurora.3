@@ -76,17 +76,17 @@
 			M.eye_blind = 5
 			return
 
-		var/safety = M:eyecheck()
+		var/safety = M:eyecheck(TRUE)
 		if(safety <= 0)
-			M.Weaken(10)
 			flick("e_flash", M.flash)
 				//Vaurca damage 15/01/16
 			var/mob/living/carbon/human/H = M
 			if(isvaurca(H))
-				var/obj/item/organ/eyes/E = H.internal_organs_by_name["eyes"]
+				var/obj/item/organ/eyes/E = H.get_eyes()
 				if(!E)
 					return
-				usr << span("alert", "Your eyes burn with the intense light of the flash!.")
+				user << span("alert", "Your eyes burn with the intense light of the flash!")
+				M.Weaken(10)
 				E.damage += rand(10, 11)
 				if(E.damage > 12)
 					M.eye_blurry += rand(3,6)
@@ -96,8 +96,7 @@
 					M.eye_blind = 5
 					M.eye_blurry = 5
 					M.disabilities |= NEARSIGHTED
-					spawn(100)
-						M.disabilities &= ~NEARSIGHTED
+					addtimer(CALLBACK(M, /mob/.proc/reset_nearsighted), 100)
 
 /*			if(ishuman(M) && ishuman(user) && M.stat!=DEAD)	//why is this even a thing
 				if(user.mind && user.mind in revs.current_antagonists)
@@ -120,7 +119,13 @@
 			flashfail = 1
 
 	else if(issilicon(M))
-		M.Weaken(rand(5,10))
+		if(isrobot(M))
+			var/mob/living/silicon/robot/R = M
+			if(R.overclocked)
+				return
+
+		M.Weaken(rand(3,7)) //should be that borg is disabled for around 3-7 seconds
+
 	else
 		flashfail = 1
 
@@ -167,7 +172,7 @@
 	//It will never break on the first use.
 	switch(times_used)
 		if(0 to 5)
-			if(prob(2*times_used))	//if you use it 5 times in a minute it has a 10% chance to break!
+			if(prob(10*times_used))	//More consequential rolls are made the more you overuse the device.
 				broken = 1
 				user << "<span class='warning'>The bulb has burnt out!</span>"
 				icon_state = "flashburnt"
@@ -195,7 +200,7 @@
 				for(var/obj/item/weapon/cloaking_device/S in M)
 					S.active = 0
 					S.icon_state = "shield0"
-		var/safety = M.eyecheck()
+		var/safety = M.eyecheck(TRUE)
 		if(safety < FLASH_PROTECTION_MODERATE)
 			if(!M.blinded)
 				flick("flash", M.flash)
@@ -207,16 +212,15 @@
 	flash_recharge()
 	switch(times_used)
 		if(0 to 5)
-			if(prob(2*times_used))
+			if(prob(20*times_used))
 				broken = 1
 				icon_state = "flashburnt"
 				return
 			times_used++
 			if(istype(loc, /mob/living/carbon))
 				var/mob/living/carbon/M = loc
-				var/safety = M.eyecheck()
+				var/safety = M.eyecheck(TRUE)
 				if(safety < FLASH_PROTECTION_MODERATE)
-					M.Weaken(10)
 					flick("e_flash", M.flash)
 					for(var/mob/O in viewers(M, null))
 						O.show_message("<span class='disarm'>[M] is blinded by the flash!</span>")

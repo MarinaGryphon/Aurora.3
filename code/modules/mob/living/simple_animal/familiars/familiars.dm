@@ -71,17 +71,10 @@
 
 	wizardy_spells = list(/spell/aoe_turf/conjure/forcewall)
 
+	flying = TRUE
+
 /mob/living/simple_animal/familiar/pike/Allow_Spacemove(var/check_drift = 0)
 	return 1
-
-/mob/living/simple_animal/familiar/pike/can_fall()
-	return FALSE
-
-/mob/living/simple_animal/familiar/pike/can_ztravel()
-	return TRUE
-
-/mob/living/simple_animal/familiar/pike/CanAvoidGravity()
-	return TRUE
 
 /mob/living/simple_animal/familiar/horror
 	name = "horror"
@@ -89,6 +82,18 @@
 	icon = 'icons/mob/mob.dmi'
 	icon_state = "horror"
 	icon_living = "horror"
+	icon_dead = "horror_dead"
+
+/mob/living/simple_animal/familiar/horror/Initialize()
+	. = ..()
+	if(prob(25))
+		icon_state = "horror_alt"
+		icon_living = "horror_alt"
+		icon_dead = "horror_alt_dead"
+	else if(prob(25))
+		icon_state = "abomination"
+		icon_living = "abomination"
+		icon_dead = "abomination_dead"
 
 	speak_emote = list("moans", "groans")
 
@@ -130,8 +135,6 @@
 	wizardy_spells = list(/spell/aoe_turf/smoke)
 
 
-
-
 /mob/living/simple_animal/familiar/pet //basically variants of normal animals with spells.
 	icon = 'icons/mob/animal.dmi'
 
@@ -144,9 +147,6 @@
 		return
 	else
 		return ..()
-
-
-
 
 /mob/living/simple_animal/familiar/pet/cat
 	name = "black cat"

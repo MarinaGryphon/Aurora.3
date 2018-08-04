@@ -108,6 +108,9 @@ var/global/list/plant_seed_sprites = list()
 /obj/item/seeds/berryseed
 	seed_type = "berries"
 
+/obj/item/seeds/blueberryseed
+	seed_type = "blueberries"
+
 /obj/item/seeds/glowberryseed
 	seed_type = "glowberries"
 
@@ -161,6 +164,9 @@ var/global/list/plant_seed_sprites = list()
 
 /obj/item/seeds/amanitamycelium
 	seed_type = "amanita"
+
+/obj/item/seeds/panocelium
+	seed_type = "panocelium"
 
 /obj/item/seeds/angelmycelium
 	seed_type = "destroyingangel"
@@ -281,3 +287,12 @@ var/global/list/plant_seed_sprites = list()
 
 /obj/item/seeds/koisspore
 	seed_type = "koisspore"
+
+/obj/item/seeds/blackkois
+	seed_type = "blackkois"
+
+/obj/item/seeds/earthenroot
+	seed_type = "earthenroot"
+
+/obj/item/seeds/nifberries
+	seed_type = "nifberries"

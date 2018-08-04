@@ -39,17 +39,19 @@
 /datum/reagent/ammonia
 	name = "Ammonia"
 	id = "ammonia"
-	description = "A caustic substance commonly used in fertilizer or household cleaners."
+	description = "A caustic substance commonly used in fertilizer or household cleaners. Poisonous to most lifeforms, lingers for a while if inhaled."
 	reagent_state = LIQUID
 	color = "#404030"
 	metabolism = REM * 0.5
 	taste_description = "mordant"
 	taste_mult = 2
+	breathe_mul = 2
+	breathe_met = REM * 0.25
 
 /datum/reagent/ammonia/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(alien == IS_VOX)
 		M.adjustOxyLoss(-removed * 10)
-	else if(alien != IS_DIONA)
+	else
 		M.adjustToxLoss(removed * 1.5)
 
 /datum/reagent/carbon
@@ -63,8 +65,6 @@
 	taste_mult = 1.5
 
 /datum/reagent/carbon/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	if(M.ingested && M.ingested.reagent_list.len > 1) // Need to have at least 2 reagents - cabon and something to remove
 		var/effect = 1 / (M.ingested.reagent_list.len - 1)
 		for(var/datum/reagent/R in M.ingested.reagent_list)
@@ -88,13 +88,13 @@
 	color = "#6E3B08"
 	taste_description = "copper"
 
-/datum/reagent/ethanol
-	name = "Ethanol" //Parent class for all alcoholic reagents.
-	id = "ethanol"
-	description = "A well-known alcohol with a variety of applications."
+/datum/reagent/alcohol //Parent class for all alcoholic reagents, though this one shouldn't be used anywhere.
+	name = null	// This null name should prevent alcohol from being added to global lists.
+	id = "alcohol"
+	description = "An abstract type you shouldn't be able to see."
 	reagent_state = LIQUID
 	color = "#404030"
-	ingest_met = 0.5
+
 	var/nutriment_factor = 0.5
 	var/strength = 100 // This is the Alcohol By Volume of the drink, value is in the range 0-100 unless you wanted to create some bizarre bluespace alcohol with <100
 
@@ -105,22 +105,62 @@
 	var/datum/modifier/caffeine_mod
 	var/caffeine  = 0
 
+	var/flammability_divisor = 10
+
+	unaffected_species = IS_MACHINE
+
+	taste_description = "mistakes"
+
+	glass_icon_state = "glass_clear"
+	glass_name = "glass of coder fuckups"
+	glass_desc = "A glass of distilled maintainer tears."
+
+/datum/reagent/alcohol/Destroy()
+	if (caffeine_mod)
+		QDEL_NULL(caffeine_mod)
+
+	return ..()
+
+/datum/reagent/alcohol/touch_mob(mob/living/L, amount)
+	if (istype(L) && strength > 40)
+		L.adjust_fire_stacks((amount / (flammability_divisor || 1)) * (strength / 100))
+
+/datum/reagent/alcohol/affect_blood(mob/living/carbon/M, alien, removed)
+	M.adjustToxLoss(removed * 2)
+
+/datum/reagent/alcohol/affect_ingest(mob/living/carbon/M, alien, removed)
+
+	M.intoxication += (strength / 100) * removed
+
+	if (druggy != 0)
+		M.druggy = max(M.druggy, druggy)
+
+	if (adj_temp > 0 && M.bodytemperature < targ_temp) // 310 is the normal bodytemp. 310.055
+		M.bodytemperature = min(targ_temp, M.bodytemperature + (adj_temp * TEMPERATURE_DAMAGE_COEFFICIENT))
+	if (adj_temp < 0 && M.bodytemperature > targ_temp)
+		M.bodytemperature = min(targ_temp, M.bodytemperature - (adj_temp * TEMPERATURE_DAMAGE_COEFFICIENT))
+
+	if (halluci)
+		M.hallucination = max(M.hallucination, halluci)
+
+	if (caffeine && !caffeine_mod)
+		caffeine_mod = M.add_modifier(/datum/modifier/stimulant, MODIFIER_REAGENT, src, _strength = caffeine, override = MODIFIER_OVERRIDE_STRENGTHEN)
+
+/datum/reagent/alcohol/ethanol
+	name = "Ethanol"
+	id = "ethanol"
+	description = "A well-known alcohol with a variety of applications."
+	ingest_met = 0.5
+	flammability_divisor = 10
+
 	taste_description = "pure alcohol"
 
 	glass_icon_state = "glass_clear"
 	glass_name = "glass of ethanol"
 	glass_desc = "A well-known alcohol with a variety of applications."
 
-/datum/reagent/ethanol/touch_mob(var/mob/living/L, var/amount)
-	if(istype(L) && strength > 40)
-		L.adjust_fire_stacks((amount / 10) * (strength / 100))
-
-/datum/reagent/ethanol/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	M.adjustToxLoss(removed * 2)
-	return
-
-/datum/reagent/ethanol/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
-	if(isvaurca(M))//Vaurca are damaged instead of getting nutrients, but they can still get drunk
+/datum/reagent/alcohol/ethanol/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
+	if(alien == IS_VAURCA)//Vaurca are damaged instead of getting nutrients, but they can still get drunk
 		M.adjustToxLoss(1.5 * removed * (strength / 100))
 	else
 		M.nutrition += nutriment_factor * removed
@@ -128,30 +168,12 @@
 	if(alien == IS_DIONA)
 		return //Diona can gain nutrients, but don't get drunk or suffer other effects
 
-	if(isunathi(M))//unathi are poisoned by alcohol as well
+	if (alien == IS_UNATHI)//unathi are poisoned by alcohol as well
 		M.adjustToxLoss(1.5 * removed * (strength / 100))
 
-	var/quantity = (strength / 100) * removed
-	M.intoxication += quantity
+	..()
 
-
-	if(druggy != 0)
-		M.druggy = max(M.druggy, druggy)
-
-	if(adj_temp > 0 && M.bodytemperature < targ_temp) // 310 is the normal bodytemp. 310.055
-		M.bodytemperature = min(targ_temp, M.bodytemperature + (adj_temp * TEMPERATURE_DAMAGE_COEFFICIENT))
-	if(adj_temp < 0 && M.bodytemperature > targ_temp)
-		M.bodytemperature = min(targ_temp, M.bodytemperature - (adj_temp * TEMPERATURE_DAMAGE_COEFFICIENT))
-
-	if(halluci)
-		M.hallucination = max(M.hallucination, halluci)
-
-	if (caffeine && !caffeine_mod)
-		caffeine_mod = M.add_modifier(/datum/modifier/stimulant, MODIFIER_REAGENT, src, _strength = caffeine, override = MODIFIER_OVERRIDE_STRENGTHEN)
-
-
-
-/datum/reagent/ethanol/touch_obj(var/obj/O)
+/datum/reagent/alcohol/ethanol/touch_obj(var/obj/O)
 	if(istype(O, /obj/item/weapon/paper))
 		var/obj/item/weapon/paper/paperaffected = O
 		paperaffected.clearpaper()
@@ -169,18 +191,16 @@
 	return
 
 
-//Butanol is a common alcohol that is fairly ineffective for humans and most other species, but highly intoxicating to unathi
-//Butanol duplicates a lot of code from ethanol. This is by design, it does not inherit.
-//Possible future todo: Add "alcohol" as a parent class to both ethanol and butanol
-/datum/reagent/butanol
-	name = "Butanol" //Parent class for all alcoholic reagents.
+// Butanol is a common alcohol that is fairly ineffective for humans and most other species, but highly intoxicating to unathi.
+// Most behavior is inherited from alcohol.
+/datum/reagent/alcohol/butanol
+	name = "Butanol"
 	id = "butanol"
 	description = "A fairly harmless alcohol that has intoxicating effects on certain species."
 	reagent_state = LIQUID
 	color = "#404030"
 	ingest_met = 0.17 //Extremely slow metabolic rate means the liver will generally purge it faster than it can intoxicate you
-	var/nutriment_factor = 0.5
-	var/strength = 100 // This is the ABV of the drink
+	flammability_divisor = 7	//Butanol is a bit less flammable than ethanol
 
 	taste_description = "alcohol"
 
@@ -188,28 +208,16 @@
 	glass_name = "glass of butanol"
 	glass_desc = "A fairly harmless alcohol that has intoxicating effects on certain species."
 
-/datum/reagent/butanol/touch_mob(var/mob/living/L, var/amount)
-	if(istype(L) && strength > 40)
-		L.adjust_fire_stacks((amount / 7) * (strength / 100)) //Butanol is a bit less flammable than ethanol
-
-/datum/reagent/butanol/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	M.adjustToxLoss(removed)
-	return
-
-/datum/reagent/butanol/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
-	if(isvaurca(M))//Vaurca are damaged instead of getting nutrients, but they can still get drunk
+/datum/reagent/alcohol/butanol/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
+	if (alien == IS_VAURCA)
 		M.adjustToxLoss(removed * (strength / 100))
 	else
 		M.nutrition += nutriment_factor * removed
 
-	if(alien == IS_DIONA)
-		return //Diona can gain nutrients, but don't get drunk or suffer other effects
+	if (alien == IS_UNATHI)
+		ingest_met = initial(ingest_met)*3
 
-	if(isunathi(M))
-		ingest_met = initial(ingest_met)*3 //Unathi digest butanol much faster
-
-	var/quantity = (strength / 100) * removed
-	M.intoxication += quantity
+	..()
 
 /datum/reagent/hydrazine
 	name = "Hydrazine"
@@ -242,8 +250,7 @@
 	taste_description = "metal"
 
 /datum/reagent/iron/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien != IS_DIONA)
-		M.add_chemical_effect(CE_BLOODRESTORE, 8 * removed)
+	M.add_chemical_effect(CE_BLOODRESTORE, 8 * removed)
 
 /datum/reagent/lithium
 	name = "Lithium"
@@ -254,11 +261,10 @@
 	taste_description = "metal"
 
 /datum/reagent/lithium/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien != IS_DIONA)
-		if(M.canmove && !M.restrained() && !(istype(M.loc, /turf/space)))
-			step(M, pick(cardinal))
-		if(prob(5))
-			M.emote(pick("twitch", "drool", "moan"))
+	if(M.canmove && !M.restrained() && !(istype(M.loc, /turf/space)))
+		step(M, pick(cardinal))
+	if(prob(5))
+		M.emote(pick("twitch", "drool", "moan"))
 
 /datum/reagent/mercury
 	name = "Mercury"
@@ -270,13 +276,12 @@
 	taste_mult = 0 //mercury apparently is tasteless
 
 /datum/reagent/mercury/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien != IS_DIONA)
-		if(M.canmove && !M.restrained() && !(istype(M.loc, /turf/space)))
-			step(M, pick(cardinal))
-		if(prob(5))
-			M.emote(pick("twitch", "drool", "moan"))
+	if(M.canmove && !M.restrained() && !(istype(M.loc, /turf/space)))
+		step(M, pick(cardinal))
+	if(prob(5))
+		M.emote(pick("twitch", "drool", "moan"))
 
-		M.adjustBrainLoss(removed)
+	M.adjustBrainLoss(removed)
 
 /datum/reagent/phosphorus
 	name = "Phosphorus"
@@ -340,6 +345,13 @@
 
 /datum/reagent/acid/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	M.take_organ_damage(0, removed * power)
+
+/datum/reagent/acid/affect_breathe(var/mob/living/carbon/human/H, var/alien, var/removed)
+	. = ..()
+	if(istype(H))
+		var/obj/item/organ/L = H.internal_organs_by_name["lungs"]
+		if(istype(L))
+			L.take_damage(removed * power * 0.5)
 
 /datum/reagent/acid/affect_touch(var/mob/living/carbon/M, var/alien, var/removed) // This is the most interesting
 	if(ishuman(M))
@@ -421,6 +433,16 @@
 	power = 3
 	meltdose = 8
 	taste_description = "stomach acid"
+
+/datum/reagent/acid/polyacid //Not in dispensers, but it should be here
+	name = "Polytrinic acid"
+	id = "pacid"
+	description = "Polytrinic acid is a an extremely corrosive chemical substance."
+	reagent_state = LIQUID
+	color = "#8E18A9"
+	power = 6
+	meltdose = 4
+	taste_description = "acid"
 
 /datum/reagent/silicon
 	name = "Silicon"

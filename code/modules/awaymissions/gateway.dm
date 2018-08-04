@@ -116,10 +116,10 @@ obj/machinery/gateway/centerstation/process()
 
 
 //okay, here's the good teleporting stuff
-/obj/machinery/gateway/centerstation/Bumped(atom/movable/M as mob|obj)
-	if(!ready)		return
-	if(!active)		return
-	if(!awaygate)	return
+/obj/machinery/gateway/centerstation/CollidedWith(atom/movable/M as mob|obj)
+	if(!ready || !active || !awaygate)
+		return
+
 	if(awaygate.calibrated)
 		M.loc = get_step(awaygate.loc, SOUTH)
 		M.set_dir(SOUTH)
@@ -134,7 +134,7 @@ obj/machinery/gateway/centerstation/process()
 
 
 /obj/machinery/gateway/centerstation/attackby(obj/item/device/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/device/multitool))
+	if(ismultitool(W))
 		user << "\black The gate is already calibrated, there is no work for you to do here."
 		return
 
@@ -216,9 +216,10 @@ obj/machinery/gateway/centerstation/process()
 	toggleoff()
 
 
-/obj/machinery/gateway/centeraway/Bumped(atom/movable/M as mob|obj)
-	if(!ready)	return
-	if(!active)	return
+/obj/machinery/gateway/centeraway/CollidedWith(atom/movable/M as mob|obj)
+	if(!ready || !active)
+		return
+
 	if(istype(M, /mob/living/carbon))
 		for(var/obj/item/weapon/implant/exile/E in M)//Checking that there is an exile implant in the contents
 			if(E.imp_in == M)//Checking that it's actually implanted vs just in their pocket
@@ -229,7 +230,7 @@ obj/machinery/gateway/centerstation/process()
 
 
 /obj/machinery/gateway/centeraway/attackby(obj/item/device/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/device/multitool))
+	if(ismultitool(W))
 		if(calibrated)
 			user << "\black The gate is already calibrated, there is no work for you to do here."
 			return

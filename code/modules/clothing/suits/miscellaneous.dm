@@ -171,8 +171,8 @@
 	desc = "A suit that completely restrains the wearer."
 	icon_state = "straight_jacket"
 	item_state = "straight_jacket"
-	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT|HIDETAIL
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|HANDS
+	flags_inv = HIDEGLOVES|HIDEJUMPSUIT
 
 /obj/item/clothing/suit/straight_jacket/equipped(var/mob/user, var/slot)
 	if (slot == slot_wear_suit)
@@ -195,8 +195,11 @@
 /obj/item/clothing/suit/leathercoat
 	name = "leather coat"
 	desc = "A long, thick black leather coat."
-	icon_state = "leathercoat"
-	item_state = "leathercoat"
+	icon_state = "leathercoat_alt"
+	item_state = "leathercoat_alt"
+	body_parts_covered = UPPER_TORSO|ARMS
+	min_cold_protection_temperature = T0C - 20
+	siemens_coefficient = 0.7
 
 /obj/item/clothing/suit/browncoat
 	name = "brown leather coat"
@@ -272,6 +275,15 @@
 	desc = "A black leather coat. A corporate logo is proudly displayed on the back."
 	icon_state = "leather_jacket_nt"
 
+/obj/item/clothing/suit/storage/toggle/leather_vest
+	name = "leather vest"
+	desc = "A black leather vest."
+	icon_state = "leather_jacket_sleeveless"
+	item_state = "leather_jacket_sleeveless"
+	icon_open = "leather_jacket_sleeveless_open"
+	icon_closed = "leather_jacket_sleeveless"
+	body_parts_covered = UPPER_TORSO
+
 //This one has buttons for some reason
 /obj/item/clothing/suit/storage/toggle/brown_jacket
 	name = "leather jacket"
@@ -281,6 +293,15 @@
 	icon_open = "brown_jacket_open"
 	icon_closed = "brown_jacket"
 	body_parts_covered = UPPER_TORSO|ARMS
+
+/obj/item/clothing/suit/storage/toggle/brown_jacket/sleeveless
+	name = "brown vest"
+	desc = "A brown leather vest."
+	icon_state = "brown_jacket_sleeveless"
+	item_state = "brown_jacket_sleeveless"
+	icon_open = "brown_jacket_sleeveless_open"
+	icon_closed = "brown_jacket_sleeveless"
+	body_parts_covered = UPPER_TORSO
 
 /obj/item/clothing/suit/storage/toggle/brown_jacket/nanotrasen
 	desc = "A brown leather coat. A corporate logo is proudly displayed on the back."
@@ -305,7 +326,7 @@
 	item_state = "black_hoodie"
 	icon_open = "black_hoodie_open"
 	icon_closed = "black_hoodie"
-	
+
 /obj/item/clothing/suit/storage/toggle/tracksuit
 	name = "track jacket"
 	desc = "An athletic black and white track jacket."
@@ -345,14 +366,14 @@
 	item_state = "flannel_gray"
 	icon_open = "flannel_gray_open"
 	icon_closed = "flannel_gray"
-	
+
 /obj/item/clothing/suit/storage/toggle/flannel/purple
 	name = "purple flannel shirt"
 	icon_state = "flannel_purple"
 	item_state = "flannel_purple"
 	icon_open = "flannel_purple_open"
 	icon_closed = "flannel_purple"
-	
+
 /obj/item/clothing/suit/storage/toggle/flannel/yellow
 	name = "yellow flannel shirt"
 	icon_state = "flannel_yellow"
@@ -360,15 +381,52 @@
 	icon_open = "flannel_yellow_open"
 	icon_closed = "flannel_yellow"
 
-/obj/item/clothing/suit/storage/trench
+/obj/item/clothing/suit/storage/toggle/trench
 	name = "brown trenchcoat"
 	desc = "A rugged canvas trenchcoat."
 	icon_state = "trench"
 	item_state = "trench"
+	icon_open = "trench_open"
+	icon_closed = "trench"
 	blood_overlay_type = "coat"
 	body_parts_covered = UPPER_TORSO|ARMS
-	
-/obj/item/clothing/suit/storage/trench/grey
+
+/obj/item/clothing/suit/storage/toggle/trench/grey
 	name = "grey trenchcoat"
 	icon_state = "trench2"
 	item_state = "trench2"
+	icon_open = "trench2_open"
+	icon_closed = "trench2"
+	blood_overlay_type = "coat"
+
+/obj/item/clothing/suit/storage/dominia
+	name = "dominia cape"
+	desc = "This is a cape in the style of Dominia nobility. It's the latest fashion across Dominian space."
+	icon_state = "dominian_cape"
+	item_state = "dominian_cape"
+
+/obj/item/clothing/suit/storage/toggle/dominia
+	name = "dominia great coat"
+	desc = "This is a great coat in the style of Dominia nobility. It's the latest fashion across Dominian space."
+	icon_state = "dominian_noble"
+	item_state = "dominian_noble"
+	icon_open = "dominian_noble_open"
+	icon_closed = "dominian_noble"
+
+/obj/item/clothing/suit/storage/toggle/dominia/alt
+	icon_state = "dominian_noble2"
+	item_state = "dominian_noble2"
+	icon_open = "dominian_noble2_open"
+	icon_closed = "dominian_noble2"
+
+/obj/item/clothing/suit/storage/toggle/dominia/black
+	icon_state = "dominian_noble4"
+	item_state = "dominian_noble4"
+	icon_open = "dominian_noble4_open"
+	icon_closed = "dominian_noble4"
+
+/obj/item/clothing/suit/storage/toggle/dominia/black/alt
+	icon_state = "dominian_noble5"
+	item_state = "dominian_noble5"
+	icon_open = "dominian_noble5_open"
+	icon_closed = "dominian_noble5"

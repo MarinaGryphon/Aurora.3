@@ -29,11 +29,11 @@
 	toggle_secure()
 		secured = !secured
 		if(secured)
-			processing_objects.Add(src)
+			START_PROCESSING(SSprocessing, src)
 		else
 			on = 0
 			if(first)	qdel(first)
-			processing_objects.Remove(src)
+			STOP_PROCESSING(SSprocessing, src)
 		update_icon()
 		return secured
 
@@ -236,13 +236,13 @@
 		return
 	return
 
-/obj/effect/beam/i_beam/Bump()
+/obj/effect/beam/i_beam/Collide()
+	. = ..()
 	qdel(src)
-	return
 
-/obj/effect/beam/i_beam/Bumped()
+/obj/effect/beam/i_beam/CollidedWith()
+	..()
 	hit()
-	return
 
 /obj/effect/beam/i_beam/Crossed(atom/movable/AM as mob|obj)
 	if(istype(AM, /obj/effect/beam))

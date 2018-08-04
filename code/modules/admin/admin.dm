@@ -46,7 +46,7 @@ proc/admin_notice(var/message, var/rights)
 		body += " played by <b>[M.client]</b> "
 		body += "\[<A href='?src=\ref[src];editrights=show'>[M.client.holder ? M.client.holder.rank : "Player"]</A>\]"
 
-	if(istype(M, /mob/new_player))
+	if(istype(M, /mob/abstract/new_player))
 		body += " <B>Hasn't Entered Game</B> "
 	else
 		body += " \[<A href='?src=\ref[src];revive=\ref[M]'>Heal</A>\] "
@@ -92,7 +92,7 @@ proc/admin_notice(var/message, var/rights)
 	"}
 
 	if (M.client)
-		if(!istype(M, /mob/new_player))
+		if(!istype(M, /mob/abstract/new_player))
 			body += "<br><br>"
 			body += "<b>Transformation:</b>"
 			body += "<br>"
@@ -338,8 +338,11 @@ proc/admin_notice(var/message, var/rights)
 	if (!istype(src,/datum/admins))
 		usr << "Error: you are not an admin!"
 		return
+
+	if (!admincaster_signature)
+		update_newscaster_sig()
 	var/dat
-	dat = text("<HEAD><TITLE>Admin Newscaster</TITLE></HEAD><H3>Admin Newscaster Unit</H3>")
+	dat = "<HEAD><TITLE>Admin Newscaster</TITLE></HEAD><H3>Admin Newscaster Unit</H3>"
 
 	switch(admincaster_screen)
 		if(0)
@@ -347,7 +350,7 @@ proc/admin_notice(var/message, var/rights)
 				<BR>Feed channels and stories entered through here will be uneditable and handled as official news by the rest of the units.
 				<BR>Note that this panel allows full freedom over the news network, there are no constrictions except the few basic ones. Don't break things!
 			"}
-			if(news_network.wanted_issue)
+			if(SSnews.wanted_issue)
 				dat+= "<HR><A href='?src=\ref[src];ac_view_wanted=1'>Read Wanted Issue</A>"
 
 			dat+= {"<HR><BR><A href='?src=\ref[src];ac_create_channel=1'>Create Feed Channel</A>
@@ -357,25 +360,26 @@ proc/admin_notice(var/message, var/rights)
 			"}
 
 			var/wanted_already = 0
-			if(news_network.wanted_issue)
+			if(SSnews.wanted_issue)
 				wanted_already = 1
 
 			dat+={"<HR><B>Feed Security functions:</B><BR>
 				<BR><A href='?src=\ref[src];ac_menu_wanted=1'>[(wanted_already) ? ("Manage") : ("Publish")] \"Wanted\" Issue</A>
 				<BR><A href='?src=\ref[src];ac_menu_censor_story=1'>Censor Feed Stories</A>
-				<BR><A href='?src=\ref[src];ac_menu_censor_channel=1'>Mark Feed Channel with [company_name] D-Notice (disables and locks the channel.</A>
+				<BR><A href='?src=\ref[src];ac_menu_censor_channel=1'>Mark Feed Channel with [current_map.company_name] D-Notice (disables and locks the channel.</A>
 				<BR><HR><A href='?src=\ref[src];ac_set_signature=1'>The newscaster recognises you as:<BR> <FONT COLOR='green'>[src.admincaster_signature]</FONT></A>
 			"}
 		if(1)
 			dat+= "Station Feed Channels<HR>"
-			if( isemptylist(news_network.network_channels) )
+			if( isemptylist(SSnews.network_channels) )
 				dat+="<I>No active channels found...</I>"
 			else
-				for(var/datum/feed_channel/CHANNEL in news_network.network_channels)
-					if(CHANNEL.is_admin_channel)
-						dat+="<B><FONT style='BACKGROUND-COLOR: LightGreen'><A href='?src=\ref[src];ac_show_channel=\ref[CHANNEL]'>[CHANNEL.channel_name]</A></FONT></B><BR>"
+				for(var/channel in SSnews.network_channels)
+					var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
+					if(FC.is_admin_channel)
+						dat+="<B><FONT style='BACKGROUND-COLOR: LightGreen'><A href='?src=\ref[src];ac_show_channel=\ref[FC]'>[FC.channel_name]</A></FONT></B><BR>"
 					else
-						dat+="<B><A href='?src=\ref[src];ac_show_channel=\ref[CHANNEL]'>[CHANNEL.channel_name]</A> [(CHANNEL.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR></B>"
+						dat+="<B><A href='?src=\ref[src];ac_show_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR></B>"
 			dat+={"<BR><HR><A href='?src=\ref[src];ac_refresh=1'>Refresh</A>
 				<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Back</A>
 			"}
@@ -418,7 +422,8 @@ proc/admin_notice(var/message, var/rights)
 			if(src.admincaster_feed_channel.channel_name =="" || src.admincaster_feed_channel.channel_name == "\[REDACTED\]")
 				dat+="<FONT COLOR='maroon'>Invalid channel name.</FONT><BR>"
 			var/check = 0
-			for(var/datum/feed_channel/FC in news_network.network_channels)
+			for(var/channel in SSnews.network_channels)
+				var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
 				if(FC.channel_name == src.admincaster_feed_channel.channel_name)
 					check = 1
 					break
@@ -429,7 +434,7 @@ proc/admin_notice(var/message, var/rights)
 			dat+="<B>[src.admincaster_feed_channel.channel_name]: </B><FONT SIZE=1>\[created by: <FONT COLOR='maroon'>[src.admincaster_feed_channel.author]</FONT>\]</FONT><HR>"
 			if(src.admincaster_feed_channel.censored)
 				dat+={"
-					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [company_name] D-Notice.<BR>
+					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
 					No further feed story additions are allowed while the D-Notice is in effect.<BR><BR>
 				"}
 			else
@@ -439,40 +444,43 @@ proc/admin_notice(var/message, var/rights)
 					var/i = 0
 					for(var/datum/feed_message/MESSAGE in src.admincaster_feed_channel.messages)
 						i++
-						dat+="-[MESSAGE.body] <BR>"
+						dat+="<BLOCKQUOTE style=\"padding:4px;border-left:4px #797979 solid\">[MESSAGE.body] <FONT SIZE=1>\[Likes: <A href='?src=\ref[src];ac_setlikes=1;'><FONT COLOR='DarkGreen'>[MESSAGE.likes]</FONT></A> Dislikes: <A href='?src=\ref[src];ac_setdislikes=1;'><FONT COLOR='maroon'>[MESSAGE.dislikes]</FONT></A>\]</FONT><BR>"
 						if(MESSAGE.img)
 							usr << browse_rsc(MESSAGE.img, "tmp_photo[i].png")
 							dat+="<img src='tmp_photo[i].png' width = '180'><BR><BR>"
-						dat+="<FONT SIZE=1>\[Story by <FONT COLOR='maroon'>[MESSAGE.author]</FONT>\]</FONT><BR>"
+						dat+="<FONT SIZE=1><A href='?src=\ref[src];ac_view_comments=1;ac_story=\ref[MESSAGE]'>View Comments</A> <A href='?src=\ref[src];ac_add_comment=1;ac_story=\ref[MESSAGE]'>Add Comment</A> <A href='?src=\ref[src];ac_like=1;ac_story=\ref[MESSAGE]'>Like Story</A> <A href='?src=\ref[src];ac_dislike=1;ac_story=\ref[MESSAGE]'>Dislike Story</A></FONT><BR>"
+						dat+="<FONT SIZE=1>\[Story by <FONT COLOR='maroon'>[MESSAGE.author] - [MESSAGE.time_stamp]</FONT>\]</FONT></BLOCKQUOTE><BR>"
 			dat+={"
 				<BR><HR><A href='?src=\ref[src];ac_refresh=1'>Refresh</A>
 				<BR><A href='?src=\ref[src];ac_setScreen=[1]'>Back</A>
 			"}
 		if(10)
 			dat+={"
-				<B>[company_name] Feed Censorship Tool</B><BR>
+				<B>[current_map.company_name] Feed Censorship Tool</B><BR>
 				<FONT SIZE=1>NOTE: Due to the nature of news Feeds, total deletion of a Feed Story is not possible.<BR>
 				Keep in mind that users attempting to view a censored feed will instead see the \[REDACTED\] tag above it.</FONT>
 				<HR>Select Feed channel to get Stories from:<BR>
 			"}
-			if(isemptylist(news_network.network_channels))
+			if(isemptylist(SSnews.network_channels))
 				dat+="<I>No feed channels found active...</I><BR>"
 			else
-				for(var/datum/feed_channel/CHANNEL in news_network.network_channels)
-					dat+="<A href='?src=\ref[src];ac_pick_censor_channel=\ref[CHANNEL]'>[CHANNEL.channel_name]</A> [(CHANNEL.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
+				for(var/channel in SSnews.network_channels)
+					var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
+					dat+="<A href='?src=\ref[src];ac_pick_censor_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
 			dat+="<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Cancel</A>"
 		if(11)
 			dat+={"
-				<B>[company_name] D-Notice Handler</B><HR>
+				<B>[current_map.company_name] D-Notice Handler</B><HR>
 				<FONT SIZE=1>A D-Notice is to be bestowed upon the channel if the handling Authority deems it as harmful for the station's
 				morale, integrity or disciplinary behaviour. A D-Notice will render a channel unable to be updated by anyone, without deleting any feed
 				stories it might contain at the time. You can lift a D-Notice if you have the required access at any time.</FONT><HR>
 			"}
-			if(isemptylist(news_network.network_channels))
+			if(isemptylist(SSnews.network_channels))
 				dat+="<I>No feed channels found active...</I><BR>"
 			else
-				for(var/datum/feed_channel/CHANNEL in news_network.network_channels)
-					dat+="<A href='?src=\ref[src];ac_pick_d_notice=\ref[CHANNEL]'>[CHANNEL.channel_name]</A> [(CHANNEL.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
+				for(var/channel in SSnews.network_channels)
+					var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
+					dat+="<A href='?src=\ref[src];ac_pick_d_notice=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
 
 			dat+="<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Back</A>"
 		if(12)
@@ -496,7 +504,7 @@ proc/admin_notice(var/message, var/rights)
 			"}
 			if(src.admincaster_feed_channel.censored)
 				dat+={"
-					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [company_name] D-Notice.<BR>
+					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
 					No further feed story additions are allowed while the D-Notice is in effect.<BR><BR>
 				"}
 			else
@@ -511,7 +519,7 @@ proc/admin_notice(var/message, var/rights)
 			dat+="<B>Wanted Issue Handler:</B>"
 			var/wanted_already = 0
 			var/end_param = 1
-			if(news_network.wanted_issue)
+			if(SSnews.wanted_issue)
 				wanted_already = 1
 				end_param = 2
 			if(wanted_already)
@@ -522,7 +530,7 @@ proc/admin_notice(var/message, var/rights)
 				<A href='?src=\ref[src];ac_set_wanted_desc=1'>Description</A>: [src.admincaster_feed_message.body] <BR>
 			"}
 			if(wanted_already)
-				dat+="<B>Wanted Issue created by:</B><FONT COLOR='green'> [news_network.wanted_issue.backup_author]</FONT><BR>"
+				dat+="<B>Wanted Issue created by:</B><FONT COLOR='green'> [SSnews.wanted_issue.backup_author]</FONT><BR>"
 			else
 				dat+="<B>Wanted Issue will be created under prosecutor:</B><FONT COLOR='green'> [src.admincaster_signature]</FONT><BR>"
 			dat+="<BR><A href='?src=\ref[src];ac_submit_wanted=[end_param]'>[(wanted_already) ? ("Edit Issue") : ("Submit")]</A>"
@@ -548,13 +556,13 @@ proc/admin_notice(var/message, var/rights)
 			"}
 		if(18)
 			dat+={"
-				<B><FONT COLOR ='maroon'>-- STATIONWIDE WANTED ISSUE --</B></FONT><BR><FONT SIZE=2>\[Submitted by: <FONT COLOR='green'>[news_network.wanted_issue.backup_author]</FONT>\]</FONT><HR>
-				<B>Criminal</B>: [news_network.wanted_issue.author]<BR>
-				<B>Description</B>: [news_network.wanted_issue.body]<BR>
+				<B><FONT COLOR ='maroon'>-- STATIONWIDE WANTED ISSUE --</B></FONT><BR><FONT SIZE=2>\[Submitted by: <FONT COLOR='green'>[SSnews.wanted_issue.backup_author]</FONT>\]</FONT><HR>
+				<B>Criminal</B>: [SSnews.wanted_issue.author]<BR>
+				<B>Description</B>: [SSnews.wanted_issue.body]<BR>
 				<B>Photo:</B>:
 			"}
-			if(news_network.wanted_issue.img)
-				usr << browse_rsc(news_network.wanted_issue.img, "tmp_photow.png")
+			if(SSnews.wanted_issue.img)
+				usr << browse_rsc(SSnews.wanted_issue.img, "tmp_photow.png")
 				dat+="<BR><img src='tmp_photow.png' width = '180'>"
 			else
 				dat+="None"
@@ -564,8 +572,16 @@ proc/admin_notice(var/message, var/rights)
 				<FONT COLOR='green'>Wanted issue for [src.admincaster_feed_message.author] successfully edited.</FONT><BR><BR>
 				<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Return</A><BR>
 			"}
+		if(20) //comments but with more censorship!
+			dat+="<B>Comments:</B></BR>"
+			if(isemptylist(src.admincaster_viewing_message.comments))
+				dat+="No comments on this story yet!</BR>"
+			else
+				for(var/datum/feed_comment/COMMENT in src.admincaster_viewing_message.comments)
+					dat+="<BLOCKQUOTE style=\"padding:2px 4px;border-left:4px #797979 solid;\"><B>\[[world.time]\] [COMMENT.author]:</B>[COMMENT.message]<BR><A href='?src=\ref[src];ac_censorcomment=1;ac_comment=\ref[COMMENT]>Censor Comment</A></BLOCKQUOTE>"
+			dat+="<A href='?src=\ref[src];ac_setScreen=[9]'>Return</A>"
 		else
-			dat+="I'm sorry to break your immersion. This shit's bugged. Report this bug to Agouri, polyxenitopalidou@gmail.com"
+			dat+="Please report this on GitHub, along with what you did to make this appear."
 
 	//world << "Channelname: [src.admincaster_feed_channel.channel_name] [src.admincaster_feed_channel.author]"
 	//world << "Msg: [src.admincaster_feed_message.author] [src.admincaster_feed_message.body]"
@@ -748,6 +764,7 @@ proc/admin_notice(var/message, var/rights)
 	world.visibility = !(world.visibility)
 	var/long_message = " toggled hub visibility. The server is now [world.visibility ? "visible" : "invisible"] ([world.visibility])."
 
+	post_webhook_event(WEBHOOK_ADMIN, list("title"="Hub visibility has been toggled", "message"="**[key_name(src)]**" + long_message))
 	discord_bot.send_to_admins("[key_name(src)]" + long_message)
 	message_admins("[key_name_admin(usr)]" + long_message, 1)
 	log_admin("[key_name(usr)] toggled hub visibility.")
@@ -1200,7 +1217,7 @@ proc/admin_notice(var/message, var/rights)
 		H.regenerate_icons()
 
 
-/proc/get_options_bar(whom, detail = 2, name = 0, link = 1, highlight_special = 1)
+/proc/get_options_bar(whom, detail = 2, name = 0, link = 1, highlight_special = 1, var/datum/ticket/ticket = null)
 	if(!whom)
 		return "<b>(*null*)</b>"
 	var/mob/M
@@ -1212,25 +1229,25 @@ proc/admin_notice(var/message, var/rights)
 		M = whom
 		C = M.client
 	else
-		return "<b>(*not an mob*)</b>"
+		return "<b>(*not a mob*)</b>"
 	switch(detail)
 		if(0)
-			return "<b>[key_name(C, link, name, highlight_special)]</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)]</b>"
 
 		if(1)	//Private Messages
-			return "<b>[key_name(C, link, name, highlight_special)](<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>)</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>)</b>"
 
 		if(2)	//Admins
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special)](<A HREF='?_src_=holder;adminmoreinfo=[ref_mob]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)]) (<A HREF='?_src_=holder;check_antagonist=1'>CA</A>)</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=holder;adminmoreinfo=[ref_mob]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)]) (<A HREF='?_src_=holder;check_antagonist=1'>CA</A>)</b>"
 
-		if(3)	//Undibbsed
+		if(3)	//Devs
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special)](<A HREF='?_src_=holder;adminmoreinfo=[ref_mob]'>?</A>) (<A HREF='?_src_=holder;admindibs=\ref[C]'>DIBS</A>) (<A HREF='?_src_=holder;adminplayeropts=\ref[M]'>PP</A>) ([admin_jump_link(M, src)])</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>)([admin_jump_link(M, src)])</b>"
 
 		if(4)	//Mentors
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special)] (<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)])</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)] (<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)])</b>"
 
 //
 //ALL DONE
@@ -1239,7 +1256,7 @@ proc/admin_notice(var/message, var/rights)
 
 //Returns 1 to let the dragdrop code know we are trapping this event
 //Returns 0 if we don't plan to trap the event
-/datum/admins/proc/cmd_ghost_drag(var/mob/dead/observer/frommob, var/mob/living/tomob)
+/datum/admins/proc/cmd_ghost_drag(var/mob/abstract/observer/frommob, var/mob/living/tomob)
 	if(!istype(frommob))
 		return //Extra sanity check to make sure only observers are shoved into things
 
@@ -1317,9 +1334,9 @@ proc/admin_notice(var/message, var/rights)
 
 	if(check_rights(R_ADMIN|R_MOD))
 		if (H.paralysis == 0)
-			H.paralysis = 8000
 			msg = "has paralyzed [key_name_admin(H)]."
 			H.visible_message("<font color='#002eb8'><b>OOC Information:</b></font> <font color='red'>[H] has been winded by a member of staff! Please freeze all roleplay involving their character until the matter is resolved! Adminhelp if you have further questions.</font>", "<font color='red'><b>You have been winded by a member of staff! Please stand by until they contact you!</b></font>")
+			H.paralysis = 8000
 		else
 			if (alert("The player is currently winded. Do you want to unwind him?", "Unwind player?", "Yes", "No") == "No")
 				return

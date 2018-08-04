@@ -358,7 +358,7 @@
 					src.SUIT = null
 				if(src.MASK)
 					src.MASK = null
-				visible_message("<font color='red'>With a loud whining noise, the Suit Storage Unit's door grinds open. Puffs of ashen smoke come out of its chamber.</font>", 3)
+				visible_message("<font color='red'>With a loud whining noise, [src]'s door grinds open. Puffs of ashen smoke come out of its chamber.</font>", range = 3)
 				src.isbroken = 1
 				src.isopen = 1
 				src.islocked = 0
@@ -453,7 +453,7 @@
 	if ( (src.OCCUPANT) || (src.HELMET) || (src.SUIT) )
 		usr << "<font color='red'>It's too cluttered inside for you to fit in!</font>"
 		return
-	visible_message("[usr] starts squeezing into the suit storage unit!", 3)
+	usr.visible_message("<span class='notice'>[usr] starts squeezing into [src]!</span>", "<span class='notice'>You start squeezing into [src]!</span>", range = 3)
 	if(do_after(usr, 10))
 		usr.stop_pulling()
 		usr.client.perspective = EYE_PERSPECTIVE
@@ -478,7 +478,7 @@
 /obj/machinery/suit_storage_unit/attackby(obj/item/I as obj, mob/user as mob)
 	if(!src.ispowered)
 		return
-	if(istype(I, /obj/item/weapon/screwdriver))
+	if(isscrewdriver(I))
 		src.panelopen = !src.panelopen
 		playsound(src.loc, 'sound/items/Screwdriver.ogg', 100, 1)
 		user << text("<font color='blue'>You [] the unit's maintenance panel.</font>",(src.panelopen ? "open up" : "close") )
@@ -497,7 +497,7 @@
 		if ( (src.OCCUPANT) || (src.HELMET) || (src.SUIT) ) //Unit needs to be absolutely empty
 			user << "<font color='red'>The unit's storage area is too cluttered.</font>"
 			return
-		visible_message("[user] starts putting [G.affecting.name] into the Suit Storage Unit.", 3)
+		user.visible_message("<span class='notice'>[user] starts putting [G.affecting] into [src].</span>", "<span class='notice'>You start putting [G.affecting] into [src].</span>", range = 3)
 		if(do_after(user, 20))
 			if(!G || !G.affecting) return //derpcheck
 			var/mob/M = G.affecting
@@ -595,7 +595,7 @@
 	//Departments that the cycler can paint suits to look like.
 	var/list/departments = list("Engineering","Mining","Medical","Security","Atmos")
 	//Species that the suits can be configured to fit.
-	var/list/species = list("Human","Skrell","Unathi","Tajara")
+	var/list/species = list("Human","Skrell","Unathi","Tajara", "Vaurca")
 
 	var/target_department
 	var/target_species
@@ -624,35 +624,30 @@
 	model_text = "Engineering"
 	req_access = list(access_construction)
 	departments = list("Engineering","Atmos")
-	species = list("Human","Tajara","Skrell","Unathi") //Add Unathi when sprites exist for their suits.
 
 /obj/machinery/suit_cycler/mining
 	name = "Mining suit cycler"
 	model_text = "Mining"
 	req_access = list(access_mining)
 	departments = list("Mining")
-	species = list("Human","Tajara","Skrell","Unathi")
 
 /obj/machinery/suit_cycler/security
 	name = "Security suit cycler"
 	model_text = "Security"
 	req_access = list(access_security)
 	departments = list("Security")
-	species = list("Human","Tajara","Skrell","Unathi")
 
 /obj/machinery/suit_cycler/medical
 	name = "Medical suit cycler"
 	model_text = "Medical"
 	req_access = list(access_medical)
 	departments = list("Medical")
-	species = list("Human","Tajara","Skrell","Unathi")
 
 /obj/machinery/suit_cycler/syndicate
 	name = "Nonstandard suit cycler"
 	model_text = "Nonstandard"
 	req_access = list(access_syndicate)
 	departments = list("Mercenary")
-	species = list("Human","Tajara","Skrell","Unathi")
 	can_repair = 1
 
 /obj/machinery/suit_cycler/wizard
@@ -681,7 +676,7 @@
 			return
 
 	//Hacking init.
-	if(istype(I, /obj/item/device/multitool) || istype(I, /obj/item/weapon/wirecutters))
+	if(ismultitool(I) || iswirecutter(I))
 		if(panel_open)
 			attack_hand(user)
 		return
@@ -700,7 +695,7 @@
 			user << "<span class='danger'>There is no room inside the cycler for [G.affecting.name].</span>"
 			return
 
-		visible_message("<span class='notice'>[user] starts putting [G.affecting.name] into the suit cycler.</span>", 3)
+		user.visible_message("<span class='notice'>[user] starts putting [G.affecting] into [src].</span>", "<span class='notice'>You start putting [G.affecting] into [src].</span>", range = 3)
 
 		if(do_after(user, 20))
 			if(!G || !G.affecting) return
@@ -717,7 +712,7 @@
 			src.updateUsrDialog()
 
 			return
-	else if(istype(I,/obj/item/weapon/screwdriver))
+	else if(isscrewdriver(I))
 
 		panel_open = !panel_open
 		user << "You [panel_open ?  "open" : "close"] the maintenance panel."
@@ -868,6 +863,18 @@
 	else if(href_list["apply_paintjob"])
 
 		if(!suit && !helmet) return
+		if(suit && suit.helmet)
+			to_chat(usr, "<span class='alert'>\The [src] cannot function while a helmet is attached to the suit!</span>")
+			return
+		var/list/no_refit
+		if (helmet && !helmet.refittable)
+			LAZYADD(no_refit, helmet)
+		if (suit && !suit.refittable)
+			LAZYADD(no_refit, suit)
+		if (LAZYLEN(no_refit))
+			to_chat(usr, "<span class='alert'>\The [english_list(no_refit)] in [src] [no_refit.len == 1 ? "is" : "are"] not refittable!</span>")
+			return
+
 		active = 1
 		spawn(100)
 			apply_paintjob()

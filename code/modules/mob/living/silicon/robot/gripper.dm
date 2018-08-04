@@ -75,23 +75,13 @@
 	return 0
 
 /obj/item/weapon/gripper/update_icon()
-	overlays.Cut()//Dummy object will be picked up by garbage collection
+	underlays.Cut()
 	if (wrapped && wrapped.icon)
+		var/mutable_appearance/MA = new(wrapped)
+		MA.layer = FLOAT_LAYER
+		MA.pixel_y = -8
 
-
-		var/obj/dummy = new //We create a dummy object which looks like the gripped item, to use as an overlay
-		dummy.icon = wrapped.icon
-		dummy.icon_state = wrapped.icon_state
-		dummy.overlays = wrapped.overlays
-		dummy.layer = 20
-		dummy.pixel_y = -8
-		overlays += dummy
-
-		var/image/I = image(icon, src, icon_state)//Overlaying ourselves ontop of the thing.
-		I.layer = 20
-		overlays += I
-		//Layering overlays seems faster than blending the images
-
+		underlays += MA
 
 /obj/item/weapon/gripper/attack_self(mob/user as mob)
 	if(wrapped)
@@ -162,7 +152,7 @@
 	if(wrapped) //Already have an item.
 		return//This is handled in /mob/living/silicon/robot/GripperClickOn
 
-	else if (istype(target, /obj/item/weapon/storage) && !istype(target, /obj/item/weapon/storage/secure))
+	else if (istype(target, /obj/item/weapon/storage) && !istype(target, /obj/item/weapon/storage/pill_bottle) && !istype(target, /obj/item/weapon/storage/secure))
 		for (var/obj/item/C in target.contents)
 			if (grip_item(C, user, 0))
 				user << "You grab the [C] from inside the [target.name]."
@@ -193,15 +183,16 @@
 	//Definitions of gripper subtypes
 */
 
-// VEEEEERY limited version for mining borgs. Basically only for swapping cells and upgrading the drills.
+// VEEEEERY limited version for mining borgs. Basically only for swapping cells, upgrading the drills, and upgrading custom KAs.
 /obj/item/weapon/gripper/miner
 	name = "drill maintenance gripper"
 	desc = "A simple grasping tool for the maintenance of heavy drilling machines."
 	icon_state = "gripper-mining"
 
 	can_hold = list(
-	/obj/item/weapon/cell,
-	/obj/item/weapon/stock_parts
+		/obj/item/weapon/cell,
+		/obj/item/weapon/stock_parts,
+		/obj/item/custom_ka_upgrade
 	)
 
 /obj/item/weapon/gripper/paperwork

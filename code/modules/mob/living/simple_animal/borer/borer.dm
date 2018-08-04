@@ -18,6 +18,8 @@
 	attacktext = "nipped"
 	friendly = "prods"
 	wander = 0
+	maxHealth = 40
+	health = 40
 	pass_flags = PASSTABLE
 	universal_understand = 1
 	holder_type = /obj/item/weapon/holder/borer
@@ -84,9 +86,9 @@
 					return
 
 				if(prob(5))
-					host.adjustBrainLoss(rand(1,2))
+					host.adjustBrainLoss(rand(1,2), 55)
 
-				if(prob(host.brainloss/20))
+				if(prob(host.getBrainLoss()/20))
 					host.say("*[pick(list("blink","blink_r","choke","aflap","drool","twitch","twitch_s","gasp"))]")
 
 /mob/living/simple_animal/borer/Stat()

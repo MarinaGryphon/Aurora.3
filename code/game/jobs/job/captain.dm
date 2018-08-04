@@ -24,6 +24,7 @@ var/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
 	satchel_type = /obj/item/weapon/storage/backpack/satchel_cap
 	alt_satchel_type = /obj/item/weapon/storage/backpack/satchel
 	duffel_type = /obj/item/weapon/storage/backpack/duffel/cap
+	messenger_bag_type = /obj/item/weapon/storage/backpack/messenger/com
 
 	equip(var/mob/living/carbon/human/H)
 		if(!H)
@@ -73,18 +74,16 @@ var/datum/announcement/minor/captain_announcement = new(do_newscast = 1)
 	economic_modifier = 10
 	ideal_character_age = 50
 
-	access = list(access_security, access_sec_doors, access_brig, access_forensics_lockers,
-			            access_medical, access_engine, access_change_ids, access_ai_upload, access_eva, access_heads,
-			            access_all_personal_lockers, access_maint_tunnels, access_bar, access_janitor, access_construction, access_morgue,
-			            access_crematorium, access_kitchen, access_cargo, access_cargo_bot, access_mailsorting, access_qm, access_hydroponics, access_lawyer,
-			            access_chapel_office, access_library, access_research, access_mining, access_heads_vault, access_mining_station,
-			            access_hop, access_RC_announce, access_keycard_auth, access_gateway)
-	minimal_access = list(access_security, access_sec_doors, access_brig, access_forensics_lockers,
-			            access_medical, access_engine, access_change_ids, access_ai_upload, access_eva, access_heads,
-			            access_all_personal_lockers, access_maint_tunnels, access_bar, access_janitor, access_construction, access_morgue,
-			            access_crematorium, access_kitchen, access_cargo, access_cargo_bot, access_mailsorting, access_qm, access_hydroponics, access_lawyer,
-			            access_chapel_office, access_library, access_research, access_mining, access_heads_vault, access_mining_station,
-			            access_hop, access_RC_announce, access_keycard_auth, access_gateway)
+	access = list(access_sec_doors, access_medical, access_engine, access_change_ids, access_eva, access_heads,
+			            access_all_personal_lockers, access_maint_tunnels, access_bar, access_janitor, access_construction,
+			            access_crematorium, access_kitchen, access_cargo, access_cargo_bot, access_mailsorting, access_qm, access_hydroponics,
+			            access_chapel_office, access_library, access_research, access_mining, access_mining_station, access_janitor,
+			            access_hop, access_RC_announce, access_keycard_auth, access_gateway, access_weapons, access_journalist)
+	minimal_access = list(access_sec_doors, access_medical, access_engine, access_change_ids, access_eva, access_heads,
+			            access_all_personal_lockers, access_maint_tunnels, access_bar, access_janitor, access_construction,
+			            access_crematorium, access_kitchen, access_cargo, access_cargo_bot, access_mailsorting, access_qm, access_hydroponics,
+			            access_chapel_office, access_library, access_research, access_mining, access_mining_station, access_janitor,
+			            access_hop, access_RC_announce, access_keycard_auth, access_gateway, access_weapons, access_journalist)
 
 
 	equip(var/mob/living/carbon/human/H)

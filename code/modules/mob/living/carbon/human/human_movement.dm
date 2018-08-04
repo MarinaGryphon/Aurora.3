@@ -6,10 +6,12 @@
 
 	if (istype(loc, /turf/space)) return -1 // It's hard to be slowed down in space by... anything
 
+	if (isopenturf(loc)) //open space checks
+		if(!(locate(/obj/structure/lattice, loc) || locate(/obj/structure/stairs, loc) || locate(/obj/structure/ladder, loc)))
+			return -1
+
 	if(embedded_flag)
 		handle_embedded_objects() //Moving with objects stuck in you can cause bad times.
-
-
 
 	var/health_deficiency = (100 - health)
 	if(health_deficiency >= 40) tally += (health_deficiency / 25)
@@ -56,10 +58,11 @@
 
 	if (drowsyness) tally += 6
 
-	if(FAT in src.mutations)
-		tally += 1.5
-	if (bodytemperature < 283.222)
-		tally += (283.222 - bodytemperature) / 10 * 1.75
+	if (!(species.flags & IS_MECHANICAL))	// Machines don't move slower when cold.
+		if(FAT in src.mutations)
+			tally += 1.5
+		if (bodytemperature < 283.222)
+			tally += (283.222 - bodytemperature) / 10 * 1.75
 
 	tally += max(2 * stance_damage, 0) //damaged/missing feet or legs is slow
 	if(mRun in mutations)
@@ -70,9 +73,11 @@
 	if(tally > 0 && (CE_SPEEDBOOST in chem_effects))
 		tally = max(0, tally-3)
 
+	var/turf/T = get_turf(src)
+	if(T)
+		tally += T.movement_cost
+
 	return (tally+config.human_delay)
-
-
 
 
 /mob/living/carbon/human/Allow_Spacemove(var/check_drift = 0)
@@ -110,17 +115,38 @@
 		return 1
 	return 0
 
+/mob/living/carbon/human/set_dir(var/new_dir)
+	. = ..()
+	if(. && species.tail)
+		update_tail_showing(1)
+
 /mob/living/carbon/human/Move()
 	. = ..()
-	if (is_noisy)
-		var/turf/T = get_turf(src)
-		if ((T.x == last_x && T.y == last_y) || !T.footstep_sound)
+
+	var/turf/T = loc
+	if (!isturf(T))
+		return
+
+	if (client)
+		var/turf/B = GetAbove(T)
+		up_hint.icon_state = "uphint[(B ? !!B.is_hole : 0)]"
+
+	if (is_noisy && !stat && !lying)
+		if ((x == last_x && y == last_y) || !T.footstep_sound)
 			return
-		last_x = T.x
-		last_y = T.y
+		last_x = x
+		last_y = y
 		if (m_intent == "run")
-			playsound(src, T.footstep_sound, 70, 1)
+			playsound(src, T.footstep_sound, 70, 1, is_footstep = TRUE)
 		else
 			footstep++
 			if (footstep % 2)
-				playsound(src, T.footstep_sound, 40, 1)
+				playsound(src, T.footstep_sound, 40, 1, is_footstep = TRUE)
+
+/mob/living/carbon/human/mob_has_gravity()
+	. = ..()
+	if(!. && mob_negates_gravity())
+		. = 1
+
+/mob/living/carbon/human/mob_negates_gravity()
+	return (shoes && shoes.negates_gravity())

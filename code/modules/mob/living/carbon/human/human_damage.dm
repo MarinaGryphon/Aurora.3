@@ -22,21 +22,38 @@
 	//TODO: fix husking
 	if( ((maxHealth - total_burn) < config.health_threshold_dead) && stat == DEAD)
 		ChangeToHusk()
+	UpdateDamageIcon() // to fix that darn overlay bug
 	return
 
-/mob/living/carbon/human/adjustBrainLoss(var/amount)
+//Some sources of brain damage shouldn't be deadly
+/mob/living/carbon/human/adjustBrainLoss(var/amount, maximum = 60)
 
 	if(status_flags & GODMODE)	return 0	//godmode
 
 	if(species && species.has_organ["brain"])
 		var/obj/item/organ/brain/sponge = internal_organs_by_name["brain"]
 		if(sponge)
+			if(amount + sponge.damage > maximum)
+				if(sponge.damage < maximum)
+					amount = maximum - sponge.damage
+				else
+					return
 			sponge.take_damage(amount)
 			brainloss = sponge.damage
 		else
 			brainloss = 200
 	else
 		brainloss = 0
+
+	if(brainloss > BRAIN_DAMAGE_MILD && !has_trauma_type(BRAIN_TRAUMA_MILD))
+		if(prob((amount * 2) + ((brainloss - BRAIN_DAMAGE_MILD) / 5))) //1 damage|50 brain damage = 4% chance
+			gain_trauma_type(BRAIN_TRAUMA_MILD)
+	if(brainloss > BRAIN_DAMAGE_SEVERE && !has_trauma_type(BRAIN_TRAUMA_SEVERE) && !has_trauma_type(BRAIN_TRAUMA_SPECIAL))
+		if(prob(amount + ((brainloss - BRAIN_DAMAGE_SEVERE) / 15))) //1 damage|150 brain damage = 3% chance
+			if(prob(20))
+				gain_trauma_type(BRAIN_TRAUMA_SPECIAL)
+			else
+				gain_trauma_type(BRAIN_TRAUMA_SEVERE)
 
 /mob/living/carbon/human/setBrainLoss(var/amount)
 
@@ -85,7 +102,7 @@
 
 
 /mob/living/carbon/human/adjustBruteLoss(var/amount)
-	amount = amount*species.brute_mod
+	amount *= brute_mod
 	if(amount > 0)
 		take_overall_damage(amount, 0)
 	else
@@ -93,7 +110,7 @@
 	BITSET(hud_updateflag, HEALTH_HUD)
 
 /mob/living/carbon/human/adjustFireLoss(var/amount)
-	amount = amount*species.burn_mod
+	amount *= burn_mod
 	if(amount > 0)
 		take_overall_damage(0, amount)
 	else
@@ -101,7 +118,7 @@
 	BITSET(hud_updateflag, HEALTH_HUD)
 
 /mob/living/carbon/human/proc/adjustBruteLossByPart(var/amount, var/organ_name, var/obj/damage_source = null)
-	amount = amount*species.brute_mod
+	amount *= brute_mod
 	if (organ_name in organs_by_name)
 		var/obj/item/organ/external/O = get_organ(organ_name)
 
@@ -114,7 +131,7 @@
 	BITSET(hud_updateflag, HEALTH_HUD)
 
 /mob/living/carbon/human/proc/adjustFireLossByPart(var/amount, var/organ_name, var/obj/damage_source = null)
-	amount = amount*species.burn_mod
+	amount *= burn_mod
 	if (organ_name in organs_by_name)
 		var/obj/item/organ/external/O = get_organ(organ_name)
 
@@ -198,6 +215,8 @@
 		oxyloss = 0
 	else
 		amount = amount*species.oxy_mod
+		if(getOxyLoss() + amount >=  abs(config.health_threshold_crit)) //start taking brain damage if they go into crit from oxyloss
+			adjustBrainLoss(amount,55) //this brain damage won't be lethal)
 		..(amount)
 
 /mob/living/carbon/human/setOxyLoss(var/amount)
@@ -225,6 +244,22 @@
 		toxloss = 0
 	else
 		..()
+
+/mob/living/carbon/human/adjustHalLoss(var/amount, var/ignoreImmunity = 0)//An inherited version so this doesnt affect cyborgs
+	if(status_flags & GODMODE)	return 0	//godmode
+	if(!ignoreImmunity)//Adjusting how hallloss works. Species with the NO_PAIN flag will suffer most of the effects of halloss, but will be immune to most conventional sources of accumulating it
+		if (species && species.flags & NO_PAIN)//Species with this flag will only gather halloss through species-specific mechanics, which apply it with the ignoreImmunity flag
+			return 0
+
+	if(wearing_rig) //I don't know if this is the best way, but I'm hard-pressed to think of a different way. Thanks Vaurca.
+		for(var/obj/item/rig_module/lattice/L in wearing_rig.installed_modules)
+			if(L.active && lattice_users.len)
+				amount = amount / (lattice_users.len + 1)
+				for(var/mob/living/carbon/human/H in lattice_users)
+					if(H != src)
+						H.setHalLoss(min(max(H.getHalLoss() + amount, 0),(H.maxHealth*2)))
+
+	halloss = min(max(halloss + amount, 0),(maxHealth*2))
 
 ////////////////////////////////////////////
 

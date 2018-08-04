@@ -5,7 +5,7 @@
 	sharp = 1
 	embed = 1 //the dart is shot fast enough to pierce space suits, so I guess splintering inside the target can be a thing. Should be rare due to low damage.
 	var/reagent_amount = 15
-	kill_count = 15 //shorter range
+	range = 15 //shorter range
 
 	muzzle_type = null
 
@@ -55,6 +55,7 @@
 	load_method = MAGAZINE
 	magazine_type = /obj/item/ammo_magazine/chemdart
 	auto_eject = 0
+	needspin = FALSE
 
 	var/list/beakers = list() //All containers inside the gun.
 	var/list/mixing = list() //Containers being used for mixing.
@@ -63,14 +64,13 @@
 	var/container_type = /obj/item/weapon/reagent_containers/glass/beaker
 	var/list/starting_chems = null
 
-/obj/item/weapon/gun/projectile/dartgun/dartgun/New()
-	..()
+/obj/item/weapon/gun/projectile/dartgun/Initialize()
+	. = ..()
 	if(starting_chems)
 		for(var/chem in starting_chems)
 			var/obj/B = new container_type(src)
 			B.reagents.add_reagent(chem, 60)
 			beakers += B
-	update_icon()
 
 /obj/item/weapon/gun/projectile/dartgun/update_icon()
 	if(!ammo_magazine)

@@ -2,11 +2,10 @@
 	real_name = "Test Dummy"
 	status_flags = GODMODE|CANPUSH
 
-/mob/living/carbon/human/dummy/mannequin/New(location, ...)
-    ..()
-    if (!initialized)
-        args[1] = TRUE
-        SSatoms.InitAtom(src, args)
+/mob/living/carbon/human/dummy/mannequin
+	mob_thinks = FALSE
+
+INITIALIZE_IMMEDIATE(/mob/living/carbon/human/dummy/mannequin)
 
 /mob/living/carbon/human/dummy/mannequin/Initialize()
 	. = ..()
@@ -48,32 +47,17 @@
 	h_style = "blue IPC screen"
 	. = ..(mapload, "Baseline Frame")
 
-/mob/living/carbon/human/monkey
-	mob_size = 2.6//Based on howler monkey, rough real world equivilant to on-mob sprite size
-
 /mob/living/carbon/human/monkey/Initialize(mapload)
 	. = ..(mapload, "Monkey")
-
-/mob/living/carbon/human/farwa
-	mob_size = 2.6//Roughly the same size as monkey
 
 /mob/living/carbon/human/farwa/Initialize(mapload)
 	. = ..(mapload, "Farwa")
 
-/mob/living/carbon/human/neaera
-	mob_size = 2.6//Roughly the same size as monkey
-
 /mob/living/carbon/human/neaera/Initialize(mapload)
 	. = ..(mapload, "Neaera")
 
-/mob/living/carbon/human/stok
-	mob_size = 2.6//Roughly the same size as monkey
-
 /mob/living/carbon/human/stok/Initialize(mapload)
 	. = ..(mapload, "Stok")
-
-/mob/living/carbon/human/bug
-	mob_size = 2.6//Roughly the same size as monkey
 
 /mob/living/carbon/human/bug/Initialize(mapload)
 	. = ..(mapload, "V'krexi")
@@ -94,11 +78,42 @@
 /mob/living/carbon/human/type_c
 	layer = 5
 
+/mob/living/carbon/human/type_big/Initialize(mapload)
+	. = ..(mapload, "Vaurca Warform")
+	src.gender = NEUTER
+	src.mutations.Add(HULK)
+
+/mob/living/carbon/human/type_big
+	layer = 5
+
+/mob/living/carbon/human/msai_tajara/Initialize(mapload)
+	h_style = "Tajaran Ears"
+	. = ..(mapload, "M'sai Tajara")
+
+/mob/living/carbon/human/zhankhazan_tajara/Initialize(mapload)
+	h_style = "Tajaran Ears"
+	. = ..(mapload, "Zhan-Khazan Tajara")
+
 /mob/living/carbon/human/industrial/Initialize(mapload)
-	..(mapload, "Industrial Frame")
+	. = ..(mapload, "Hephaestus G1 Industrial Frame")
 
 /mob/living/carbon/human/shell/Initialize(mapload)
-	..(mapload, "Shell Frame")
+	. = ..(mapload, "Shell Frame")
+
+/mob/living/carbon/human/industrial_hephaestus/Initialize(mapload)
+	. = ..(mapload, "Hephaestus G2 Industrial Frame")
+
+/mob/living/carbon/human/industrial_xion/Initialize(mapload)
+	. = ..(mapload, "Xion Industrial Frame")
+
+/mob/living/carbon/human/industrial_zenghu/Initialize(mapload)
+	. = ..(mapload, "Zeng-Hu Mobility Frame")
+
+/mob/living/carbon/human/industrial_bishop/Initialize(mapload)
+	. = ..(mapload, "Bishop Accessory Frame")
+
+/mob/living/carbon/human/unbranded_frame/Initialize(mapload)
+	. = ..(mapload, "Unbranded Frame")
 
 /mob/living/carbon/human/terminator/Initialize(mapload)
 	. = ..(mapload, "Hunter-Killer")

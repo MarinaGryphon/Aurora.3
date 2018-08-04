@@ -164,11 +164,11 @@
 
 	if(W.flags & NOBLUDGEON) return
 
-	if(istype(W, /obj/item/weapon/screwdriver))
+	if(isscrewdriver(W))
 		user << ("<span class='notice'>It's a holowindow, you can't unfasten it!</span>")
-	else if(istype(W, /obj/item/weapon/crowbar) && reinf && state <= 1)
+	else if(iscrowbar(W) && reinf && state <= 1)
 		user << ("<span class='notice'>It's a holowindow, you can't pry it!</span>")
-	else if(istype(W, /obj/item/weapon/wrench) && !anchored && (!state || !reinf))
+	else if(iswrench(W) && !anchored && (!state || !reinf))
 		user << ("<span class='notice'>It's a holowindow, you can't dismantle it!</span>")
 	else
 		if(W.damtype == BRUTE || W.damtype == BURN)
@@ -234,7 +234,7 @@
 	return ..()
 
 /obj/structure/bed/chair/holochair/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench))
+	if(iswrench(W))
 		user << ("<span class='notice'>It's a holochair, you can't dismantle it!</span>")
 	return
 
@@ -324,12 +324,12 @@
 			return
 		G.affecting.loc = src.loc
 		G.affecting.Weaken(5)
-		visible_message("<span class='warning'>[G.assailant] dunks [G.affecting] into the [src]!</span>", 3)
+		visible_message("<span class='warning'>[G.assailant] dunks [G.affecting] into the [src]!</span>", range = 3)
 		qdel(W)
 		return
 	else if (istype(W, /obj/item) && get_dist(src,user)<2)
 		user.drop_item(src.loc)
-		visible_message("<span class='notice'>[user] dunks [W] into the [src]!</span>", 3)
+		visible_message("<span class='notice'>[user] dunks [W] into the [src]!</span>", range = 3)
 		return
 
 /obj/structure/holohoop/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
@@ -339,9 +339,9 @@
 			return
 		if(prob(50))
 			I.loc = src.loc
-			visible_message("<span class='notice'>Swish! \the [I] lands in \the [src].</span>", 3)
+			visible_message("<span class='notice'>Swish! \the [I] lands in \the [src].</span>", range = 3)
 		else
-			visible_message("<span class='warning'>\The [I] bounces off of \the [src]'s rim!</span>", 3)
+			visible_message("<span class='warning'>\The [I] bounces off of \the [src]'s rim!</span>", range = 3)
 		return 0
 	else
 		return ..(mover, target, height, air_group)
@@ -448,5 +448,38 @@
 	derez()
 
 /mob/living/simple_animal/hostile/carp/holodeck/proc/derez()
+	visible_message("<span class='notice'>\The [src] fades away!</span>")
+	qdel(src)
+
+//Holo-penguin
+
+/mob/living/simple_animal/penguin/holodeck
+	icon = 'icons/mob/penguins.dmi'
+	icon_state = "penguin"
+	icon_living = "penguin"
+	icon_dead = "penguin_dead"
+	icon_gib = null
+	meat_amount = 0
+	meat_type = null
+	light_range = 2
+	hunger_enabled = FALSE
+
+/mob/living/simple_animal/penguin/holodeck/baby
+	icon_state = "penguin_baby"
+	icon_living = "penguin_baby"
+	icon_dead = "penguin_baby_dead"
+
+/mob/living/simple_animal/penguin/holodeck/emperor
+	name = "emperor penguin"
+	desc = "Emperor of all he surveys."
+
+/mob/living/simple_animal/penguin/holodeck/gib()
+	derez() //holograms can't gib
+
+/mob/living/simple_animal/penguin/holodeck/death()
+	..()
+	derez()
+
+/mob/living/simple_animal/penguin/holodeck/proc/derez()
 	visible_message("<span class='notice'>\The [src] fades away!</span>")
 	qdel(src)

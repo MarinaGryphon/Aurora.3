@@ -45,7 +45,7 @@
 	allowed_magazines = list(/obj/item/ammo_magazine/c45m)
 	caliber = ".45"
 	origin_tech = list(TECH_COMBAT = 2, TECH_MATERIAL = 2)
-	fire_sound = 'sound/weapons/Gunshot_light.ogg'
+	fire_sound = 'sound/weapons/gunshot_pistol.ogg'
 	load_method = MAGAZINE
 
 /obj/item/weapon/gun/projectile/sec/update_icon()
@@ -105,7 +105,7 @@
 
 	firemodes = list(
 		list(mode_name="semiauto",       burst=1, fire_delay=0,    move_delay=null, burst_accuracy=null, dispersion=null),
-		list(mode_name="3-round bursts", burst=3, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1),       dispersion=list(0.0, 0.6, 1.0))
+		list(mode_name="3-round bursts", burst=3, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1),       dispersion=list(0, 10))
 		)
 
 
@@ -132,13 +132,20 @@
 	name = ".50 magnum pistol"
 	desc = "A robust handgun that uses .50 AE ammo."
 	icon_state = "deagle"
-	item_state = "deagle"
 	force = 14.0
 	caliber = ".50"
 	load_method = MAGAZINE
 	magazine_type = /obj/item/ammo_magazine/a50
 	allowed_magazines = list(/obj/item/ammo_magazine/a50)
 	auto_eject = 1
+	auto_eject_sound = 'sound/weapons/smg_empty_alarm.ogg'
+
+/obj/item/weapon/gun/projectile/deagle/update_icon()
+	..()
+	if(ammo_magazine)
+		icon_state = "[initial(icon_state)]"
+	else
+		icon_state = "[initial(icon_state)]-e"
 
 /obj/item/weapon/gun/projectile/deagle/gold
 	desc = "A gold plated gun folded over a million times by superior martian gunsmiths. Uses .50 AE ammo."
@@ -148,8 +155,6 @@
 /obj/item/weapon/gun/projectile/deagle/camo
 	desc = "A Deagle brand Deagle for operators operating operationally. Uses .50 AE ammo."
 	icon_state = "deaglecamo"
-	item_state = "deagleg"
-	auto_eject_sound = 'sound/weapons/smg_empty_alarm.ogg'
 
 /obj/item/weapon/gun/projectile/gyropistol
 	name = "gyrojet pistol"
@@ -182,7 +187,7 @@
 	caliber = "9mm"
 	silenced = 0
 	origin_tech = list(TECH_COMBAT = 2, TECH_MATERIAL = 2, TECH_ILLEGAL = 2)
-	fire_sound = 'sound/weapons/Gunshot_light.ogg'
+	fire_sound = 'sound/weapons/gunshot_pistol.ogg'
 	load_method = MAGAZINE
 	magazine_type = /obj/item/ammo_magazine/mc9mm
 	allowed_magazines = list(/obj/item/ammo_magazine/mc9mm)
@@ -263,10 +268,10 @@
 		/obj/item/ammo_casing/a556              = "5.56mm"
 		)
 
-/obj/item/weapon/gun/projectile/pirate/New()
+/obj/item/weapon/gun/projectile/pirate/Initialize()
 	ammo_type = pick(ammo_types)
 	desc += " Uses [ammo_types[ammo_type]] rounds."
 
 	var/obj/item/ammo_casing/ammo = ammo_type
 	caliber = initial(ammo.caliber)
-	..()
+	. = ..()

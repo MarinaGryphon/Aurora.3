@@ -20,11 +20,11 @@
 
 /datum/talking_atom/proc/init()
 	if(holder_atom)
-		processing_objects.Add(src)
+		START_PROCESSING(SSprocessing, src)
 
 /datum/talking_atom/process()
 	if(!holder_atom)
-		processing_objects.Remove(src)
+		STOP_PROCESSING(SSprocessing, src)
 
 	else if(heard_words.len >= 1 && world.time > last_talk_time + talk_interval && prob(talk_chance))
 		SaySomething()
@@ -119,7 +119,7 @@
 	for(var/mob/M in mob_list)
 		if (!M.client)
 			continue //skip monkeys and leavers
-		if (istype(M, /mob/new_player))
+		if (istype(M, /mob/abstract/new_player))
 			continue
 		if(M.stat == 2 &&  M.client.prefs.toggles & CHAT_GHOSTEARS)
 			listening|=M

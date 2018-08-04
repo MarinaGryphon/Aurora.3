@@ -54,7 +54,7 @@
 
 	src.add_fingerprint(user)
 	if(mode<=0) // It's off
-		if(istype(I, /obj/item/weapon/screwdriver))
+		if(isscrewdriver(I))
 			if(contents.len > 0)
 				user << "Eject the items first!"
 				return
@@ -68,7 +68,7 @@
 				playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
 				user << "You attach the screws around the power connection."
 				return
-		else if(istype(I,/obj/item/weapon/weldingtool) && mode==-1)
+		else if(iswelder(I) && mode==-1)
 			if(contents.len > 0)
 				user << "Eject the items first!"
 				return
@@ -862,7 +862,7 @@
 	if(!T.is_plating())
 		return		// prevent interaction with T-scanner revealed pipes
 	src.add_fingerprint(user)
-	if(istype(I, /obj/item/weapon/weldingtool))
+	if(iswelder(I))
 		var/obj/item/weapon/weldingtool/W = I
 
 		if(W.remove_fuel(0,user))
@@ -1112,6 +1112,7 @@
 	icon_state = "pipe-tagger"
 	var/sort_tag = ""
 	var/partial = 0
+	var/no_override = 0
 
 /obj/structure/disposalpipe/tagger/proc/updatedesc()
 	desc = initial(desc)
@@ -1150,10 +1151,11 @@
 
 /obj/structure/disposalpipe/tagger/transfer(var/obj/disposalholder/H)
 	if(sort_tag)
-		if(partial)
-			H.setpartialtag(sort_tag)
-		else
-			H.settag(sort_tag)
+		if(!no_override || H.destinationTag == "")
+			if(partial)
+				H.setpartialtag(sort_tag)
+			else
+				H.settag(sort_tag)
 	return ..()
 
 /obj/structure/disposalpipe/tagger/partial //needs two passes to tag
@@ -1331,7 +1333,7 @@
 	if(!T.is_plating())
 		return		// prevent interaction with T-scanner revealed pipes
 	src.add_fingerprint(user)
-	if(istype(I, /obj/item/weapon/weldingtool))
+	if(iswelder(I))
 		var/obj/item/weapon/weldingtool/W = I
 
 		if(W.remove_fuel(0,user))
@@ -1410,9 +1412,13 @@
 	var/turf/target	// this will be where the output objects are 'thrown' to.
 	var/mode = 0
 
+	var/spread = 0
+	var/spread_point = 10
+
+
 /obj/structure/disposaloutlet/Initialize()
 	. = ..()
-	target = get_ranged_target_turf(src, dir, 10)
+	target = get_ranged_target_turf(src, dir, spread_point)
 
 	var/obj/structure/disposalpipe/trunk/trunk = locate() in src.loc
 	if(trunk)
@@ -1435,7 +1441,12 @@
 			AM.pipe_eject(dir)
 			if(!istype(AM,/mob/living/silicon/robot/drone)) //Drones keep smashing windows from being fired out of chutes. Bad for the station. ~Z
 				spawn(5)
-					AM.throw_at(target, 3, 1)
+					if(spread)
+						var/turf/new_turf_target = get_step(target,turn(src.dir, rand(-spread,spread)))
+						AM.throw_at(new_turf_target, 3, 1)
+					else
+						AM.throw_at(target, 3, 1)
+
 		H.vent_gas(src.loc)
 		qdel(H)
 
@@ -1479,7 +1490,7 @@
 	if(!I || !user)
 		return
 	src.add_fingerprint(user)
-	if(istype(I, /obj/item/weapon/screwdriver))
+	if(isscrewdriver(I))
 		if(mode==0)
 			mode=1
 			playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
@@ -1490,7 +1501,7 @@
 			playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
 			user << "You attach the screws around the power connection."
 			return
-	else if(istype(I,/obj/item/weapon/weldingtool) && mode==1)
+	else if(iswelder(I) && mode==1)
 		var/obj/item/weapon/weldingtool/W = I
 		if(W.remove_fuel(0,user))
 			playsound(src.loc, 'sound/items/Welder2.ogg', 100, 1)

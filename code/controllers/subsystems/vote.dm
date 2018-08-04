@@ -214,7 +214,7 @@ var/datum/controller/subsystem/vote/SSvote
 					usr << "<span class='warning'>You must be playing or have been playing to start a vote.</span>"
 					return 0
 				else if (isobserver(usr))
-					var/mob/dead/observer/O = usr
+					var/mob/abstract/observer/O = usr
 					if (O.started_as_observer)
 						usr << "<span class='warning'>You must be playing or have been playing to start a vote.</span>"
 						return 0
@@ -239,7 +239,7 @@ var/datum/controller/subsystem/vote/SSvote
 						usr << "<span class='warning'>You must be playing or have been playing to start a vote.</span>"
 						return 0
 					else if (isobserver(usr))
-						var/mob/dead/observer/O = usr
+						var/mob/abstract/observer/O = usr
 						if (O.started_as_observer)
 							usr << "<span class='warning'>You must be playing or have been playing to start a vote.</span>"
 							return 0
@@ -259,6 +259,7 @@ var/datum/controller/subsystem/vote/SSvote
 			if("restart")
 				choices.Add("Restart Round","Continue Playing")
 			if("gamemode")
+				round_voters.Cut() //Delete the old list, since we are having a new gamemode vote
 				if(SSticker.current_state >= 2)
 					return 0
 				choices.Add(config.votable_modes)

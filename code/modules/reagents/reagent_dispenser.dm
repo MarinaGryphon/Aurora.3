@@ -108,7 +108,7 @@
 
 /obj/structure/reagent_dispensers/fueltank/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	src.add_fingerprint(user)
-	if (istype(W,/obj/item/weapon/wrench))
+	if (iswrench(W))
 		user.visible_message("[user] wrenches [src]'s faucet [modded ? "closed" : "open"].", \
 			"You wrench [src]'s faucet [modded ? "closed" : "open"]")
 		modded = modded ? 0 : 1
@@ -131,12 +131,12 @@
 
 			rig = W
 			user.drop_item()
-			W.loc = src
+			W.forceMove(src)
 
-			var/icon/test = getFlatIcon(W)
-			test.Shift(NORTH,1)
-			test.Shift(EAST,6)
-			overlays += test
+			var/mutable_appearance/MA = new(W)
+			MA.pixel_x += 1
+			MA.pixel_y += 6
+			add_overlay(MA)
 
 	return ..()
 
@@ -166,6 +166,9 @@
 	explode()
 
 /obj/structure/reagent_dispensers/fueltank/proc/explode()
+	if (QDELETED(src))
+		return
+
 	if (reagents.total_volume > 500)
 		explosion(src.loc,1,2,4)
 	else if (reagents.total_volume > 100)
@@ -224,7 +227,7 @@
 		reagents.add_reagent("water",500)
 
 /obj/structure/reagent_dispensers/water_cooler/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if (istype(W,/obj/item/weapon/wrench))
+	if (iswrench(W))
 		src.add_fingerprint(user)
 		playsound(src.loc, 'sound/items/Ratchet.ogg', 100, 1)
 		if(do_after(user, 20))

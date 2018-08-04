@@ -1,5 +1,3 @@
-var/list/organ_cache = list()
-
 /obj/item/organ
 	name = "organ"
 	icon = 'icons/obj/surgery.dmi'
@@ -29,6 +27,12 @@ var/list/organ_cache = list()
 
 	var/force_skintone = FALSE		// If true, icon generation will skip is-robotic checks. Used for synthskin limbs.
 
+/obj/item/organ/New(loc, ...)
+	..()
+	if (!initialized && istype(loc, /mob/living/carbon/human/dummy/mannequin))
+		args[1] = TRUE
+		SSatoms.InitAtom(src, args)
+
 /obj/item/organ/Destroy()
 	STOP_PROCESSING(SSprocessing, src)
 	if(!owner)
@@ -44,8 +48,8 @@ var/list/organ_cache = list()
 				owner.organs -= src
 			if(owner.organs_by_name)
 				owner.organs_by_name -= src
-				
-	owner = null 
+
+	owner = null
 	QDEL_NULL(dna)
 
 	return ..()
@@ -53,8 +57,9 @@ var/list/organ_cache = list()
 /obj/item/organ/proc/update_health()
 	return
 
-/obj/item/organ/New(var/mob/living/carbon/holder, var/internal)
-	..(holder)
+/obj/item/organ/Initialize(mapload, internal)
+	. = ..()
+	var/mob/living/carbon/holder = loc
 	create_reagents(5)
 	if(!max_damage)
 		max_damage = min_broken_damage * 2
@@ -209,7 +214,7 @@ var/list/organ_cache = list()
 	damage = 0
 
 /obj/item/organ/proc/is_damaged()
-	return damage > 0
+	return damage >= 1 // Not zero because honestly who gives a shit about 0.01 organ damage
 
 /obj/item/organ/proc/is_bruised()
 	return damage >= min_bruised_damage
@@ -278,13 +283,12 @@ var/list/organ_cache = list()
 /obj/item/organ/emp_act(severity)
 	if(!(status & ORGAN_ROBOT))
 		return
+
 	switch (severity)
 		if (1.0)
 			take_damage(rand(7,20) * emp_coeff)
-			return
 		if (2.0)
 			take_damage(rand(3,7) * emp_coeff)
-			return
 		if(3.0)
 			take_damage(rand(3) * emp_coeff)
 
@@ -336,7 +340,7 @@ var/list/organ_cache = list()
 		transplant_data["blood_DNA"] =  transplant_blood.data["blood_DNA"]
 
 	owner = target
-	loc = owner
+	src.forceMove(owner)
 	STOP_PROCESSING(SSprocessing, src)
 	target.internal_organs |= src
 	affected.internal_organs |= src

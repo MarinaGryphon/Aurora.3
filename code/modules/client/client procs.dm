@@ -58,11 +58,25 @@
 	//Admin PM
 	if(href_list["priv_msg"])
 		var/client/C = locate(href_list["priv_msg"])
+		var/datum/ticket/ticket = locate(href_list["ticket"])
+
+		if (!isnull(ticket) && !istype(ticket))
+			return
+
 		if(ismob(C)) 		//Old stuff can feed-in mobs instead of clients
 			var/mob/M = C
 			C = M.client
-		cmd_admin_pm(C,null)
+
+		cmd_admin_pm(C, null, ticket)
 		return
+
+	if(href_list["close_ticket"])
+		var/datum/ticket/ticket = locate(href_list["close_ticket"])
+
+		if(!istype(ticket))
+			return
+
+		ticket.close(src)
 
 	if(href_list["discord_msg"])
 		if(!holder && received_discord_pm < world.time - 6000) //Worse they can do is spam IRC for 10 minutes
@@ -87,6 +101,10 @@
 	if(href_list["warnacknowledge"])
 		var/queryid = text2num(href_list["warnacknowledge"])
 		warnings_acknowledge(queryid)
+	
+	if(href_list["notifacknowledge"])
+		var/queryid = text2num(href_list["notifacknowledge"])
+		notifications_acknowledge(queryid)
 
 	if(href_list["warnview"])
 		warnings_check()
@@ -225,8 +243,11 @@
 
 	..()	//redirect to hsrc.()
 
+/proc/client_by_ckey(ckey)
+	return directory[ckey]
+
 /client/proc/handle_spam_prevention(var/message, var/mute_type)
-	if (config.automute_on && !holder)
+	if (config.automute_on && !holder && length(message))
 		if (last_message_time)
 			if (world.time - last_message_time < config.macro_trigger)
 				spam_alert++
@@ -243,7 +264,7 @@
 
 		last_message_time = world.time
 
-		if(!isnull(message) && last_message == message)
+		if(last_message == message)
 			last_message_count++
 			if(last_message_count >= SPAM_TRIGGER_AUTOMUTE)
 				src << "<span class='danger'>You have exceeded the spam filter limit for identical messages. An auto-mute was applied.</span>"
@@ -288,11 +309,6 @@
 		del(src)
 		return
 
-	// Change the way they should download resources.
-	if(config.resource_urls)
-		src.preload_rsc = pick(config.resource_urls)
-	else src.preload_rsc = 1 // If config.resource_urls is not set, preload like normal.
-
 	src << "<span class='alert'>If the title screen is black, resources are still downloading. Please be patient until the title screen appears.</span>"
 
 
@@ -333,8 +349,21 @@
 		if (holder)
 			src << "Admins get a free pass. However, <b>please</b> update your BYOND as soon as possible. Certain things may cause crashes if you play with your present version."
 		else
+			log_access("Failed Login: [key] [computer_id] [address] - Outdated BYOND major version: [byond_version].")
 			del(src)
 			return 0
+
+#if DM_VERSION > 511
+	if (LAZYLEN(config.client_blacklist_version))
+		var/client_version = "[byond_version].[byond_build]"
+		if (client_version in config.client_blacklist_version)
+			src << "<span class='danger'><b>Your version of BYOND is explicitly blacklisted from joining this server!</b></span>"
+			src << "Your current version: [client_version]."
+			src << "Visit http://www.byond.com/download/ to download a different version. Try looking for a newer one, or go one lower."
+			log_access("Failed Login: [key] [computer_id] [address] - Blacklisted BYOND version: [client_version].")
+			del(src)
+			return 0
+#endif
 
 	//preferences datum - also holds some persistant data for the client (because we may as well keep these datums to a minimum)
 	prefs = preferences_datums[ckey]
@@ -348,8 +377,6 @@
 	prefs.last_id = computer_id			//these are gonna be used for banning
 
 	. = ..()	//calls mob.Login()
-
-	prefs.sanitize_preferences()
 
 	if(holder)
 		add_admin_verbs()
@@ -377,11 +404,13 @@
 	//DISCONNECT//
 	//////////////
 /client/Del()
+	ticket_panels -= src
 	if(holder)
 		holder.owner = null
 		admins -= src
 	directory -= ckey
 	clients -= src
+	SSassets.handle_disconnect(src)
 	return ..()
 
 
@@ -459,14 +488,21 @@
 	var/sql_ip = sql_sanitize_text(src.address)
 	var/sql_computerid = sql_sanitize_text(src.computer_id)
 	var/sql_admin_rank = sql_sanitize_text(admin_rank)
+	var/sql_byond_version = text2num(byond_version)
+	#if DM_VERSION >= 512
+	var/sql_byond_build = text2num(byond_build)
+	#else
+	var/sql_byond_build = 0
+	#endif
+
 
 	if(found)
-		//Player already identified previously, we need to just update the 'lastseen', 'ip' and 'computer_id' variables
-		var/DBQuery/query_update = dbcon.NewQuery("UPDATE ss13_player SET lastseen = Now(), ip = '[sql_ip]', computerid = '[sql_computerid]', lastadminrank = '[sql_admin_rank]', account_join_date = [account_join_date ? "'[account_join_date]'" : "NULL"] WHERE ckey = '[sql_ckey]'")
+		//Player already identified previously, we need to just update the 'lastseen', 'ip', 'computer_id', 'byond_version' and 'byond_build' variables
+		var/DBQuery/query_update = dbcon.NewQuery("UPDATE ss13_player SET lastseen = Now(), ip = '[sql_ip]', computerid = '[sql_computerid]', lastadminrank = '[sql_admin_rank]', account_join_date = [account_join_date ? "'[account_join_date]'" : "NULL"], byond_version = [sql_byond_version], byond_build = [sql_byond_build] WHERE ckey = '[sql_ckey]'")
 		query_update.Execute()
 	else if (!config.access_deny_new_players)
 		//New player!! Need to insert all the stuff
-		var/DBQuery/query_insert = dbcon.NewQuery("INSERT INTO ss13_player (ckey, firstseen, lastseen, ip, computerid, lastadminrank, account_join_date) VALUES ('[sql_ckey]', Now(), Now(), '[sql_ip]', '[sql_computerid]', '[sql_admin_rank]', [account_join_date ? "'[account_join_date]'" : "NULL"])")
+		var/DBQuery/query_insert = dbcon.NewQuery("INSERT INTO ss13_player (ckey, firstseen, lastseen, ip, computerid, lastadminrank, account_join_date, byond_version, byond_build) VALUES ('[sql_ckey]', Now(), Now(), '[sql_ip]', '[sql_computerid]', '[sql_admin_rank]', [account_join_date ? "'[account_join_date]'" : "NULL"], [sql_byond_version], [sql_byond_build])")
 		query_insert.Execute()
 	else
 		// Flag as -1 to know we have to kiiick them.
@@ -477,7 +513,7 @@
 
 	//Logging player access
 	var/serverip = "[world.internet_address]:[world.port]"
-	var/DBQuery/query_accesslog = dbcon.NewQuery("INSERT INTO `ss13_connection_log`(`id`,`datetime`,`serverip`,`ckey`,`ip`,`computerid`) VALUES(null,Now(),'[serverip]','[sql_ckey]','[sql_ip]','[sql_computerid]');")
+	var/DBQuery/query_accesslog = dbcon.NewQuery("INSERT INTO `ss13_connection_log`(`id`,`datetime`,`serverip`,`ckey`,`ip`,`computerid`,`byond_version`,`byond_build`) VALUES(null,Now(),'[serverip]','[sql_ckey]','[sql_ip]','[sql_computerid]','[sql_byond_version]','[sql_byond_build]');")
 	query_accesslog.Execute()
 
 
@@ -493,9 +529,7 @@
 
 //send resources to the client. It's here in its own proc so we can move it around easiliy if need be
 /client/proc/send_resources()
-	spawn (10) //removing this spawn causes all clients to not get verbs.
-		//Precache the client with all other assets slowly, so as to not block other browse() calls
-		getFilesSlow(src, SSassets.cache, register_asset = FALSE)
+	SSassets.handle_connect(src)
 
 /mob/proc/MayRespawn()
 	return 0
@@ -663,5 +697,4 @@
 	if (holder)
 		sleep(1)
 	else
-		sleep(5)
-		stoplag()
+		stoplag(5)

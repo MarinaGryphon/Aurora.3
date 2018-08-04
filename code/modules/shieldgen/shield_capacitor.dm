@@ -28,7 +28,7 @@
 		if(get_dir(src, possible_gen) == src.dir)
 			possible_gen.owned_capacitor = src
 			break
-	
+
 /obj/machinery/shield_capacitor/emag_act(var/remaining_charges, var/mob/user)
 	if(prob(75))
 		src.locked = !src.locked
@@ -47,7 +47,7 @@
 			updateDialog()
 		else
 			user << span("alert", "Access denied.")
-	else if(istype(W, /obj/item/weapon/wrench))
+	else if(iswrench(W))
 		src.anchored = !src.anchored
 		src.visible_message(span("notice", "\The [src] has been [anchored ? "bolted to the floor" : "unbolted from the floor"] by \the [user]."))
 
@@ -106,7 +106,13 @@
 	//see if we can connect to a power net.
 	var/datum/powernet/PN
 	var/turf/T = src.loc
+
+	if (!istype(T))
+		active = 0
+		return
+
 	var/obj/structure/cable/C = T.get_cable_node()
+
 	if (C)
 		PN = C.powernet
 

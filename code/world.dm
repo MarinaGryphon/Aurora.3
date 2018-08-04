@@ -1,5 +1,6 @@
 #define WORLD_ICON_SIZE 32
 #define PIXEL_MULTIPLIER WORLD_ICON_SIZE/32
+#define WORLD_MIN_SIZE 32
 
 /*
 	The initialization of the game happens roughly like this:
@@ -20,9 +21,6 @@ var/global/datum/global_init/init = new ()
 
 	makeDatumRefLists()
 	load_configuration()
-
-	initialize_chemical_reagents()
-	initialize_chemical_reactions()
 
 	qdel(src) //we're done
 	init = null
@@ -51,11 +49,13 @@ var/global/datum/global_init/init = new ()
 		t = round(t / l)
 
 /world
-	mob = /mob/new_player
+	mob = /mob/abstract/new_player
 	turf = /turf/space
 	area = /area/space
 	view = "15x15"
 	cache_lifespan = 0	//stops player uploaded stuff from being kept in the rsc past the current session
+	maxx = WORLD_MIN_SIZE	// So that we don't get map-window-popin at boot. DMMS will expand this.
+	maxy = WORLD_MIN_SIZE
 
 
 #define RECOMMENDED_VERSION 510
@@ -73,6 +73,8 @@ var/global/datum/global_init/init = new ()
 	if(byond_version < RECOMMENDED_VERSION)
 		world.log << "Your server's byond version does not meet the recommended requirements for this server. Please update BYOND to [RECOMMENDED_VERSION]."
 
+	world.TgsNew()
+
 	config.post_load()
 
 	if(config && config.server_name != null && config.server_suffix && world.port > 0)
@@ -83,8 +85,6 @@ var/global/datum/global_init/init = new ()
 	//Emergency Fix
 	load_mods()
 	//end-emergency fix
-
-	src.update_status()
 
 	. = ..()
 
@@ -107,12 +107,31 @@ var/list/world_api_rate_limit = list()
 
 /world/Topic(T, addr, master, key)
 	var/list/response[] = list()
-	var/list/queryparams[] = json_decode(T)
+	var/list/queryparams[]
+
+	try
+		queryparams = json_decode(T)
+	catch()
+		queryparams = list()
+
+	log_debug("API: Request Received - from:[addr], master:[master], key:[key]")
+	diary << "TOPIC: \"[T]\", from:[addr], master:[master], key:[key], auth:[queryparams["auth"] ? queryparams["auth"] : "null"] [log_end]"
+
+	// TGS topic hook. Returns if successful, expects old-style serialization.
+	var/tgs_topic_return = TgsTopic(T)
+
+	if (tgs_topic_return)
+		log_debug("API - TGS3 Request.")
+		return tgs_topic_return
+	else if (!queryparams.len)
+		log_debug("API - Bad Request - Invalid/no JSON data sent.")
+		response["statuscode"] = 400
+		response["response"] = "Bad Request - Invalid/no JSON data sent."
+		return json_encode(response)
+
 	queryparams["addr"] = addr //Add the IP to the queryparams that are passed to the api functions
 	var/query = queryparams["query"]
 	var/auth = queryparams["auth"]
-	log_debug("API: Request Received - from:[addr], master:[master], key:[key]")
-	diary << "TOPIC: \"[T]\", from:[addr], master:[master], key:[key], auth:[auth] [log_end]"
 
 	/*if (!SSticker) //If the game is not started most API Requests would not work because of the throtteling
 		response["statuscode"] = 500
@@ -170,9 +189,7 @@ var/list/world_api_rate_limit = list()
 
 
 /world/Reboot(var/reason)
-	/*spawn(0)
-		world << sound(pick('sound/AI/newroundsexy.ogg','sound/misc/apcdestroyed.ogg','sound/misc/bangindonk.ogg')) // random end sounds!! - LastyBatsy
-		*/
+	world.TgsReboot()
 
 	Master.Shutdown()
 
@@ -182,14 +199,25 @@ var/list/world_api_rate_limit = list()
 
 	..(reason)
 
-var/inerror = 0
 /world/Error(var/exception/e)
+	var/static/inerror = 0
+
 	//runtime while processing runtimes
 	if (inerror)
 		inerror = 0
 		return ..(e)
 
 	inerror = 1
+
+// A horrible hack for unit tests but fuck runtiming timers.
+// They don't provide any useful information, and as such, are being suppressed.
+#ifdef UNIT_TEST
+
+	if (findtextEx(e.name, "Invalid timer:") || findtextEx(e.desc, "Invalid timer:"))
+		inerror = 0
+		return
+
+#endif // UNIT_TEST
 
 	e.time_stamp()
 	log_exception(e)
@@ -247,7 +275,7 @@ var/inerror = 0
 	config.load("config/config.txt")
 	config.load("config/game_options.txt","game_options")
 
-	if (config.use_age_restriction_for_jobs || config.use_age_restriction_for_antags)
+	if (config.age_restrictions_from_file)
 		config.load("config/age_restrictions.txt", "age_restrictions")
 
 /hook/startup/proc/loadMods()
@@ -297,7 +325,7 @@ var/inerror = 0
 				D.associate(directory[ckey])
 
 /world/proc/update_status()
-	var/s = ""
+	var/list/s = list()
 
 	if (config && config.server_name)
 		s += "<b>[config.server_name]</b> &#8212; "
@@ -339,12 +367,13 @@ var/inerror = 0
 	else if (n > 0)
 		features += "~[n] player"
 
-
 	if (config && config.hostedby)
 		features += "hosted by <b>[config.hostedby]</b>"
 
 	if (features)
-		s += ": [list2text(features, ", ")]"
+		s += ": [jointext(features, ", ")]"
+
+	s = s.Join()
 
 	/* does this help? I do not know */
 	if (src.status != s)
@@ -416,7 +445,14 @@ var/inerror = 0
 		con.failed_connections = 0	//If this connection succeeded, reset the failed connections counter.
 	else
 		con.failed_connections++		//If it failed, increase the failed connections counter.
+
+#ifdef UNIT_TEST
+		// UTs are presumed public. Change this to hide your shit.
+		error("Database connection failed with message:")
+		error(con.ErrorMsg())
+#else
 		world.log << con.ErrorMsg()
+#endif
 
 	return .
 
@@ -427,6 +463,7 @@ var/inerror = 0
 		return 0
 
 	if (con.failed_connections > FAILED_DB_CONNECTION_CUTOFF)
+		error("DB connection cutoff exceeded for a database object in establish_db_connection().")
 		return 0
 
 	if (!con.IsConnected())

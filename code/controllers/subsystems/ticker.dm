@@ -1,5 +1,9 @@
 #define LOBBY_TIME 180
 
+#define SETUP_OK 0
+#define SETUP_REVOTE 1
+#define SETUP_REATTEMPT 2
+
 var/datum/controller/subsystem/ticker/SSticker
 
 /datum/controller/subsystem/ticker
@@ -137,11 +141,14 @@ var/datum/controller/subsystem/ticker/SSticker
 	if (pregame_timeleft <= 0 || current_state == GAME_STATE_SETTING_UP)
 		current_state = GAME_STATE_SETTING_UP
 		wait = 2 SECONDS
-		if (!setup())
-			// Something fucked up.
-			wait = 1 SECOND
-			is_revote = TRUE
-			pregame()
+		switch (setup())
+			if (SETUP_REVOTE)
+				wait = 1 SECOND
+				is_revote = TRUE
+				pregame()
+			if (SETUP_REATTEMPT)
+				pregame_timeleft = 1 SECOND
+				to_world("Reattempting gamemode selection.")
 
 /datum/controller/subsystem/ticker/proc/game_tick()
 	if(current_state != GAME_STATE_PLAYING)
@@ -178,14 +185,32 @@ var/datum/controller/subsystem/ticker/SSticker
 				if(!delay_end)
 					world << "<span class='notice'><b>Restarting in [restart_timeout/10] seconds</b></span>"
 
+			var/wait_for_tickets
+			var/delay_notified = 0
+			do
+				wait_for_tickets = 0
+				for(var/datum/ticket/ticket in tickets)
+					if(ticket.is_active())
+						wait_for_tickets = 1
+						break
+				if(wait_for_tickets)
+					if(!delay_notified)
+						delay_notified = 1
+						message_admins("<span class='warning'><b>Automatically delaying restart due to active tickets.</b></span>")
+						to_world("<span class='notice'><b>An admin has delayed the round end</b></span>")
+					sleep(15 SECONDS)
+				else if(delay_notified)
+					message_admins("<span class='warning'><b>No active tickets remaining, restarting in [restart_timeout/10] seconds if an admin has not delayed the round end.</b></span>")
+			while(wait_for_tickets)
+
 			if(!delay_end)
 				sleep(restart_timeout)
 				if(!delay_end)
 					world.Reboot()
-				else
-					world << "<span class='notice'><b>An admin has delayed the round end</b></span>"
-			else
-				world << "<span class='notice'><b>An admin has delayed the round end</b></span>"
+				else if(!delay_notified)
+					to_world("<span class='notice'><b>An admin has delayed the round end</b></span>")
+			else if(!delay_notified)
+				to_world("<span class='notice'><b>An admin has delayed the round end</b></span>")
 
 	else if (mode_finished)
 		post_game = 1
@@ -221,8 +246,8 @@ var/datum/controller/subsystem/ticker/SSticker
 				else
 					Player << "<font color='blue'><b>You missed the crew transfer after the events on [station_name()] as [Player.real_name].</b></font>"
 			else
-				if(istype(Player,/mob/dead/observer))
-					var/mob/dead/observer/O = Player
+				if(istype(Player,/mob/abstract/observer))
+					var/mob/abstract/observer/O = Player
 					if(!O.started_as_observer)
 						Player << "<font color='red'><b>You did not survive the events on [station_name()]...</b></font>"
 				else
@@ -336,7 +361,7 @@ var/datum/controller/subsystem/ticker/SSticker
 		if(!runnable_modes.len)
 			current_state = GAME_STATE_PREGAME
 			world << "<B>Unable to choose playable game mode.</B> Reverting to pre-game lobby."
-			return 0
+			return SETUP_REVOTE
 		if(secret_force_mode != ROUNDTYPE_STR_SECRET && secret_force_mode != ROUNDTYPE_STR_MIXED_SECRET)
 			src.mode = config.pick_mode(secret_force_mode)
 		if(!src.mode)
@@ -361,7 +386,7 @@ var/datum/controller/subsystem/ticker/SSticker
 	if(!src.mode)
 		current_state = GAME_STATE_PREGAME
 		world << "<span class='danger'>Serious error in mode setup!</span> Reverting to pre-game lobby."
-		return 0
+		return SETUP_REVOTE
 
 	SSjobs.ResetOccupations()
 	src.mode.create_antagonists()
@@ -369,12 +394,21 @@ var/datum/controller/subsystem/ticker/SSticker
 	SSjobs.DivideOccupations() // Apparently important for new antagonist system to register specific job antags properly.
 
 	if(!src.mode.can_start())
+		var/list/voted_not_ready = list()
+		for(var/mob/abstract/new_player/player in player_list)
+			if((player.client)&&(!player.ready))
+				voted_not_ready += player.ckey
+		message_admins("The following players voted for [mode.name], but did not ready up: [jointext(voted_not_ready, ", ")]")
+		log_game("Ticker: Players voted for [mode.name], but did not ready up: [jointext(voted_not_ready, ", ")]")
 		world << "<B>Unable to start [mode.name].</B> Not enough players, [mode.required_players] players needed. Reverting to pre-game lobby."
 		current_state = GAME_STATE_PREGAME
 		mode.fail_setup()
 		mode = null
 		SSjobs.ResetOccupations()
-		return 0
+		if(master_mode in list(ROUNDTYPE_STR_RANDOM, ROUNDTYPE_STR_SECRET, ROUNDTYPE_STR_MIXED_SECRET))
+			return SETUP_REATTEMPT
+		else
+			return SETUP_REVOTE
 
 	var/starttime = REALTIMEOFDAY
 
@@ -398,6 +432,7 @@ var/datum/controller/subsystem/ticker/SSticker
 	data_core.manifest()
 
 	Master.RoundStart()
+	round_start_time = world.time
 
 	callHook("roundstart")
 
@@ -419,7 +454,7 @@ var/datum/controller/subsystem/ticker/SSticker
 
 	log_debug("SSticker: Round-start setup took [(REALTIMEOFDAY - starttime)/10] seconds.")
 
-	return 1
+	return SETUP_OK
 
 /datum/controller/subsystem/ticker/proc/run_callback_list(list/callbacklist)
 	set waitfor = FALSE
@@ -433,19 +468,20 @@ var/datum/controller/subsystem/ticker/SSticker
 
 		CHECK_TICK
 
-/datum/controller/subsystem/ticker/proc/station_explosion_cinematic(station_missed = 0, override = null)
+/datum/controller/subsystem/ticker/proc/station_explosion_cinematic(station_missed = 0, override = null, list/affected_levels = current_map.station_levels)
 	if (cinematic)
 		return	//already a cinematic in progress!
 
 	//initialise our cinematic screen object
-	cinematic = new(src)
-	cinematic.icon = 'icons/effects/station_explosion.dmi'
-	cinematic.icon_state = "station_intact"
-	cinematic.layer = 20
-	cinematic.mouse_opacity = 0
-	cinematic.screen_loc = "1,0"
+	cinematic = new /obj/screen{
+		icon = 'icons/effects/station_explosion.dmi';
+		icon_state = "station_intact";
+		layer = 20;
+		mouse_opacity = 0;
+		screen_loc = "1,0"
+	}
 
-	var/obj/structure/bed/temp_buckle = new(src)
+	var/obj/structure/bed/temp_buckle = new
 	//Incredibly hackish. It creates a bed within the gameticker (lol) to stop mobs running around
 	if(station_missed)
 		for(var/mob/living/M in living_mob_list)
@@ -458,15 +494,17 @@ var/datum/controller/subsystem/ticker/SSticker
 			if(M.client)
 				M.client.screen += cinematic
 
-			switch(M.z)
-				if(0)	//inside a crate or something
-					var/turf/T = get_turf(M)
-					if(T && T.z in config.station_levels)				//we don't use M.death(0) because it calls a for(/mob) loop and
-						M.health = 0
-						M.stat = DEAD
-				if(1)	//on a z-level 1 turf.
-					M.health = 0
-					M.stat = DEAD
+			var/turf/Mloc = M.loc
+			if (!Mloc)
+				continue
+
+			if (!istype(Mloc))
+				Mloc = get_turf(M)
+
+			if (Mloc.z in affected_levels)
+				M.dust()
+
+			CHECK_TICK
 
 	//Now animate the cinematic
 	switch(station_missed)
@@ -486,11 +524,9 @@ var/datum/controller/subsystem/ticker/SSticker
 					world << sound('sound/effects/explosionfar.ogg')
 					//flick("end",cinematic)
 
-
 		if(2)	//nuke was nowhere nearby	//TODO: a really distant explosion animation
 			sleep(50)
 			world << sound('sound/effects/explosionfar.ogg')
-
 
 		else	//station was destroyed
 			if( mode && !override )
@@ -520,9 +556,7 @@ var/datum/controller/subsystem/ticker/SSticker
 					flick("station_explode_fade_red", cinematic)
 					world << sound('sound/effects/explosionfar.ogg')
 					cinematic.icon_state = "summary_selfdes"
-			for(var/mob/living/M in living_mob_list)
-				if(M.loc.z in config.station_levels)
-					M.death()//No mercy
+
 	//If its actually the end of the round, wait for it to end.
 	//Otherwise if its a verb it will continue on afterwards.
 	sleep(300)
@@ -535,7 +569,7 @@ var/datum/controller/subsystem/ticker/SSticker
 // Round setup stuff.
 
 /datum/controller/subsystem/ticker/proc/create_characters()
-	for(var/mob/new_player/player in player_list)
+	for(var/mob/abstract/new_player/player in player_list)
 		if(player && player.ready && player.mind)
 			if(player.mind.assigned_role=="AI")
 				player.close_spawn_windows()
@@ -566,7 +600,7 @@ var/datum/controller/subsystem/ticker/SSticker
 		CHECK_TICK
 	if(captainless)
 		for(var/mob/M in player_list)
-			if(!istype(M,/mob/new_player))
+			if(!istype(M,/mob/abstract/new_player))
 				M << "Captainship not forced on anyone."
 
 // Registers a callback to run on round-start.
@@ -577,4 +611,7 @@ var/datum/controller/subsystem/ticker/SSticker
 	LAZYADD(roundstart_callbacks, callback)
 
 
+#undef SETUP_OK
+#undef SETUP_REVOTE
+#undef SETUP_REATTEMPT
 #undef LOBBY_TIME

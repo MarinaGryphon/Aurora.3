@@ -9,13 +9,23 @@
 	item_flags = THICKMATERIAL
 	body_parts_covered = HEAD
 	armor = list(melee = 50, bullet = 15, laser = 50,energy = 10, bomb = 25, bio = 0, rad = 0)
-	flags_inv = HIDEEARS|HIDEEYES
+	flags_inv = HIDEEARS|BLOCKHEADHAIR
 	cold_protection = HEAD
 	min_cold_protection_temperature = HELMET_MIN_COLD_PROTECTION_TEMPERATURE
 	heat_protection = HEAD
 	max_heat_protection_temperature = HELMET_MAX_HEAT_PROTECTION_TEMPERATURE
 	siemens_coefficient = 0.5
 	w_class = 3
+	var/allow_hair_covering = TRUE //in case if you want to allow someone to switch the BLOCKHEADHAIR var from the helmet or not
+
+/obj/item/clothing/head/helmet/verb/toggle_block_hair()
+	set name = "Toggle Helmet Hair Coverage"
+	set category = "Object"
+
+	if(allow_hair_covering)
+		flags_inv ^= BLOCKHEADHAIR
+		usr << "<span class='notice'>[src] will now [flags_inv & BLOCKHEADHAIR ? "hide" : "show"] hair.</span>"
+	..()
 
 /obj/item/clothing/head/helmet/warden
 	name = "warden's hat"
@@ -36,11 +46,12 @@
 	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
 	flags_inv = HIDEEARS
 	body_parts_covered = 0
-	
+
 /obj/item/clothing/head/helmet/HoS/dermal
 	name = "dermal armour patch"
 	desc = "You're not quite sure how you manage to take it on and off, but it implants nicely in your head."
 	icon_state = "dermal"
+	allow_hair_covering = FALSE
 
 /obj/item/clothing/head/helmet/hop
 	name = "crew resource's hat"
@@ -63,6 +74,21 @@
 	body_parts_covered = HEAD|FACE|EYES //face shield
 	armor = list(melee = 80, bullet = 20, laser = 25, energy = 10, bomb = 0, bio = 0, rad = 0)
 	flags_inv = HIDEEARS
+	action_button_name = "Toggle Visor"
+
+/obj/item/clothing/head/helmet/riot/attack_self(mob/user as mob)
+	if (use_check(user))
+		return
+
+	if(src.icon_state == initial(icon_state))
+		src.icon_state = "[icon_state]-up"
+		user << "You raise the visor on \the [src]."
+		body_parts_covered = HEAD
+	else
+		src.icon_state = initial(icon_state)
+		user << "You lower the visor on \the [src]."
+		body_parts_covered = HEAD|FACE|EYES
+	update_clothing_icon()
 
 /obj/item/clothing/head/helmet/ablative
 	name = "ablative helmet"

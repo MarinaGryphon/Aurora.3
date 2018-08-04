@@ -97,10 +97,10 @@
 						// Find a turf near or on the original location to bounce to
 						var/new_x = P.starting.x + pick(0, 0, 0, 0, 0, -1, 1, -2, 2)
 						var/new_y = P.starting.y + pick(0, 0, 0, 0, 0, -1, 1, -2, 2)
-						var/turf/curloc = get_turf(user)
 
 						// redirect the projectile
-						P.redirect(new_x, new_y, curloc, user)
+						P.firer = user
+						P.old_style_target(locate(new_x, new_y, P.z))
 
 						return PROJECTILE_CONTINUE // complete projectile permutation
 					else
@@ -148,6 +148,15 @@
 	..()
 	icon_state = initial(icon_state)
 	user << "<span class='notice'>\The [src] is de-energised.</span>"
+
+/obj/item/weapon/melee/energy/glaive/attack(mob/living/carbon/human/M as mob, mob/living/carbon/user as mob)
+	user.setClickCooldown(16)
+	..()
+
+/obj/item/weapon/melee/energy/glaive/pre_attack(var/mob/living/target, var/mob/living/user)
+	if(istype(target))
+		cleave(user, target)
+	..()
 
 /*
  * Energy Axe
@@ -255,7 +264,30 @@
 /obj/item/weapon/melee/energy/sword/pirate/activate(mob/living/user)
 	..()
 	icon_state = "cutlass1"
+/*
+*Power Sword
+*/
 
+/obj/item/weapon/melee/energy/sword/powersword
+	name = "power sword"
+	desc = "For when you really want to ruin someone's day. It is extremely heavy."
+	icon_state = "powerswordoff"
+	base_reflectchance = 65
+	active_force = 40
+	base_block_chance = 65
+	active_w_class = 3
+	w_class = 3
+
+/obj/item/weapon/melee/energy/sword/powersword/activate(mob/living/user)
+	..()
+	icon_state = "powerswordon"
+
+/obj/item/weapon/melee/energy/sword/powersword/attack_self(mob/living/user as mob)
+	..()
+	if(prob(30))
+		user.visible_message("<span class='danger'>\The [user] accidentally cuts \himself with \the [src].</span>",\
+		"<span class='danger'>You accidentally cut yourself with \the [src].</span>")
+		user.take_organ_damage(5,5)
 /*
  *Energy Blade
  */
@@ -281,14 +313,13 @@
 	shield_power = 150
 	can_block_bullets = 1
 	active = 1
-	armor_penetration = 20
 
-/obj/item/weapon/melee/energy/blade/New()
-	processing_objects |= src
-	..()
+/obj/item/weapon/melee/energy/blade/Initialize()
+	. = ..()
+	START_PROCESSING(SSprocessing, src)
 
 /obj/item/weapon/melee/energy/blade/Destroy()
-	processing_objects -= src
+	STOP_PROCESSING(SSprocessing, src)
 	return ..()
 
 /obj/item/weapon/melee/energy/blade/deactivate(mob/living/user)

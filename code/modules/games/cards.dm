@@ -8,6 +8,9 @@
 	icon = 'icons/obj/playing_cards.dmi'
 	var/list/cards = list()
 
+/obj/item/weapon/deck/proc/generate_deck() //the procs that creates the cards
+	return
+
 /obj/item/weapon/deck/holder
 	name = "card box"
 	desc = "A small leather case to show how classy you are compared to everyone else."
@@ -18,9 +21,11 @@
 	desc = "A simple deck of playing cards."
 	icon_state = "deck"
 
-/obj/item/weapon/deck/cards/New()
-	..()
+/obj/item/weapon/deck/Initialize()
+	. = ..()
+	generate_deck()
 
+/obj/item/weapon/deck/cards/generate_deck()
 	var/datum/playingcard/P
 	for(var/suit in list("spades","clubs","diamonds","hearts"))
 
@@ -253,15 +258,14 @@
 		name = "a playing card"
 		desc = "A playing card."
 
-	overlays.Cut()
-
+	cut_overlays()
 
 	if(cards.len == 1)
 		var/datum/playingcard/P = cards[1]
 		var/image/I = new(src.icon, (concealed ? "[P.back_icon]" : "[P.card_icon]") )
 		I.pixel_x += (-5+rand(10))
 		I.pixel_y += (-5+rand(10))
-		overlays += I
+		add_overlay(I)
 		return
 
 	var/offset = Floor(20/cards.len)
@@ -293,7 +297,7 @@
 			else
 				I.pixel_x = -7+(offset*i)
 		I.transform = M
-		overlays += I
+		add_overlay(I)
 		i++
 
 /obj/item/weapon/hand/dropped(mob/user as mob)

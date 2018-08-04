@@ -40,16 +40,23 @@
 
 /datum/gear/uniform/skirt
 	display_name = "skirt selection"
-	path = /obj/item/clothing/under/dress/plaid_blue
+	path = /obj/item/clothing/under/skirt/
 
 /datum/gear/uniform/skirt/New()
 	..()
 	var/skirts = list()
-	skirts["plaid skirt, blue"] = /obj/item/clothing/under/dress/plaid_blue
-	skirts["plaid skirt, purple"] = /obj/item/clothing/under/dress/plaid_purple
-	skirts["plaid skirt, red"] = /obj/item/clothing/under/dress/plaid_red
-	skirts["jumpskirt, black"] = /obj/item/clothing/under/blackjumpskirt
-	skirts["skirt, black"] = /obj/item/clothing/under/blackskirt
+	skirts["plaid skirt, blue"] = /obj/item/clothing/under/skirt/plaid_blue
+	skirts["plaid skirt, purple"] = /obj/item/clothing/under/skirt/plaid_purple
+	skirts["plaid skirt, red"] = /obj/item/clothing/under/skirt/plaid_red
+	skirts["jumpskirt, black"] = /obj/item/clothing/under/skirt/blackjumpskirt
+	skirts["skirt, black"] = /obj/item/clothing/under/skirt/
+	skirts["skirt, khaki"] = /obj/item/clothing/under/skirt/khaki
+	skirts["short skirt, black"] = /obj/item/clothing/under/skirt/short_black
+	skirts["short skirt, blue"] = /obj/item/clothing/under/skirt/blue
+	skirts["short skirt, red"] = /obj/item/clothing/under/skirt/red
+	skirts["skirt, swept"] = /obj/item/clothing/under/skirt/swept
+
+
 	gear_tweaks += new/datum/gear_tweak/path(skirts)
 
 /datum/gear/uniform/suit
@@ -82,7 +89,7 @@
 /datum/gear/uniform/scrubs
 	display_name = "scrubs selection"
 	path = /obj/item/clothing/under/rank/medical/black
-	allowed_roles = list("Scientist","Chief Medical Officer", "Medical Doctor", "Chemist", "Geneticist", "Paramedic", "Nursing Intern", "Xenobiologist", "Roboticist", "Research Director", "Forensic Technician")
+	allowed_roles = list("Scientist","Chief Medical Officer", "Medical Doctor", "Chemist", "Geneticist", "Paramedic", "Medical Resident", "Xenobiologist", "Roboticist", "Research Director", "Forensic Technician")
 
 /datum/gear/uniform/scrubs/New()
 	..()
@@ -135,14 +142,19 @@
 	allowed_roles = list("Head of Personnel")
 
 /datum/gear/uniform/navysecsuit
-	display_name = "uniform, navyblue (Security)"
+	display_name = "uniform, navyblue (Security Officer)"
 	path = /obj/item/clothing/under/rank/security/navyblue
-	allowed_roles = list("Security Officer", "Head of Security", "Warden", "Security Cadet")
+	allowed_roles = list("Security Officer", "Head of Security", "Warden")
 
-/datum/gear/uniform/gearharness
-	display_name = "gear harness"
-	path = /obj/item/clothing/under/gearharness
-	cost = 2
+/datum/gear/uniform/navysecsuit_warden
+	display_name = "uniform, navyblue (Warden)"
+	path = /obj/item/clothing/under/rank/warden/navyblue
+	allowed_roles = list("Head of Security", "Warden")
+
+/datum/gear/uniform/navysecsuit_hos
+	display_name = "uniform, navyblue (Head of Security)"
+	path = /obj/item/clothing/under/rank/head_of_security/navyblue
+	allowed_roles = list("Head of Security")
 
 /datum/gear/uniform/pants
 	display_name = "pants selection"
@@ -163,9 +175,39 @@
 	pants["khaki pants"] = /obj/item/clothing/under/pants/khaki
 	pants["track pants"] = /obj/item/clothing/under/pants/track
 	pants["camo pants"] = /obj/item/clothing/under/pants/camo
+	pants["athletic shorts, black"] = /obj/item/clothing/under/shorts
+	pants["athletic shorts, red"] = /obj/item/clothing/under/shorts/red
+	pants["athletic shorts, green"] = /obj/item/clothing/under/shorts/green
+	pants["athletic shorts, black"] = /obj/item/clothing/under/shorts/black
+	pants["athletic shorts, grey"] = /obj/item/clothing/under/shorts/grey
+	pants["jean shorts"] = /obj/item/clothing/under/shorts/jeans
+	pants["jean short shorts"] = /obj/item/clothing/under/shorts/jeans/female
+	pants["classic jeans shorts"] = /obj/item/clothing/under/shorts/jeans/classic
+	pants["classic jeans shorts shorts"] = /obj/item/clothing/under/shorts/jeans/classic/female
+	pants["mustang jeans shorts"] = /obj/item/clothing/under/shorts/jeans/mustang
+	pants["mustang jeans shorts shorts"] = /obj/item/clothing/under/shorts/jeans/mustang/female
+	pants["young folks jeans shorts"] = /obj/item/clothing/under/shorts/jeans/youngfolks
+	pants["young folks jeans shorts shorts"] = /obj/item/clothing/under/shorts/jeans/youngfolks/female
+	pants["black jeans shorts"] = /obj/item/clothing/under/shorts/jeans/black
+	pants["black jeans shorts shorts"] = /obj/item/clothing/under/shorts/jeans/black/female
+	pants["grey jeans shorts"] = /obj/item/clothing/under/shorts/jeans/grey
+	pants["grey jeans shorts shorts"] = /obj/item/clothing/under/shorts/jeans
+	pants["khaki shorts"] = /obj/item/clothing/under/shorts/khaki
+	pants["khaki shorts shorts"] = /obj/item/clothing/under/shorts/khaki/female
 	gear_tweaks += new/datum/gear_tweak/path(pants)
 
 /datum/gear/uniform/turtleneck
 	display_name = "tacticool turtleneck"
 	path = /obj/item/clothing/under/syndicate/tacticool
 
+/datum/gear/uniform/dominia
+	display_name = "dominia suit selection"
+	path = /obj/item/clothing/under/dominia
+
+/datum/gear/uniform/dominia/New()
+	..()
+	var/suit = list()
+	suit["dominia suit"] = /obj/item/clothing/under/dominia
+	suit["dominia suit, black"] = /obj/item/clothing/under/dominia/black
+	suit["lyodsuit"] = /obj/item/clothing/under/dom_thermal
+	gear_tweaks += new/datum/gear_tweak/path(suit)

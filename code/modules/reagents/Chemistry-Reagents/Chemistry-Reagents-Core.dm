@@ -1,5 +1,15 @@
 /datum/reagent/blood
-	data = new/list("donor" = null, "viruses" = null, "species" = "Human", "blood_DNA" = null, "blood_type" = null, "blood_colour" = "#A10808", "resistances" = null, "trace_chem" = null, "antibodies" = list())
+	data = list(
+		"donor" = null,
+		"viruses" = null,
+		"species" = "Human",
+		"blood_DNA" = null,
+		"blood_type" = null,
+		"blood_colour" = "#A10808",
+		"resistances" = null,
+		"trace_chem" = null,
+		"antibodies" = list()
+	)
 	name = "Blood"
 	id = "blood"
 	reagent_state = LIQUID
@@ -45,14 +55,25 @@
 /datum/reagent/blood/touch_turf(var/turf/simulated/T)
 	if(!istype(T) || volume < 3)
 		return
-	if(!data["donor"] || istype(data["donor"], /mob/living/carbon/human))
+	var/datum/weakref/W = data["donor"]
+	if (!W)
 		blood_splatter(T, src, 1)
-	else if(istype(data["donor"], /mob/living/carbon/alien))
+	W = W.resolve()
+	if(istype(W, /mob/living/carbon/human))
+		blood_splatter(T, src, 1)
+	else if(istype(W, /mob/living/carbon/alien))
 		var/obj/effect/decal/cleanable/blood/B = blood_splatter(T, src, 1)
 		if(B)
 			B.blood_DNA["UNKNOWN DNA STRUCTURE"] = "X*"
 
 /datum/reagent/blood/affect_ingest(var/mob/living/carbon/M, var/alien, var/removed)
+	if(ishuman(M))
+		if (M.mind && M.mind.vampire)
+			if(M.dna.unique_enzymes == data["blood_DNA"]) //so vampires can't drink their own blood
+				return
+			M.mind.vampire.blood_usable += removed
+			M<< "<span class='notice'>You have accumulated [M.mind.vampire.blood_usable] [M.mind.vampire.blood_usable > 1 ? "units" : "unit"] of usable blood. It tastes quite stale.</span>"
+			return
 	if(dose > 5)
 		M.adjustToxLoss(removed)
 	if(dose > 15)
@@ -147,6 +168,7 @@
 	if(!istype(T))
 		return
 
+	T.color = initial(T.color)
 	var/datum/gas_mixture/environment = T.return_air()
 	var/min_temperature = T0C + 100 // 100C, the boiling point of water
 
@@ -168,13 +190,24 @@
 		T.wet_floor(1)
 
 /datum/reagent/water/touch_obj(var/obj/O)
-	if(istype(O, /obj/item/weapon/reagent_containers/food/snacks/monkeycube))
-		var/obj/item/weapon/reagent_containers/food/snacks/monkeycube/cube = O
-		if(!cube.wrapped)
-			cube.Expand()
+	if(istype(O))
+		O.color = initial(O.color)
+		if(istype(O, /obj/item/weapon/light))
+			var/obj/item/weapon/light/L = O
+			L.brightness_color = initial(L.brightness_color)
+			L.update()
+		else if(istype(O, /obj/machinery/light))
+			var/obj/machinery/light/L = O
+			L.brightness_color = initial(L.brightness_color)
+			L.update()
+		else if(istype(O, /obj/item/weapon/reagent_containers/food/snacks/monkeycube))
+			var/obj/item/weapon/reagent_containers/food/snacks/monkeycube/cube = O
+			if(!cube.wrapped)
+				cube.Expand()
 
-/datum/reagent/water/touch_mob(var/mob/living/L, var/amount)
-	if(istype(L))
+/datum/reagent/water/touch_mob(var/mob/M, var/amount)
+	if(istype(M) && isliving(M))
+		var/mob/living/L = M
 		var/needed = L.fire_stacks * 10
 		if(amount > needed)
 			L.fire_stacks = 0
@@ -183,6 +216,9 @@
 		else
 			L.adjust_fire_stacks(-(amount / 10))
 			remove_self(amount)
+
+	if(istype(M) && !istype(M, /mob/abstract))
+		M.color = initial(M.color)
 
 /datum/reagent/water/affect_touch(var/mob/living/carbon/M, var/alien, var/removed)
 	if(istype(M, /mob/living/carbon/slime))
@@ -198,7 +234,7 @@
 /datum/reagent/fuel
 	name = "Welding fuel"
 	id = "fuel"
-	description = "Required for welders. Flamable."
+	description = "Required for welders. Flammable."
 	reagent_state = LIQUID
 	color = "#660000"
 	touch_met = 5
@@ -220,3 +256,27 @@
 	if(istype(L))
 		L.adjust_fire_stacks(amount / 10) // Splashing people with welding fuel to make them easy to ignite!
 
+/datum/reagent/fuel/napalm
+	name = "Zo'rane Fire"
+	id = "greekfire"
+	description = "A highly flammable and cohesive gel once used commonly in the tunnels of Sedantis. Napalm sticks to kids."
+	reagent_state = LIQUID
+	color = "#D35908"
+	touch_met = 50
+	taste_description = "fiery death"
+
+/datum/reagent/fuel/napalm/touch_turf(var/turf/T)
+	new /obj/effect/decal/cleanable/liquid_fuel/napalm(T, volume/3)
+	for(var/mob/living/L in T)
+		L.adjust_fire_stacks(volume / 10)
+		L.add_modifier(/datum/modifier/napalm, MODIFIER_CUSTOM, _strength = 2)
+	remove_self(volume)
+	return
+
+/datum/reagent/fuel/touch_mob(var/mob/living/L, var/amount)
+	if(istype(L))
+		L.adjust_fire_stacks(amount / 10) // Splashing people with welding fuel to make them easy to ignite!
+		new /obj/effect/decal/cleanable/liquid_fuel/napalm(get_turf(L), amount/3)
+		L.adjustFireLoss(amount / 10)
+		remove_self(volume)
+		L.add_modifier(/datum/modifier/napalm, MODIFIER_CUSTOM, _strength = 2)

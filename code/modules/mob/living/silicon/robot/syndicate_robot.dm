@@ -73,9 +73,9 @@
 	recharge_time = 5
 	sel_mode = 1
 	firemodes = list(
-		list(mode_name="semiauto",       burst=1, fire_delay=0,    move_delay=null, burst_accuracy=null, dispersion=null),
-		list(mode_name="3-round bursts", burst=3, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1),       dispersion=list(0.0, 0.6, 1.0)),
-		list(mode_name="short bursts",   burst=5, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1,-2,-2), dispersion=list(0.6, 1.0, 1.0, 1.0, 1.2))
+		list(mode_name="semiauto",       burst=1, fire_delay=0,    move_delay=null, burst_accuracy=null, dispersion=list(0)),
+		list(mode_name="3-round bursts", burst=3, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1),       dispersion=list(0, 15, 15)),
+		list(mode_name="short bursts",   burst=5, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1,-2,-2), dispersion=list(0, 15, 15, 18, 18, 20))
 		)
 
 /obj/item/weapon/gun/energy/crossbow/cyborg
@@ -89,11 +89,36 @@
 	name = "grenade launcher"
 	desc = "A bulky pump-action grenade launcher. Loaded with 3 frag grenades."
 
-/obj/item/weapon/gun/launcher/grenade/cyborg/New()
-	..()
+/obj/item/weapon/gun/launcher/grenade/cyborg/Initialize()
+	. = ..()
 
 	grenades = list(
-			new /obj/item/weapon/grenade/frag(src),
-			new /obj/item/weapon/grenade/frag(src),
-			new /obj/item/weapon/grenade/frag(src)
-			)
+		new /obj/item/weapon/grenade/frag(src),
+		new /obj/item/weapon/grenade/frag(src),
+		new /obj/item/weapon/grenade/frag(src)
+	)
+
+/obj/item/weapon/robot_emag
+	desc = "It's a card with a magnetic strip attached to some circuitry, this one is modified to be used by a cyborg."
+	name = "cryptographic sequencer"
+	icon = 'icons/obj/card.dmi'
+	icon_state = "emag"
+
+/obj/item/weapon/robot_emag/afterattack(var/atom/target, var/mob/living/user, proximity) //possible spaghetti code, but should work
+	if(!target)
+		return
+	if(!proximity)
+		return
+
+	else if(istype(target,/obj/))
+		var/obj/O = target
+		O.add_fingerprint(user)
+		O.emag_act(1,user,src)
+		log_and_message_admins("emmaged \an [O].")
+		if(isrobot(user))
+			var/mob/living/silicon/robot/R = user
+			if(R.cell)
+				R.cell.use(350)
+		return 1
+
+	return 0

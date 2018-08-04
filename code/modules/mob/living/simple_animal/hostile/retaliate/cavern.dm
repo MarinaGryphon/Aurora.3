@@ -3,7 +3,7 @@
 	name = "cavern dweller"
 	desc = "An alien creature that dwells in the tunnels of the asteroid, commonly found in the Romanovich Cloud."
 	icon = 'icons/mob/cavern.dmi'
-	icon_state = "dweller"
+	icon_state = "dweller" //icons from europa station
 	icon_living = "dweller"
 	icon_dead = "dweller_dead"
 	ranged = 1
@@ -43,17 +43,10 @@
 
 	faction = "cavern"
 
+	flying = TRUE
+
 /mob/living/simple_animal/hostile/retaliate/cavern_dweller/Allow_Spacemove(var/check_drift = 0)
 	return 1
-
-/mob/living/simple_animal/hostile/retaliate/cavern_dweller/can_fall()
-	return FALSE
-
-/mob/living/simple_animal/hostile/retaliate/cavern_dweller/can_ztravel()
-	return TRUE
-
-/mob/living/simple_animal/hostile/retaliate/cavern_dweller/CanAvoidGravity()
-	return TRUE
 
 /obj/item/projectile/beam/cavern
 	name = "electrical discharge"
@@ -62,9 +55,9 @@
 	check_armour = "energy"
 	damage = 5
 
-	muzzle_type = /obj/effect/projectile/stun/muzzle
-	tracer_type = /obj/effect/projectile/stun/tracer
-	impact_type = /obj/effect/projectile/stun/impact
+	muzzle_type = /obj/effect/projectile/muzzle/stun
+	tracer_type = /obj/effect/projectile/tracer/stun
+	impact_type = /obj/effect/projectile/impact/stun
 
 /obj/item/projectile/beam/cavern/on_hit(var/atom/target, var/blocked = 0)
 	if(ishuman(target))

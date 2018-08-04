@@ -75,6 +75,9 @@
 					user.visible_message("<span class='notice'>[user] treats damage to [target]'s [I.name] with [tool_name].</span>", \
 					"<span class='notice'>You treat damage to [target]'s [I.name] with [tool_name].</span>" )
 					I.damage = 0
+					var/obj/item/organ/brain/sponge = target.internal_organs_by_name["brain"]
+					if(sponge && istype(I, sponge))
+						target.cure_all_traumas(cure_type = CURE_SURGERY)
 
 	fail_step(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 
@@ -357,14 +360,16 @@
 		if (!..())
 			return 0
 
-		target.op_stage.current_organ = null
-
+		var/obj/item/organ/external/affected = target.get_organ(target_zone)
 		var/obj/item/organ/brain/sponge = target.internal_organs_by_name["brain"]
-		if(sponge && sponge.can_lobotomize && !sponge.lobotomized)
-			target.op_stage.current_organ = sponge
-			return ..()
-		else
+		if (!affected || !istype(sponge) || !(sponge in affected.internal_organs))
 			return 0
+
+		if (!sponge.can_lobotomize || sponge.lobotomized)
+			return 0
+
+		target.op_stage.current_organ = sponge
+		return ..()
 
 	begin_step(mob/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 		var/obj/item/organ/brain/B = target.op_stage.current_organ
@@ -401,3 +406,4 @@
 
 //	can_use(mob/living/user, mob/living/carbon/human/target, target_zone, obj/item/tool)
 //		return ..() && target.op_stage.ribcage == 2
+

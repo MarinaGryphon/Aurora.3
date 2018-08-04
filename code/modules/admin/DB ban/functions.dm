@@ -133,7 +133,7 @@
 	else
 		bantype_sql = "bantype = '[bantype_str]'"
 
-	var/sql = "SELECT id FROM ss13_ban WHERE ckey = '[ckey]' AND [bantype_sql] AND (unbanned is null OR unbanned = false)"
+	var/sql = "SELECT id FROM ss13_ban WHERE isnull(unbanned) AND [bantype_sql] AND ckey = '[ckey]'"
 	if(job)
 		sql += " AND job = '[job]'"
 
@@ -401,13 +401,13 @@
 					adminsearch = "AND a_ckey = '[adminckey]' "
 				if(playerckey)
 					playersearch = "AND ckey = '[playerckey]' "
-					mirror_player = "AND mirrors.player_ckey = '[playerckey]' "
+					mirror_player = "AND mirrors.ckey = '[playerckey]' "
 				if(playerip)
 					ipsearch  = "AND ip = '[playerip]' "
-					mirror_ip = "AND mirrors.ban_mirror_ip = '[playerip]' "
+					mirror_ip = "AND mirrors.ip = '[playerip]' "
 				if(playercid)
 					cidsearch  = "AND computerid = '[playercid]' "
-					mirror_cid = "AND mirrors.ban_mirror_computerid = '[playercid]'"
+					mirror_cid = "AND mirrors.computerid = '[playercid]'"
 			else
 				if(adminckey && lentext(adminckey) >= 3)
 					adminsearch = "AND a_ckey LIKE '[adminckey]%' "
@@ -437,7 +437,7 @@
 			if (!match)
 				var/DBQuery/mirror_query = dbcon.NewQuery({"SELECT DISTINCT(mirrors.ban_id), bans.ckey FROM ss13_ban_mirrors mirrors
 					JOIN ss13_ban bans ON mirrors.ban_id = bans.id
-					WHERE (1 [mirror_player] [mirror_ip] [mirror_cid])
+					WHERE (isnull(mirrors.deleted_at) AND (1 [mirror_player] [mirror_ip] [mirror_cid]))
 					AND (
 						ISNULL(bans.unbanned) AND (
 							(bans.bantype = 'PERMABAN')
@@ -548,7 +548,7 @@
 					output += "</tr>"
 				if (bantype in list("PERMABAN", "TEMPBAN"))
 					var/mirror_count = 0
-					var/DBQuery/get_mirrors = dbcon.NewQuery("SELECT ban_mirror_id FROM ss13_ban_mirrors WHERE ban_id = :ban_id:")
+					var/DBQuery/get_mirrors = dbcon.NewQuery("SELECT id FROM ss13_ban_mirrors WHERE ban_id = :ban_id:")
 					get_mirrors.Execute(list("ban_id" = text2num(banid)))
 
 					while (get_mirrors.NextRow())

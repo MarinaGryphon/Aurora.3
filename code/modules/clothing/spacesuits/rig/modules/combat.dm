@@ -184,7 +184,7 @@
 	interface_name = "mounted pulse rifle"
 	interface_desc = "A shoulder-mounted cell-powered pulse rifle."
 
-	gun_type = /obj/item/weapon/gun/energy/pulse
+	gun_type = /obj/item/weapon/gun/energy/pulse/mounted
 
 /obj/item/rig_module/mounted/smg
 
@@ -231,15 +231,6 @@
 	construction_time = 300
 
 	gun_type = /obj/item/weapon/gun/energy/plasmacutter/mounted
-
-/obj/item/rig_module/mounted/kinetic_accelerator
-	name = "hardsuit kinetic accelerator"
-	desc = "A lethal-looking industrial cutter."
-	icon_state = "kineticgun"
-	interface_name = "kinetic accelerator"
-	interface_desc = "A ranged mining tool that does increased damage in low pressure."
-
-	gun_type = /obj/item/weapon/gun/energy/kinetic_accelerator/cyborg
 
 /obj/item/rig_module/mounted/thermalldrill
 	name = "hardsuit thermal drill"
@@ -315,15 +306,15 @@
 	desc = "A self-contained microfactory system for hardsuit integration."
 	selectable = 1
 	usable = 1
-	use_power_cost = 15
+	use_power_cost = 10
 	icon_state = "enet"
 
 	engage_string = "Fabricate Star"
 
 	interface_name = "death blossom launcher"
-	interface_desc = "An integrated microfactory that produces poisoned throwing stars from thin air and electricity."
+	interface_desc = "An integrated microfactory that produces steel throwing stars from thin air and electricity."
 
-	var/fabrication_type = /obj/item/weapon/material/star/ninja
+	var/fabrication_type = /obj/item/weapon/material/star
 	var/fire_force = 30
 	var/fire_distance = 10
 

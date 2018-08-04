@@ -14,9 +14,10 @@
 	item_state = "spikethrower"
 	fire_sound_text = "a strange noise"
 	fire_sound = 'sound/weapons/bladeslice.ogg'
+	needspin = FALSE
 
-/obj/item/weapon/gun/launcher/spikethrower/New()
-	..()
+/obj/item/weapon/gun/launcher/spikethrower/Initialize()
+	. = ..()
 	last_regen = world.time
 
 /obj/item/weapon/gun/launcher/spikethrower/Destroy()
@@ -73,6 +74,7 @@
 	cell_type = /obj/item/weapon/cell/super
 	fire_delay = 40
 	fire_sound = 'sound/effects/basscannon.ogg'
+	needspin = FALSE
 
 	var/mode = 1
 

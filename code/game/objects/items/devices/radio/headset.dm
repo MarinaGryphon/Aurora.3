@@ -226,20 +226,13 @@
 	item_state = "headset"
 	ks2type = /obj/item/device/encryptionkey/heads/hos
 
-/obj/item/device/radio/headset/entertainment
-	name = "actor's radio headset"
-	desc = "specially made to make you sound less cheesy."
-	icon_state = "com_headset"
-	item_state = "headset"
-	ks2type = /obj/item/device/encryptionkey/entertainment
-
 /obj/item/device/radio/headset/attackby(obj/item/weapon/W as obj, mob/user as mob)
 //	..()
 	user.set_machine(src)
-	if (!( istype(W, /obj/item/weapon/screwdriver) || (istype(W, /obj/item/device/encryptionkey/ ))))
+	if (!( isscrewdriver(W) || (istype(W, /obj/item/device/encryptionkey/ ))))
 		return
 
-	if(istype(W, /obj/item/weapon/screwdriver))
+	if(isscrewdriver(W))
 		if(keyslot1 || keyslot2)
 
 

@@ -14,12 +14,12 @@
 	add_overlay(image(icon = 'icons/obj/furniture.dmi', icon_state = "w_overlay", layer = FLY_LAYER))
 
 /obj/structure/bed/chair/wheelchair/set_dir()
-	..()
+	. = ..()
 	if(buckled_mob)
 		buckled_mob.set_dir(dir)
 
 /obj/structure/bed/chair/wheelchair/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W, /obj/item/weapon/wrench) || istype(W,/obj/item/stack) || istype(W, /obj/item/weapon/wirecutters))
+	if(iswrench(W) || istype(W,/obj/item/stack) || iswirecutter(W))
 		return
 	..()
 
@@ -85,7 +85,7 @@
 	driving = 0
 
 /obj/structure/bed/chair/wheelchair/Move()
-	..()
+	. = ..()
 	if(buckled_mob)
 		var/mob/living/occupant = buckled_mob
 		if(!driving)
@@ -96,7 +96,7 @@
 				if (propelled)
 					for (var/mob/O in src.loc)
 						if (O != occupant)
-							Bump(O)
+							Collide(O)
 				else
 					unbuckle_mob()
 			if (pulling && (get_dist(src, pulling) > 1))
@@ -133,9 +133,10 @@
 			pulling = null
 		return
 
-/obj/structure/bed/chair/wheelchair/Bump(atom/A)
-	..()
-	if(!buckled_mob)	return
+/obj/structure/bed/chair/wheelchair/Collide(atom/A)
+	. = ..()
+	if(!buckled_mob)
+		return
 
 	if(propelled || (pulling && (pulling.a_intent == I_HURT)))
 		var/mob/living/occupant = unbuckle_mob()

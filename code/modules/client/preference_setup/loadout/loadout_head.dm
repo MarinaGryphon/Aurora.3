@@ -89,8 +89,17 @@
 	gear_tweaks += new/datum/gear_tweak/path(hardhat)
 
 /datum/gear/head/hairflower
-	display_name = "hair flower pin, red"
+	display_name = "hair flower pin selection"
 	path = /obj/item/clothing/head/hairflower
+
+/datum/gear/head/hairflower/New()
+	..()
+	var/hairflower = list()
+	hairflower["hair flower pin, red"] = /obj/item/clothing/head/hairflower
+	hairflower["hair flower pin, blue"] = /obj/item/clothing/head/hairflower/blue
+	hairflower["hair flower pin, yellow"] = /obj/item/clothing/head/hairflower/yellow
+	hairflower["hair flower pin, pink"] = /obj/item/clothing/head/hairflower/pink
+	gear_tweaks += new/datum/gear_tweak/path(hairflower)
 
 /datum/gear/head/hats
 	display_name = "hat selection"
@@ -104,7 +113,9 @@
 	hats["hat, fez"] = /obj/item/clothing/head/fez
 	hats["hat, tophat"] = /obj/item/clothing/head/that
 	hats["hat, feather trilby"] = /obj/item/clothing/head/feathertrilby
-	hats["hat, fedora"] = /obj/item/clothing/head/fedora
+	hats["hat, black fedora"] = /obj/item/clothing/head/fedora
+	hats["hat, brown fedora"] = /obj/item/clothing/head/fedora/brown
+	hats["hat, grey fedora"] = /obj/item/clothing/head/fedora/grey
 	hats["hat, beaver"] = /obj/item/clothing/head/beaverhat
 	hats["hat, cowboy"] = /obj/item/clothing/head/cowboy
 	hats["hat, wide-brimmed cowboy"] = /obj/item/clothing/head/cowboy/wide
@@ -131,7 +142,7 @@
 	hijab["white hijab"] = /obj/item/clothing/head/hijab/white
 
 	gear_tweaks += new/datum/gear_tweak/path(hijab)
-	
+
 /datum/gear/head/turban
 	display_name = "turban selection"
 	path = /obj/item/clothing/head/turban
@@ -148,13 +159,13 @@
 	turbans["red turban"] = /obj/item/clothing/head/turban/red
 	turbans["white turban"] = /obj/item/clothing/head/turban/white
 	turbans["yellow turban"] = /obj/item/clothing/head/turban/yellow
-	
+
 	gear_tweaks += new/datum/gear_tweak/path(turbans)
 
 /datum/gear/head/surgical
 	display_name = "surgical cap selection"
 	path = /obj/item/clothing/head/surgery/blue
-	allowed_roles = list("Scientist", "Chief Medical Officer", "Medical Doctor", "Geneticist", "Chemist", "Paramedic", "Nursing Intern", "Xenobiologist", "Roboticist", "Research Director", "Forensic Technician")
+	allowed_roles = list("Scientist", "Chief Medical Officer", "Medical Doctor", "Geneticist", "Chemist", "Paramedic", "Medical Resident", "Xenobiologist", "Roboticist", "Research Director", "Forensic Technician")
 
 /datum/gear/head/surgical/New()
 	..()
@@ -164,3 +175,11 @@
 	surgical["surgical cap, green"] = /obj/item/clothing/head/surgery/green
 	surgical["surgical cap, black"] = /obj/item/clothing/head/surgery/black
 	gear_tweaks += new/datum/gear_tweak/path(surgical)
+
+/datum/gear/head/headbando
+	display_name = "basic headband"
+	path = /obj/item/clothing/head/headbando
+
+/datum/gear/head/headbando/New()
+	..()
+	gear_tweaks = list(gear_tweak_free_color_choice)

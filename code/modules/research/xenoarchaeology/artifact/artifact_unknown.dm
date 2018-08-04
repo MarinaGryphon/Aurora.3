@@ -84,7 +84,7 @@
 		secondary_effect.process()
 
 	if(pulledby)
-		Bumped(pulledby)
+		CollidedWith(pulledby)
 
 	//if either of our effects rely on environmental factors, work that out
 	var/trigger_cold = 0
@@ -235,14 +235,14 @@
 			istype(W,/obj/item/weapon/melee/energy) ||\
 			istype(W,/obj/item/weapon/melee/cultblade) ||\
 			istype(W,/obj/item/weapon/card/emag) ||\
-			istype(W,/obj/item/device/multitool))
+			ismultitool(W))
 		if (my_effect.trigger == TRIGGER_ENERGY)
 			my_effect.ToggleActivate()
 		if(secondary_effect && secondary_effect.trigger == TRIGGER_ENERGY && prob(25))
 			secondary_effect.ToggleActivate(0)
 
 	else if (istype(W,/obj/item/weapon/flame) && W:lit ||\
-			istype(W,/obj/item/weapon/weldingtool) && W:welding)
+			iswelder(W) && W:welding)
 		if(my_effect.trigger == TRIGGER_HEAT)
 			my_effect.ToggleActivate()
 		if(secondary_effect && secondary_effect.trigger == TRIGGER_HEAT && prob(25))
@@ -254,7 +254,7 @@
 		if(secondary_effect && secondary_effect.trigger == TRIGGER_FORCE && prob(25))
 			secondary_effect.ToggleActivate(0)
 
-/obj/machinery/artifact/Bumped(M as mob|obj)
+/obj/machinery/artifact/CollidedWith(M as mob|obj)
 	..()
 	if(istype(M,/obj))
 		if(M:throwforce >= 10)

@@ -9,7 +9,7 @@
 ---
 
 ### LICENSE
-Aurorastation is licensed under the GNU Affero General Public License version 3, which can be found in full in LICENSE-AGPL3.txt.
+Aurorastation is licensed under the GNU Affero General Public License version 3, which can be found in full in LICENSE.
 
 Commits with a git authorship date prior to `1420675200 +0000` (2015/01/08 00:00) are licensed under the GNU General Public License version 3, which can be found in full in LICENSE-GPL3.txt.
 
@@ -31,13 +31,6 @@ The more complicated and easier to update method is using git.  You'll need to d
 (hint: hold down ctrl and press insert to paste into git bash)
 
 This will take a while to download, but it provides an easier method for updating.
-
-Once the repository is in place, run this command:
-```bash
-cd Aurora.3
-git update-index --assume-unchanged baystation12.int
-```
-Now git will ignore changes to the file baystation12.int.
 
 ### INSTALLATION
 

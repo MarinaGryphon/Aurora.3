@@ -65,7 +65,7 @@
 		alert("That mob doesn't seem to exist, close the panel and try again.")
 		return
 
-	if(istype(M, /mob/new_player))
+	if(istype(M, /mob/abstract/new_player))
 		alert("The mob must not be a new_player.")
 		return
 
@@ -203,7 +203,7 @@
 	set name = "Del-All"
 
 	// to prevent REALLY stupid deletions
-	var/blocked = list(/obj, /mob, /mob/living, /mob/living/carbon, /mob/living/carbon/human, /mob/dead, /mob/dead/observer, /mob/living/silicon, /mob/living/silicon/robot, /mob/living/silicon/ai)
+	var/blocked = list(/obj, /mob, /mob/living, /mob/living/carbon, /mob/living/carbon/human, /mob/abstract, /mob/abstract/observer, /mob/living/silicon, /mob/living/silicon/robot, /mob/living/silicon/ai)
 	var/hsbitem = input(usr, "Choose an object to delete.", "Delete:") as null|anything in typesof(/obj) + typesof(/mob) - blocked
 	if(hsbitem)
 		for(var/atom/O in world)
@@ -271,7 +271,7 @@
 		if(alert("This mob is being controlled by [M.ckey]. Are you sure you wish to assume control of it? [M.ckey] will be made a ghost.",,"Yes","No") != "Yes")
 			return
 		else
-			var/mob/dead/observer/ghost = new/mob/dead/observer(M,1)
+			var/mob/abstract/observer/ghost = new/mob/abstract/observer(M,1)
 			ghost.ckey = M.ckey
 	message_admins("<span class='notice'>[key_name_admin(usr)] assumed direct control of [M].</span>", 1)
 	log_admin("[key_name(usr)] assumed direct control of [M].",admin_key=key_name(usr))
@@ -468,7 +468,7 @@
 			M.equip_to_slot_or_del(new /obj/item/clothing/under/det(M), slot_w_uniform)
 			M.equip_to_slot_or_del(new /obj/item/clothing/shoes/black(M), slot_shoes)
 
-			M.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/det_trench(M), slot_wear_suit)
+			M.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/toggle/det_trench(M), slot_wear_suit)
 			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/thermal/plain/monocle(M), slot_glasses)
 			M.equip_to_slot_or_del(new /obj/item/clothing/head/det(M), slot_head)
 
@@ -652,7 +652,7 @@
 
 			M.equip_to_slot_or_del(pda, slot_r_store)
 			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses(M), slot_l_store)
-			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy(M), slot_belt)
+			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/pistol(M), slot_belt)
 
 			var/obj/item/weapon/card/id/centcom/W = new(M)
 			W.name = "[M.real_name]'s ID Card"
@@ -677,7 +677,7 @@
 
 			M.equip_to_slot_or_del(pda, slot_r_store)
 			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses(M), slot_l_store)
-			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy(M), slot_belt)
+			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/pistol(M), slot_belt)
 
 			var/obj/item/weapon/card/id/centcom/W = new(M)
 			W.name = "[M.real_name]'s ID Card"
@@ -688,22 +688,7 @@
 			M.equip_to_slot_or_del(W, slot_wear_id)
 
 		if("emergency response team")
-			M.equip_to_slot_or_del(new /obj/item/clothing/under/rank/centcom_officer(M), slot_w_uniform)
-			M.equip_to_slot_or_del(new /obj/item/clothing/shoes/swat(M), slot_shoes)
-			M.equip_to_slot_or_del(new /obj/item/clothing/gloves/swat(M), slot_gloves)
-			M.equip_to_slot_or_del(new /obj/item/device/radio/headset/ert(M), slot_l_ear)
-			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/gun(M), slot_belt)
-			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses(M), slot_glasses)
-			M.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/satchel(M), slot_back)
-
-			var/obj/item/weapon/card/id/W = new(M)
-			W.name = "[M.real_name]'s ID Card"
-			W.icon_state = "centcom"
-			W.access = get_all_accesses()
-			W.access += get_all_centcom_access()
-			W.assignment = "Emergency Response Team"
-			W.registered_name = M.real_name
-			M.equip_to_slot_or_del(W, slot_wear_id)
+			ert.equip(M)
 
 		if("protection detail")
 			M.equip_to_slot_or_del(new /obj/item/clothing/under/ccpolice(M), slot_w_uniform)
@@ -713,7 +698,7 @@
 			M.equip_to_slot_or_del(new /obj/item/device/radio/headset/ert(M), slot_l_ear)
 			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/sunglasses/sechud(M), slot_glasses)
 			M.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/satchel(M), slot_back)
-			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/gun/nuclear(M.back), slot_in_backpack)
+			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/gun(M.back), slot_in_backpack)
 			M.equip_to_slot_or_del(new /obj/item/clothing/head/helmet/swat/peacekeeper(M.back), slot_in_backpack)
 			M.equip_to_slot_or_del(new /obj/item/clothing/accessory/holster/hip(M.back), slot_in_backpack)
 			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/pistol(M.back), slot_in_backpack)
@@ -796,7 +781,7 @@
 			W.icon_state = "centcom"
 			W.access = get_all_accesses()
 			W.access += get_all_centcom_access()
-			W.assignment = "NTCC Odin Security Specialist"
+			W.assignment = "[current_map.dock_name] Security Specialist"
 			W.registered_name = M.real_name
 			M.equip_to_slot_or_del(W, slot_wear_id)
 
@@ -806,7 +791,7 @@
 			M.equip_to_slot_or_del(new /obj/item/clothing/shoes/combat(M), slot_shoes)
 			M.equip_to_slot_or_del(new /obj/item/clothing/gloves/combat(M), slot_gloves)
 			M.equip_to_slot_or_del(new /obj/item/device/radio/headset/heads/captain(M), slot_l_ear)
-			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/thermal/plain/eyepatch(M), slot_glasses)
+			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/eyepatch/hud/thermal(M), slot_glasses)
 			M.equip_to_slot_or_del(new /obj/item/clothing/mask/smokable/cigarette/cigar/havana(M), slot_wear_mask)
 			M.equip_to_slot_or_del(new /obj/item/clothing/head/helmet/space/deathsquad/beret(M), slot_head)
 			M.equip_to_slot_or_del(new /obj/item/weapon/gun/energy/pulse/pistol(M), slot_belt)
@@ -821,7 +806,7 @@
 			W.assignment = "Special Operations Officer"
 			W.registered_name = M.real_name
 			M.equip_to_slot_or_del(W, slot_wear_id)
-			
+
 		if("blue wizard")
 			M.equip_to_slot_or_del(new /obj/item/clothing/under/lightpurple(M), slot_w_uniform)
 			M.equip_to_slot_or_del(new /obj/item/clothing/suit/wizrobe(M), slot_wear_suit)
@@ -857,13 +842,13 @@
 			M.equip_to_slot_or_del(new /obj/item/weapon/staff(M), slot_l_hand)
 			M.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack(M), slot_back)
 			M.equip_to_slot_or_del(new /obj/item/weapon/storage/box(M), slot_in_backpack)
-			
+
 		if("soviet admiral")
 			M.equip_to_slot_or_del(new /obj/item/clothing/head/hgpiratecap(M), slot_head)
 			M.equip_to_slot_or_del(new /obj/item/clothing/shoes/combat(M), slot_shoes)
 			M.equip_to_slot_or_del(new /obj/item/clothing/gloves/combat(M), slot_gloves)
 			M.equip_to_slot_or_del(new /obj/item/device/radio/headset/heads/captain(M), slot_l_ear)
-			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/thermal/plain/eyepatch(M), slot_glasses)
+			M.equip_to_slot_or_del(new /obj/item/clothing/glasses/eyepatch/hud/thermal(M), slot_glasses)
 			M.equip_to_slot_or_del(new /obj/item/clothing/suit/hgpirate(M), slot_wear_suit)
 			M.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/satchel(M), slot_back)
 			M.equip_to_slot_or_del(new /obj/item/weapon/gun/projectile/revolver/mateba(M), slot_belt)
@@ -941,17 +926,17 @@
 
 	switch(input("Which list?") in list("Players","Admins","Mobs","Living Mobs","Dead Mobs", "Clients"))
 		if("Players")
-			usr << list2text(player_list,",")
+			usr << jointext(player_list,",")
 		if("Admins")
-			usr << list2text(admins,",")
+			usr << jointext(admins,",")
 		if("Mobs")
-			usr << list2text(mob_list,",")
+			usr << jointext(mob_list,",")
 		if("Living Mobs")
-			usr << list2text(living_mob_list,",")
+			usr << jointext(living_mob_list,",")
 		if("Dead Mobs")
-			usr << list2text(dead_mob_list,",")
+			usr << jointext(dead_mob_list,",")
 		if("Clients")
-			usr << list2text(clients,",")
+			usr << jointext(clients,",")
 
 // DNA2 - Admin Hax
 /client/proc/cmd_admin_toggle_block(var/mob/M,var/block)

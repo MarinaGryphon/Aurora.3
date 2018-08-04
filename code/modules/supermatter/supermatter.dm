@@ -166,8 +166,8 @@
 /obj/machinery/power/supermatter/get_transit_zlevel()
 	//don't send it back to the station -- most of the time
 	if(prob(99))
-		var/list/candidates = accessible_z_levels.Copy()
-		for(var/zlevel in config.station_levels)
+		var/list/candidates = current_map.accessible_z_levels.Copy()
+		for(var/zlevel in current_map.station_levels)
 			candidates.Remove("[zlevel]")
 		candidates.Remove("[src.z]")
 
@@ -265,6 +265,8 @@
 	for(var/mob/living/carbon/human/l in view(src, min(7, round(sqrt(power/6))))) // If they can see it without mesons on.  Bad on them.
 		if(!istype(l.glasses, /obj/item/clothing/glasses/meson) && !l.is_diona() && !l.isSynthetic())
 			l.hallucination = max(0, min(200, l.hallucination + power * config_hallucination_power * sqrt( 1 / max(1,get_dist(l, src)) ) ) )
+			if(prob(15))
+				l.cure_all_traumas(cure_type = CURE_HYPNOSIS)
 
 	//adjusted range so that a power of 170 (pretty high) results in 9 tiles, roughly the distance from the core to the engine monitoring room.
 	//note that the rads given at the maximum range is a constant 0.2 - as power increases the maximum range merely increases.
@@ -359,10 +361,12 @@
 	user.apply_effect(150, IRRADIATE, blocked = user.getarmor(null, "rad"))
 
 
-/obj/machinery/power/supermatter/Bumped(atom/AM as mob|obj)
+/obj/machinery/power/supermatter/CollidedWith(atom/AM as mob|obj)
 	if(!AM.simulated)
 		return
 	if(istype(AM, /obj/effect))
+		return
+	if(isprojectile(AM))
 		return
 	if(istype(AM, /mob/living))
 		AM.visible_message("<span class=\"warning\">\The [AM] slams into \the [src] inducing a resonance... \his body starts to glow and catch flame before flashing into ash.</span>",\

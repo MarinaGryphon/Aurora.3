@@ -65,7 +65,7 @@
 /obj/machinery/meter/examine(mob/user)
 	var/t = "A gas flow meter. "
 	
-	if(get_dist(user, src) > 3 && !(istype(user, /mob/living/silicon/ai) || istype(user, /mob/dead)))
+	if(get_dist(user, src) > 3 && !(istype(user, /mob/living/silicon/ai) || istype(user, /mob/abstract)))
 		t += "<span class='warning'>You are too far away to read it.</span>"
 	
 	else if(stat & (NOPOWER|BROKEN))
@@ -91,7 +91,7 @@
 	return ..()
 
 /obj/machinery/meter/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (!istype(W, /obj/item/weapon/wrench))
+	if (!iswrench(W))
 		return ..()
 	playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
 	user << "<span class='notice'>You begin to unfasten \the [src]...</span>"

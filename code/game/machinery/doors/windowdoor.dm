@@ -57,7 +57,7 @@
 	update_nearby_tiles()
 	return ..()
 
-/obj/machinery/door/window/Bumped(atom/movable/AM as mob|obj)
+/obj/machinery/door/window/CollidedWith(atom/movable/AM as mob|obj)
 	if (istype(AM, /obj))
 		var/mob/living/bot/bot = AM
 		if(istype(bot))
@@ -151,7 +151,7 @@
 		if(H.species.can_shred(H))
 			user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 			playsound(src.loc, 'sound/effects/Glasshit.ogg', 75, 1)
-			visible_message("<span class='danger'>[user] smashes against the [src.name].</span>", 1)
+			user.visible_message("<span class='danger'>[user] smashes against [src].</span>", "<span class='danger'>You smash against [src]!</span>")
 			take_damage(25)
 			return
 	return src.attackby(user, user)
@@ -180,7 +180,7 @@
 		return 1
 
 	//If it's emagged, crowbar can pry electronics out.
-	if (src.operating == -1 && istype(I, /obj/item/weapon/crowbar))
+	if (src.operating == -1 && iscrowbar(I))
 		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
 		user.visible_message("[user] removes the electronics from the windoor.", "You start to remove electronics from the windoor.")
 		if (do_after(user,40))

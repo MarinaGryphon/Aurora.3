@@ -94,7 +94,7 @@
 		C.loc = src
 		cell = C
 		updateDialog()
-	else if(istype(I,/obj/item/weapon/screwdriver))
+	else if(isscrewdriver(I))
 		if(locked)
 			user << "<span class='notice'>The maintenance hatch cannot be opened or closed while the controls are locked.</span>"
 			return
@@ -109,7 +109,7 @@
 			icon_state = "mulebot0"
 
 		updateDialog()
-	else if (istype(I, /obj/item/weapon/wrench))
+	else if (iswrench(I))
 		if (src.health < maxhealth)
 			src.health = min(maxhealth, src.health+25)
 			user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
@@ -415,7 +415,7 @@
 	C.pixel_y += 9
 	if(C.layer < layer)
 		C.layer = layer + 0.1
-	overlays += C
+	add_overlay(C)
 
 	if(ismob(C))
 		var/mob/M = C
@@ -434,7 +434,7 @@
 		return
 
 	mode = 1
-	overlays.Cut()
+	cut_overlays()
 
 	load.loc = src.loc
 	load.pixel_y -= 9
@@ -694,7 +694,7 @@
 	return
 
 // called when bot bumps into anything
-/obj/machinery/bot/mulebot/Bump(var/atom/obs)
+/obj/machinery/bot/mulebot/Collide(var/atom/obs)
 	if(!wires.MobAvoid())		//usually just bumps, but if avoidance disabled knock over mobs
 		var/mob/M = obs
 		if(ismob(M))
@@ -706,7 +706,7 @@
 				M.Stun(8)
 				M.Weaken(5)
 				M.lying = 1
-	..()
+	. = ..()
 
 // called from mob/living/carbon/human/Crossed()
 // when mulebot is in the same loc
@@ -724,6 +724,8 @@
 
 	blood_splatter(src,H,1)
 	bloodiness += 4
+
+	SSfeedback.IncrementSimpleStat("mule_victims")
 
 // player on mulebot attempted to move
 /obj/machinery/bot/mulebot/relaymove(var/mob/user)
@@ -859,7 +861,7 @@
 
 
 /obj/machinery/bot/mulebot/explode()
-	src.visible_message("<span class='danger'>[src] blows apart!</span>", 1)
+	visible_message("<span class='danger'>[src] blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 
 	new /obj/item/device/assembly/prox_sensor(Tsec)

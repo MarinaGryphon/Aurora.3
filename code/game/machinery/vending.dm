@@ -9,6 +9,7 @@
 	var/product_name = "generic" // Display name for the product
 	var/product_path = null
 	var/amount = 0  // Amount held in the vending machine
+	var/max_amount = 0
 	var/price = 0  // Price to buy one
 	var/display_color = null  // Display color for vending machine listing
 	var/category = CAT_NORMAL  // CAT_HIDDEN for contraband, CAT_COIN for premium
@@ -53,6 +54,7 @@
 	var/active = 1 //No sales pitches if off!
 	var/vend_ready = 1 //Are we ready to vend?? Is it time??
 	var/vend_delay = 10 //How long does it take to vend?
+
 	var/categories = CAT_NORMAL // Bitmask of cats we're currently showing
 	var/datum/data/vending_product/currently_vending = null // What we're requesting payment for right now
 	var/status_message = "" // Status screen messages like "insufficient funds", displayed in NanoUI
@@ -94,8 +96,11 @@
 	var/scan_id = 1
 	var/obj/item/weapon/coin/coin
 	var/datum/wires/vending/wires = null
-	
+
 	var/can_move = 1	//if you can wrench the machine out of place
+	var/vend_id = "generic"	//Id of the refill cartridge that has to be used
+	var/restock_items = 0	//If items can be restocked into the vending machine
+	var/list/restock_blocked_items = list() //Items that can not be restocked if restock_items is enabled
 
 /obj/machinery/vending/Initialize()
 	. = ..()
@@ -136,6 +141,7 @@
 
 			product.price = (entry in src.prices) ? src.prices[entry] : 0
 			product.amount = (current_list[1][entry]) ? current_list[1][entry] : 1
+			product.max_amount = product.amount
 			product.category = category
 
 			src.product_records.Add(product)
@@ -208,7 +214,7 @@
 	if (I || istype(W, /obj/item/weapon/spacecash))
 		attack_hand(user)
 		return
-	else if(istype(W, /obj/item/weapon/screwdriver))
+	else if(isscrewdriver(W))
 		src.panel_open = !src.panel_open
 		user << "You [src.panel_open ? "open" : "close"] the maintenance panel."
 		cut_overlays()
@@ -217,7 +223,7 @@
 
 		SSnanoui.update_uis(src)  // Speaker switch is on the main UI, not wires UI
 		return
-	else if(istype(W, /obj/item/device/multitool)||istype(W, /obj/item/weapon/wirecutters))
+	else if(ismultitool(W)||iswirecutter(W))
 		if(src.panel_open)
 			attack_hand(user)
 		return
@@ -229,7 +235,7 @@
 		user << "<span class='notice'>You insert \the [W] into \the [src].</span>"
 		SSnanoui.update_uis(src)
 		return
-	else if(istype(W, /obj/item/weapon/wrench))
+	else if(iswrench(W))
 		if(!can_move)
 			return
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
@@ -245,7 +251,32 @@
 			anchored = !anchored
 		return
 
-	else if (!is_borg_item(W))
+	else if(istype(W,/obj/item/weapon/vending_refill))
+		if(panel_open)
+			var/obj/item/weapon/vending_refill/VR = W
+			if(VR.charges)
+				if(VR.vend_id == vend_id)
+					VR.restock_inventory(src)
+					user << "<span class='notice'>You restock \the [src] with \the [VR]!</span>"
+					if(!VR.charges)
+						user << "<span class='warning'>\The [VR] is depleted!</span>"
+				else
+					user << "<span class='warning'>\The [VR] is not stocked for this type of vendor!</span>"
+			else
+				user << "<span class='warning'>\The [VR] is depleted!</span>"
+			return
+		else
+			user << "<span class='warning'>You must open \the [src]'s maintenance panel first!</span>"
+			return
+
+	else if(!is_borg_item(W))
+		if(!restock_items)
+			user << "<span class='warning'>\the [src] can not be restocked manually!</span>"
+			return
+		for(var/path in restock_blocked_items)
+			if(istype(W,path))
+				user << "<span class='warning'>\the [src] does not accept this item!</span>"
+				return
 
 		for(var/datum/data/vending_product/R in product_records)
 			if(istype(W, R.product_path))

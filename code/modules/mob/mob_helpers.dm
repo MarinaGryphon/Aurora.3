@@ -60,28 +60,23 @@
 /proc/isvaurca(A)
 	if(istype(A, /mob/living/carbon/human))
 		switch(A:get_species())
-			if ("Vaurca Worker")
+			if("Vaurca Worker")
 				return 1
 			if("Vaurca Warrior")
 				return 1
 			if("Vaurca Breeder")
+				return 1
+			if("Vaurca Warform")
 				return 1
 			if("V'krexi")
 				return 1
 	return 0
 
 /proc/isipc(A)
-	if(istype(A, /mob/living/carbon/human))
-		switch(A:get_species())
-			if ("Baseline Frame")
-				return 1
-			if ("Industrial Frame")
-				return 1
-			if ("Shell Frame")
-				return 1
-			if ("Hunter-Killer")
-				return 1
-	return 0
+	. = 0
+	if(ishuman(A))
+		var/mob/living/carbon/human/H = A
+		. = H.species && (H.species.flags & IS_MECHANICAL)
 
 /proc/isvox(A)
 	if(istype(A, /mob/living/carbon/human))
@@ -295,7 +290,7 @@ var/list/global/organ_rel_size = list(
 		p++
 	return t
 
-proc/slur(phrase)
+proc/slur(phrase, strength = 100)
 	phrase = html_decode(phrase)
 	var/leng=lentext(phrase)
 	var/counter=lentext(phrase)
@@ -303,18 +298,16 @@ proc/slur(phrase)
 	var/newletter=""
 	while(counter>=1)
 		newletter=copytext(phrase,(leng-counter)+1,(leng-counter)+2)
-		if(rand(1,3)==3)
-			if(lowertext(newletter)=="o")	newletter="u"
-			if(lowertext(newletter)=="s")	newletter="ch"
-			if(lowertext(newletter)=="a")	newletter="ah"
-			if(lowertext(newletter)=="c")	newletter="k"
-		switch(rand(1,15))
-			if(1,3,5,8)	newletter="[lowertext(newletter)]"
-			if(2,4,6,15)	newletter="[uppertext(newletter)]"
-			if(7)	newletter+="'"
-			//if(9,10)	newletter="<b>[newletter]</b>"
-			//if(11,12)	newletter="<big>[newletter]</big>"
-			//if(13)	newletter="<small>[newletter]</small>"
+		if(prob(strength))
+			if(rand(1,3)==3)
+				if(lowertext(newletter)=="o")	newletter="u"
+				if(lowertext(newletter)=="s")	newletter="ch"
+				if(lowertext(newletter)=="a")	newletter="ah"
+				if(lowertext(newletter)=="c")	newletter="k"
+			switch(rand(1,15))
+				if(1,3,5,8)	newletter="[lowertext(newletter)]"
+				if(2,4,6,15)	newletter="[uppertext(newletter)]"
+				if(7)	newletter+="'"
 		newphrase+="[newletter]";counter-=1
 	return newphrase
 
@@ -399,7 +392,7 @@ It's fairly easy to fix if dealing with single letters but not so much with comp
 			return
 		var/atom/oldeye=M.client.eye
 		var/aiEyeFlag = 0
-		if(istype(oldeye, /mob/eye/aiEye))
+		if(istype(oldeye, /mob/abstract/eye/aiEye))
 			aiEyeFlag = 1
 
 		var/x
@@ -538,7 +531,7 @@ proc/is_blind(A)
 				name = realname
 
 	for(var/mob/M in player_list)
-		if(M.client && ((!istype(M, /mob/new_player) && M.stat == DEAD) || (M.client.holder && check_rights(R_DEV|R_MOD|R_ADMIN, 0, M))) && (M.client.prefs.toggles & CHAT_DEAD))
+		if(M.client && ((!istype(M, /mob/abstract/new_player) && M.stat == DEAD) || (M.client.holder && check_rights(R_DEV|R_MOD|R_ADMIN, 0, M))) && (M.client.prefs.toggles & CHAT_DEAD))
 			var/follow
 			var/lname
 			if(subject)
@@ -546,8 +539,8 @@ proc/is_blind(A)
 					follow = "[ghost_follow_link(subject, M)] "
 				if(M.stat != DEAD && M.client.holder)
 					follow = "([admin_jump_link(subject, M.client.holder)]) "
-				var/mob/dead/observer/DM
-				if(istype(subject, /mob/dead/observer))
+				var/mob/abstract/observer/DM
+				if(istype(subject, /mob/abstract/observer))
 					DM = subject
 				if(M.client.holder) 							// What admins see
 					lname = "[keyname][(DM && DM.anonsay) ? "*" : (DM ? "" : "^")] ([name])"
@@ -677,12 +670,13 @@ proc/is_blind(A)
 
 /mob/living/simple_animal/hostile/assess_perp(var/obj/access_obj, var/check_access, var/auth_weapons, var/check_records, var/check_arrest)
 	var/threatcount = ..()
-	if(. == SAFE_PERP)
+	if(threatcount == SAFE_PERP)
 		return SAFE_PERP
 
-	if(!istype(src, /mob/living/simple_animal/hostile/retaliate/goat))
-		threatcount += 4
-	return threatcount
+	if(istype(src, /mob/living/simple_animal/hostile/retaliate/goat) || istype(src, /mob/living/simple_animal/hostile/commanded))
+		return threatcount
+
+	return threatcount + 4
 
 
 /mob/living/proc/bucklecheck(var/mob/living/user)
@@ -716,7 +710,7 @@ proc/is_blind(A)
 
 		nutrition -= 60
 		if (intoxication)//The pain and system shock of vomiting, sobers you up a little
-			intoxication *= 0.8
+			intoxication *= 0.9
 
 		if (istype(src, /mob/living/carbon/human))
 			ingested.trans_to_turf(location,30)//Vomiting empties the stomach, transferring 30u reagents to the floor where you vomited
@@ -998,138 +992,106 @@ proc/is_blind(A)
 	P.time_of_death[which] = value
 	return 1
 
+/**
+ * Resets death timers for a mob. Should only be called during new player creation.
+ */
+/mob/proc/reset_death_timers()
+	var/datum/preferences/P
+	if (client)
+		P = client.prefs
+	else if (ckey)
+		// To avoid runtimes during adminghost.
+		if (copytext(ckey, 1, 2) == "@")
+			P = preferences_datums[copytext(ckey, 2)]
+		else
+			P = preferences_datums[ckey]
+	else
+		return
+
+	if (!P)
+		return
+
+	P.time_of_death.Cut()
 
 //Below here is stuff related to devouring, but which is generally helpful and thus placed here
 //See Devour.dm for more info in how these are used
 
-
-
-//Blacklists of mobs that can be excluded from eating by flags in the bitfield
-
-//All of these specific human subtypes are here for a reason.
-//Using /mob/living/carbon/human as a generic type would include monkey/stok/farwa/neara.
-//We do not want those to count as humanoids, only player species
-var/list/humanoid_mobs_specific = list( /mob/living/carbon/human,
-	/mob/living/carbon/human/bst,
-	/mob/living/carbon/human/skrell,
-	/mob/living/carbon/human/unathi,
-	/mob/living/carbon/human/diona,
-	/mob/living/carbon/human/tajaran,
-	/mob/living/carbon/human/vox,
-	/mob/living/carbon/human/machine,
-	/mob/living/carbon/human/type_a,
-	/mob/living/carbon/human/type_b
-	)
-
-var/list/humanoid_mobs_inclusive = list(
-	/mob/living/simple_animal/hostile/pirate,
-	/mob/living/simple_animal/hostile/russian,
-	/mob/living/simple_animal/hostile/syndicate
-	)
-
-var/list/synthetic_mobs_specific = list(
-	/mob/living/carbon/human/machine,
-	/mob/living/simple_animal/hostile/retaliate/malf_drone,
-	/mob/living/simple_animal/hostile/viscerator,
-	/mob/living/simple_animal/spiderbot
-	)
-
-
-var/list/synthetic_mobs_inclusive = list( /mob/living/silicon,
-	/mob/living/simple_animal/hostile/hivebot,
-	/mob/living/bot
-	)
-
-var/list/wierd_mobs_specific = list(/mob/living/simple_animal/adultslime)
-
-var/list/wierd_mobs_inclusive = list( /mob/living/simple_animal/construct,
-	/mob/living/simple_animal/shade,
-	/mob/living/simple_animal/slime,
-	/mob/living/simple_animal/hostile/faithless,
-	/mob/living/carbon/slime
-	)
-
-
+// Returns a bitfield representing the mob's type as relevant to the devour system.
 /mob/proc/find_type()
-	if (istype(src, /mob/living))
-		var/mob/living/L = src
-		return L.find_type()
 	return 0
 
-/mob/living/find_type()
-	//This function returns a bitfield indicating what type(s) the passed mob is.
-	//Synthetic and wierd are exclusive from organic. We assume it's organic if it's not either of those
-	//var/mob/living/test = src
-	var/mobtypes = 0
+/mob/living/carbon/human/find_type()
+	. = ..()
+	. |= isSynthetic() ? TYPE_SYNTHETIC : TYPE_ORGANIC
+	if (!islesserform(src))
+		. |= TYPE_HUMANOID
 
-	if (mob_listed(src, synthetic_mobs_specific,1))
-		mobtypes |= TYPE_SYNTHETIC
-	else if (mob_listed(src, synthetic_mobs_inclusive,0))
-		mobtypes |= TYPE_SYNTHETIC
-	else
-		if (isSynthetic())
-			mobtypes |= TYPE_SYNTHETIC
+/mob/living/carbon/slime/find_type()
+	. = ..()
+	. |= TYPE_WEIRD
 
-	if (mob_listed(src, wierd_mobs_specific,1))
-		mobtypes |= TYPE_WIERD
-	else if (mob_listed(src, wierd_mobs_inclusive,0))
-		mobtypes |= TYPE_WIERD
+/mob/living/bot/find_type()
+	. = ..()
+	. |= TYPE_SYNTHETIC
 
-	if (!(mobtypes & TYPE_WIERD) && !(mobtypes & TYPE_SYNTHETIC))
-		mobtypes |= TYPE_ORGANIC
+/mob/living/silicon/find_type()
+	. = ..()
+	. |= TYPE_SYNTHETIC
+
+// Yeah, I'm just going to cheat and do istype(src) checks here.
+// It's not worth adding a proc for every single one of these types.
+/mob/living/simple_animal/find_type()
+	. = ..()
+	if (is_type_in_typecache(src, SSmob.mtl_synthetic))
+		. |= TYPE_SYNTHETIC
+
+	if (is_type_in_typecache(src, SSmob.mtl_weird))
+		. |= TYPE_WEIRD
+
+	if (is_type_in_typecache(src, SSmob.mtl_incorporeal))
+		. |= TYPE_INCORPOREAL
+
+	// If it's not TYPE_SYNTHETIC, TYPE_WEIRD or TYPE_INCORPOREAL, we can assume it's TYPE_ORGANIC.
+	if (!(. & (TYPE_SYNTHETIC|TYPE_WEIRD|TYPE_INCORPOREAL)))
+		. |= TYPE_ORGANIC
+
+	if (is_type_in_typecache(src, SSmob.mtl_humanoid))
+		. |= TYPE_HUMANOID
 
 
-	if (mob_listed(src, humanoid_mobs_specific,1))
-		mobtypes |= TYPE_HUMANOID
-	else if (mob_listed(src, humanoid_mobs_inclusive,0))
-		mobtypes |= TYPE_HUMANOID
+/mob/living/proc/get_vessel(create = FALSE)
+	if (!create)
+		return
 
-	return mobtypes
+	//we make a new vessel for whatever creature we're devouring. this allows blood to come from creatures that can't normally bleed
+	//We create an MD5 hash of the mob's reference to use as its DNA string.
+	//This creates unique DNA for each creature in a consistently repeatable process
+	var/datum/reagents/vessel = new/datum/reagents(600)
+	vessel.add_reagent("blood",560)
+	for(var/datum/reagent/blood/B in vessel.reagent_list)
+		if(B.id == "blood")
+			B.data = list(
+				"donor" = WEAKREF(src),
+				"viruses" = null,
+				"species" = name,
+				"blood_DNA" = md5("\ref[src]"),
+				"blood_colour" = "#a10808",
+				"blood_type" = null,
+				"resistances" = null,
+				"trace_chem" = null,
+				"virus2" = null,
+				"antibodies" = list()
+			)
 
+			B.color = B.data["blood_colour"]
 
-//This function attempts to find the mob's blood vessel, if it has one.
-//If it doesn't, and the create var is true, then it will create a new temporary one filled with blood that has fake DNA, and return that
-//If no vessel and no create var, then null is returned, getting blood isnt possible.
-//The fake DNA is generally useful for animals, it contains enough information to tell what kind of creature it came from
-/mob/living/proc/get_vessel(var/create = 0)
-	//Add any other creatures which have blood, here
-	if(istype(src, /mob/living/carbon/human))
-		var/mob/living/carbon/human/H = src
-		return H.vessel
-	else if (istype(src, /mob/living/carbon/alien/diona))
-		var/mob/living/carbon/alien/diona/D = src
-		return D.vessel
-	else if (create)
+	return vessel
 
-		//we make a new vessel for whatever creature we're devouring. this allows blood to come from creatures that can't normally bleed
-		//We create an MD5 hash of the mob's reference to use as its DNA string.
-		//This creates unique DNA for each creature in a consistently repeatable process
-		var/datum/reagents/vessel = new/datum/reagents(600)
-		vessel.add_reagent("blood",560)
-		for(var/datum/reagent/blood/B in vessel.reagent_list)
-			if(B.id == "blood")
-				B.data = list(	"donor"=src,"viruses"=null,"species"=src.name,"blood_DNA"=md5("\ref[src]"),"blood_colour"= "#a10808","blood_type"=null,	\
-								"resistances"=null,"trace_chem"=null, "virus2" = null, "antibodies" = list())
+/mob/living/carbon/human/get_vessel(create = FALSE)
+	. = vessel
 
-				B.color = B.data["blood_colour"]
-
-		return vessel
-
-	else return null
-
-//This function checks against a list to see if the mob is in it.
-//Any specified types are checked against exactly, using ==, not istype
-//Any types ending in * will be tested with isType
-/proc/mob_listed(var/mob/living/test, var/list/toCheck, var/specific = 0)
-	for (var/i in toCheck)
-		if (specific)
-			if (test.type == i)
-				return 1
-		else
-			if (istype(test, i))
-				return 1
-	return 0
-
+/mob/living/carbon/alien/diona/get_vessel(create = FALSE)
+	. = vessel
 
 #define POSESSIVE_PRONOUN	0
 #define POSESSIVE_ADJECTIVE	1
@@ -1188,7 +1150,7 @@ var/list/wierd_mobs_inclusive = list( /mob/living/simple_animal/construct,
 	if(istype(P))
 		return P
 
-mob/dead/observer/get_multitool()
+/mob/abstract/observer/get_multitool()
 	return can_admin_interact() && ..(ghost_multitool)
 
 /mob/living/carbon/human/get_multitool()

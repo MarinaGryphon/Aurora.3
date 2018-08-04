@@ -51,23 +51,15 @@
 
 	var/process_lock = 0 //If the call to process is locked because it is still running
 
+	component_types = list(
+		/obj/item/weapon/circuitboard/crusher,
+		/obj/item/weapon/stock_parts/matter_bin = 4,
+		/obj/item/weapon/stock_parts/manipulator = 3,
+		/obj/item/weapon/reagent_containers/glass/beaker = 3
+	)
+
 /obj/machinery/crusher_base/Initialize()
 	. = ..()
-
-	//Create parts for crusher.
-	component_parts = list()
-	component_parts += new /obj/item/weapon/circuitboard/crusher(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/matter_bin(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/stock_parts/manipulator(src)
-	component_parts += new /obj/item/weapon/reagent_containers/glass/beaker(src)
-	component_parts += new /obj/item/weapon/reagent_containers/glass/beaker(src)
-	component_parts += new /obj/item/weapon/reagent_containers/glass/beaker(src)
-	RefreshParts()
 
 	action_start_time = world.time
 
@@ -83,26 +75,32 @@
 	var/oldloc = loc
 	var/obj/machinery/crusher_base/left = locate(/obj/machinery/crusher_base, get_step(src, WEST))
 	var/obj/machinery/crusher_base/right = locate(/obj/machinery/crusher_base, get_step(src, EAST))
-	
+
 	loc=null
 	if(left)
 		left.update_icon()
 	if(right)
 		right.update_icon()
 	loc=oldloc
-	
+
 	QDEL_NULL(pstn)
 	return ..()
 
 /obj/machinery/crusher_base/attackby(var/obj/item/O as obj, var/mob/user as mob)
+	if(status != "idle" && prob(40) && ishuman(user))
+		var/mob/living/carbon/human/M = user
+		M.apply_damage(45, BRUTE, user.get_active_hand())
+		M.apply_damage(45, HALLOSS)
+		M.visible_message("<span class='danger'>[user]'s hand catches in the [src]!</span>", "<span class='danger'>Your hand gets caught in the [src]!</span>")
+		M.say("*scream")
+		return
 	if(default_deconstruction_screwdriver(user, O))
 		return
-	//TODO: Add a chance to catch their hand in the mechanic if they do something while the crusher is in operation
 	if(default_deconstruction_crowbar(user, O))
 		return
 	if(default_part_replacement(user, O))
 		return
-	
+
 	//Stuff you can do if the maint hatch is open
 	if(panel_open)
 		if(iswrench(O))
@@ -140,7 +138,7 @@
 
 	if(QDELETED(left))
 		left = null
-		
+
 	if(QDELETED(right))
 		right = null
 
@@ -166,7 +164,7 @@
 			holographic_overlay(src, icon, "[asmtype]-overlay-green")
 	if(panel_open)
 		add_overlay("[asmtype]-hatch")
-	update_above()	
+	update_above()
 
 /obj/machinery/crusher_base/power_change()
 	..()
@@ -216,7 +214,7 @@
 					status = "stage1"
 					action_start_time = world.time
 					initial = 1
-		
+
 		//Extend the second piston
 		else if(status == "stage1")
 			if(valve_check())
@@ -250,7 +248,7 @@
 					status = "stage3"
 					action_start_time = world.time
 					initial = 1
-		
+
 		//Wait a moment, then reverse the direction
 		else if(status == "stage3")
 			if(initial)
@@ -310,7 +308,7 @@
 			action_start_time = world.time
 			initial = 1
 			update_icon()
-	
+
 	//Move all the items in the move list
 	for(var/atom/movable/AM in items_to_move)
 		if(!AM.simulated)
@@ -324,7 +322,7 @@
 		if(!AM.piston_move())
 			items_to_crush += AM
 		CHECK_TICK
-	
+
 	//Destroy all the items in the crush list
 	for(var/atom/movable/AM in items_to_crush)
 		items_to_crush -= AM
@@ -368,7 +366,7 @@
 	name = "trash compactor piston"
 	desc = "A colossal piston used for crushing garbage."
 	icon = 'icons/obj/machines/crusherpiston.dmi' //Placeholder TODO: Get a proper icon
-	icon_state = "piston_0" 
+	icon_state = "piston_0"
 	density = 0
 	anchored = 1
 	pixel_y = -64
@@ -515,6 +513,8 @@
 // The crush act proc
 //
 /atom/movable/proc/crush_act()
+	if(!simulated)
+		return
 	ex_act(1)
 	if(!QDELETED(src))
 		qdel(src)//Just as a failsafe

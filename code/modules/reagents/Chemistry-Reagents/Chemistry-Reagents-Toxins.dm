@@ -12,7 +12,7 @@
 	taste_mult = 1.2
 
 /datum/reagent/toxin/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(strength && alien != IS_DIONA)
+	if(strength)
 		M.adjustToxLoss(strength * removed)
 
 /datum/reagent/toxin/plasticide
@@ -47,20 +47,33 @@
 		return
 	..()
 
+/datum/reagent/toxin/panotoxin
+	name = "Panotoxin"
+	id = "panotoxin"
+	description = "A strange poison from the strange panocelium mushroom that causes intense pain when injected."
+	reagent_state = LIQUID
+	color = "#008844"
+	strength = 0
+	taste_description = "stinging needles"
+
+/datum/reagent/toxin/panotoxin/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
+	M.adjustHalLoss(removed*15)
+
 /datum/reagent/toxin/phoron
 	name = "Phoron"
 	id = "phoron"
-	description = "Phoron in its liquid form."
+	description = "Phoron in its liquid form. Twice as potent when breathed in."
 	reagent_state = LIQUID
 	color = "#9D14DB"
 	strength = 30
 	touch_met = 5
 	taste_mult = 1.5
+	breathe_mul = 2
 
 /datum/reagent/toxin/phoron/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		if(H.species.has_organ["filtration bit"] && isvaurca(H))
+		if(alien == IS_VAURCA && H.species.has_organ["filtration bit"])
 			metabolism = REM * 20 //vaurcae metabolise phoron faster than other species - good for them if their filter isn't broken.
 			var/obj/item/organ/vaurca/filtrationbit/F = H.internal_organs_by_name["filtration bit"]
 			if(isnull(F))
@@ -80,12 +93,15 @@
 	else
 		..()
 
+
+
+
 /datum/reagent/toxin/phoron/touch_mob(var/mob/living/L, var/amount)
 	if(istype(L))
 		L.adjust_fire_stacks(amount / 5)
 
 /datum/reagent/toxin/phoron/affect_touch(var/mob/living/carbon/M, var/alien, var/removed)
-	if(isvaurca(M))
+	if(alien == IS_VAURCA)
 		return
 	M.take_organ_damage(0, removed * 0.1) //being splashed directly with phoron causes minor chemical burns
 	if(prob(50))
@@ -97,6 +113,35 @@
 	T.assume_gas("phoron", volume, T20C)
 	remove_self(volume)
 
+/datum/reagent/toxin/cardox
+	name = "Cardox"
+	id = "cardox"
+	description = "Cardox is an mildly toxic, expensive, NanoTrasen designed cleaner intended to eliminate liquid phoron stains from suits."
+	reagent_state = LIQUID
+	color = "#EEEEEE"
+	taste_description = "cherry"
+	conflicting_reagent = /datum/reagent/toxin/phoron
+	strength = 1
+
+/datum/reagent/toxin/cardox/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
+	if(alien == IS_VAURCA)
+		M.adjustToxLoss(removed * strength*2)
+	else
+		M.adjustToxLoss(removed * strength)
+
+/datum/reagent/toxin/cardox/affect_conflicting(var/mob/living/carbon/M, var/alien, var/removed, var/datum/reagent/conflicting)
+	var/amount = min(removed, conflicting.volume)
+	holder.remove_reagent(conflicting.id, amount)
+
+/datum/reagent/toxin/cardox/touch_turf(var/turf/T, var/amount)
+
+	if(amount >= 1)
+		for(var/mob/living/carbon/slime/M in T)
+			M.adjustToxLoss(amount*10)
+
+	var/datum/gas_mixture/environment = T.return_air()
+	environment.adjust_gas("phoron",-amount*10)
+
 /datum/reagent/toxin/cyanide //Fast and Lethal
 	name = "Cyanide"
 	id = "cyanide"
@@ -105,6 +150,7 @@
 	color = "#CF3600"
 	strength = 20
 	metabolism = REM * 2
+	taste_description = "bitter almonds"
 	taste_mult = 1.5
 
 /datum/reagent/toxin/cyanide/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
@@ -113,7 +159,6 @@
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
 	M.adjustOxyLoss(20 * removed)
-	M.sleeping += 1
 
 /datum/reagent/toxin/potassium_chloride
 	name = "Potassium Chloride"
@@ -169,8 +214,6 @@
 
 /datum/reagent/toxin/zombiepowder/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	..()
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_SCAN))
 		return
@@ -195,6 +238,7 @@
 	color = "#664330"
 	taste_description = "plant food"
 	taste_mult = 0.5
+	unaffected_species = IS_MACHINE
 
 /datum/reagent/toxin/fertilizer/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	if(alien == IS_DIONA)
@@ -224,6 +268,7 @@
 	strength = 4
 	metabolism = REM*1.5
 	taste_mult = 1
+	unaffected_species = IS_MACHINE
 
 /datum/reagent/toxin/plantbgone/touch_turf(var/turf/T)
 	if(istype(T, /turf/simulated/wall))
@@ -234,7 +279,11 @@
 			W.visible_message("<span class='notice'>The fungi are completely dissolved by the solution!</span>")
 
 /datum/reagent/toxin/plantbgone/touch_obj(var/obj/O, var/volume)
-	if(istype(O, /obj/effect/plant))
+	if(istype(O, /obj/structure/alien/weeds))
+		var/obj/structure/alien/weeds/alien_weeds = O
+		alien_weeds.health -= rand(15, 35)
+		alien_weeds.healthcheck()
+	else if(istype(O, /obj/effect/plant))
 		qdel(O)
 
 /datum/reagent/toxin/plantbgone/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
@@ -247,16 +296,6 @@
 	removed *= M.reagent_permeability()
 	affect_blood(M, alien, removed*0.5)
 
-/datum/reagent/acid/polyacid
-	name = "Polytrinic acid"
-	id = "pacid"
-	description = "Polytrinic acid is a an extremely corrosive chemical substance."
-	reagent_state = LIQUID
-	color = "#8E18A9"
-	power = 6
-	meltdose = 4
-	taste_description = "acid"
-
 /datum/reagent/lexorin
 	name = "Lexorin"
 	id = "lexorin"
@@ -267,8 +306,6 @@
 	taste_description = "acid"
 
 /datum/reagent/lexorin/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -319,8 +356,6 @@
 	taste_mult = 1.3
 
 /datum/reagent/slimejelly/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -333,16 +368,16 @@
 /datum/reagent/soporific
 	name = "Soporific"
 	id = "stoxin"
-	description = "An effective hypnotic used to treat insomnia."
+	description = "An effective hypnotic used to treat insomnia, can act as a sedative. Lasts three times longer when inhaled."
 	reagent_state = LIQUID
 	color = "#009CA8"
 	metabolism = REM * 0.5
 	overdose = REAGENTS_OVERDOSE
 	taste_description = "bitterness"
+	breathe_met = 0.33
+	var/total_strength = 0
 
 /datum/reagent/soporific/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -362,16 +397,15 @@
 /datum/reagent/chloralhydrate
 	name = "Chloral Hydrate"
 	id = "chloralhydrate"
-	description = "A powerful sedative."
+	description = "A powerful sedative. Lasts three times longer when inhaled."
 	reagent_state = SOLID
 	color = "#000067"
 	metabolism = REM * 0.5
 	overdose = REAGENTS_OVERDOSE * 0.5
 	taste_description = "bitterness"
+	breathe_met = 0.33
 
 /datum/reagent/chloralhydrate/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -405,17 +439,17 @@
 /datum/reagent/space_drugs
 	name = "Space drugs"
 	id = "space_drugs"
-	description = "An illegal chemical compound used as drug."
+	description = "An illegal chemical compound used as drug. Lasts twice as long when inhaled."
 	reagent_state = LIQUID
 	color = "#60A584"
 	metabolism = REM * 0.5
 	overdose = REAGENTS_OVERDOSE
 	taste_description = "bitterness"
 	taste_mult = 0.4
+	breathe_mul = 2
+	breathe_met = REM * 0.25
 
 /datum/reagent/space_drugs/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -436,8 +470,6 @@
 	taste_description = "bitterness"
 
 /datum/reagent/serotrotium/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -456,8 +488,6 @@
 	taste_description = "sourness"
 
 /datum/reagent/cryptobiolin/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -476,8 +506,6 @@
 	taste_description = "numbness"
 
 /datum/reagent/impedrezene/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	M.jitteriness = max(M.jitteriness - 5, 0)
 	if(prob(80))
 		M.adjustBrainLoss(3 * removed)
@@ -497,8 +525,6 @@
 	taste_description = "sourness"
 
 /datum/reagent/mindbreaker/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	M.hallucination = max(M.hallucination, 100)
 
 /datum/reagent/psilocybin
@@ -511,8 +537,6 @@
 	taste_description = "mushroom"
 
 /datum/reagent/psilocybin/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	var/mob/living/carbon/human/H = M
 	if(istype(H) && (H.species.flags & NO_BLOOD))
 		return
@@ -538,14 +562,6 @@
 		M.druggy = max(M.druggy, 40)
 		if(prob(15))
 			M.emote(pick("twitch", "giggle"))
-
-/datum/reagent/nicotine
-	name = "Nicotine"
-	id = "nicotine"
-	description = "A highly addictive stimulant extracted from the tobacco plant."
-	reagent_state = LIQUID
-	color = "#181818"
-	taste_description = "bitterness"
 
 /* Transformations */
 
@@ -579,7 +595,7 @@
 	M.transforming = 1
 	M.canmove = 0
 	M.icon = null
-	M.overlays.Cut()
+	M.cut_overlays()
 	M.invisibility = 101
 	for(var/obj/item/W in M)
 		if(istype(W, /obj/item/weapon/implant)) //TODO: Carn. give implants a dropped() or something
@@ -626,3 +642,49 @@
 
 /datum/reagent/xenomicrobes/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
 	M.contract_disease(new /datum/disease/xeno_transformation(0), 1)
+
+/datum/reagent/toxin/undead
+	name = "Undead Ichor"
+	id = "undead_ichor"
+	description = "A wicked liquid with unknown origins and uses."
+	color = "#b2beb5"
+	strength = 25
+	taste_description = "ashes"
+
+/datum/reagent/toxin/undead/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
+	if(alien && alien == IS_UNDEAD)
+		M.heal_organ_damage(10 * removed, 15 * removed)
+		return
+	..()
+
+/datum/reagent/toxin/tobacco
+	name = "Space Tobacco"
+	id = "tobacco"
+	description = "Low-grade space tobacco."
+	reagent_state = LIQUID
+	color = "#333300"
+	data = 0
+	taste_description = "low-grade tobacco"
+	strength = 0.004
+	taste_mult = 10
+
+/datum/reagent/toxin/tobacco/affect_blood(var/mob/living/carbon/human/M, var/alien, var/removed)
+	if(istype(M))
+		var/obj/item/organ/H = M.internal_organs_by_name["heart"]
+		if(istype(H))
+			H.take_damage(removed * strength * 0.5,1)
+		var/obj/item/organ/L = M.internal_organs_by_name["lungs"]
+		if(istype(L))
+			L.take_damage(removed * strength,1)
+		var/obj/item/organ/A = M.internal_organs_by_name["liver"]
+		if(istype(A))
+			A.take_damage(removed * strength * 0.25,1)
+
+/datum/reagent/toxin/tobacco/rich
+	name = "Earth Tobacco"
+	id = "tobaccorich"
+	description = "Nicknamed 'Earth Tobacco', this plant is much higher quality than it's space fairing counterpart."
+	reagent_state = LIQUID
+	data = 0
+	taste_description = "quality tobacco"
+	strength = 0.002

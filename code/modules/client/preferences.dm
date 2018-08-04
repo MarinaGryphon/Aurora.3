@@ -40,6 +40,7 @@ datum/preferences
 	var/undershirt						//undershirt type
 	var/socks						//socks type
 	var/backbag = 2						//backpack type
+	var/backbag_style = 1
 	var/h_style = "Bald"				//Hair type
 	var/hair_colour = "#000000"			//Hair colour hex value, for SQL loading
 	var/r_hair = 0						//Hair color
@@ -92,7 +93,7 @@ datum/preferences
 	var/unsanitized_jobs = ""
 
 	//Keeps track of preferrence for not getting any wanted jobs
-	var/alternate_option = 0
+	var/alternate_option = 2
 
 	var/used_skillpoints = 0
 	var/skill_specialization = null
@@ -115,7 +116,7 @@ datum/preferences
 	var/exploit_record = ""
 	var/ccia_record = ""
 	var/list/ccia_actions = list()
-	var/disabilities = 0
+	var/list/disabilities = list()
 
 	var/nanotrasen_relation = "Neutral"
 
@@ -126,7 +127,7 @@ datum/preferences
 
 	// SPAAAACE
 	var/parallax_speed = 2
-	var/parallax_togs = PARALLAX_SPACE | PROGRESS_BARS
+	var/toggles_secondary = PARALLAX_SPACE | PARALLAX_DUST | PROGRESS_BARS
 
 	var/list/pai = list()	// A list for holding pAI related data.
 
@@ -141,6 +142,8 @@ datum/preferences
 	var/datum/category_collection/player_setup_collection/player_setup
 
 	var/dress_mob = TRUE
+
+
 
 /datum/preferences/New(client/C)
 	new_setup()
@@ -243,7 +246,7 @@ datum/preferences
 /datum/preferences/proc/process_link(mob/user, list/href_list)
 	if(!user)	return
 
-	if(!istype(user, /mob/new_player))	return
+	if(!istype(user, /mob/abstract/new_player))	return
 
 	if(href_list["preference"] == "open_whitelist_forum")
 		if(config.forumurl)
@@ -363,48 +366,10 @@ datum/preferences
 	character.skills = skills
 	character.used_skillpoints = used_skillpoints
 
-	// Destroy/cyborgize organs
+	// Destroy/cyborgize organs & setup body markings
+	character.sync_organ_prefs_to_mob(src)
 
-	for(var/name in organ_data)
-
-		var/status = organ_data[name]
-		var/obj/item/organ/external/O = character.organs_by_name[name]
-		if(O)
-			O.status = 0
-			if(status == "amputated")
-				character.organs_by_name[O.limb_name] = null
-				character.organs -= O
-				if(O.children) // This might need to become recursive.
-					for(var/obj/item/organ/external/child in O.children)
-						character.organs_by_name[child.limb_name] = null
-						character.organs -= child
-
-			else if(status == "cyborg")
-				if(rlimb_data[name])
-					O.robotize(rlimb_data[name])
-				else
-					O.robotize()
-		else
-			var/obj/item/organ/I = character.internal_organs_by_name[name]
-			if(I)
-				if(status == "assisted")
-					I.mechassist()
-				else if(status == "mechanical")
-					I.robotize()
-
-	for(var/N in character.organs_by_name)
-		var/obj/item/organ/external/O = character.organs_by_name[N]
-		if (O)
-			O.markings.Cut()
-
-	for(var/M in body_markings)
-		var/datum/sprite_accessory/marking/mark_datum = body_marking_styles_list[M]
-		var/mark_color = "[body_markings[M]]"
-
-		for(var/BP in mark_datum.body_parts)
-			var/obj/item/organ/external/O = character.organs_by_name[BP]
-			if(O)
-				O.markings[M] = list("color" = mark_color, "datum" = mark_datum)
+	character.sync_trait_prefs_to_mob(src)
 
 	character.underwear = underwear
 
@@ -412,15 +377,17 @@ datum/preferences
 
 	character.socks = socks
 
-	if(backbag > 5 || backbag < 1)
+	if(backbag > 6 || backbag < 1)
 		backbag = 1 //Same as above
 	character.backbag = backbag
+	character.backbag_style = backbag_style
 
 	if(icon_updates)
 		character.force_update_limbs()
 		character.update_mutations(0)
 		character.update_body(0)
 		character.update_hair(0)
+		character.update_underwear(0)
 		character.update_icons()
 
 /datum/preferences/proc/open_load_dialog_sql(mob/user)
@@ -571,7 +538,7 @@ datum/preferences
 		flavour_texts_robot = list()
 
 		ccia_actions = list()
-		disabilities = 0
+		disabilities = list()
 
 		nanotrasen_relation = "Neutral"
 

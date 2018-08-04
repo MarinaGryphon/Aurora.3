@@ -10,7 +10,8 @@
 	flags =  CONDUCT
 	slot_flags = 0
 	origin_tech = list(TECH_COMBAT = 8, TECH_MATERIAL = 5)
-	fire_sound = 'sound/effects/bang.ogg'
+	fire_sound = 'sound/weapons/rocketlaunch.ogg'
+	needspin = FALSE
 
 	release_force = 15
 	throw_distance = 30

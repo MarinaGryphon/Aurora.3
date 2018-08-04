@@ -14,8 +14,8 @@
 	var/toxloss = 0.0	//Toxic damage caused by being poisoned or radiated
 	var/fireloss = 0.0	//Burn damage caused by being way too hot, too cold or burnt.
 	var/cloneloss = 0	//Damage caused by being cloned or ejected from the cloner early. slimes also deal cloneloss damage to victims
-	var/brainloss = 0	//'Retardation' damage caused by someone hitting you in the head with a bible or being infected with brainrot.
 	var/halloss = 0		//Hallucination damage. 'Fake' damage obtained through hallucinating or the holodeck. Sleeping should cause it to wear off.
+	var/brainloss = 0	//'Retardation' damage caused by someone hitting you in the head with a bible or being infected with brainrot.
 
 
 	var/hallucination = 0 //Directly affects how long a mob will hallucinate for
@@ -65,6 +65,7 @@
 	var/stamina_recovery = 1
 	var/min_walk_delay = 0//When move intent is walk, movedelay is clamped to this value as a lower bound
 	var/exhaust_threshold = 50
+	var/datum/progressbar/stamina_bar	// Progress bar shown when stamina is not at full, and the mob supports stamina. Deleted on Logout or when stamina is full.
 
 	var/move_delay_mod = 0//Added to move delay, used for calculating movement speeds. Provides a centralised value for modifiers to alter
 
@@ -72,3 +73,8 @@
 	var/cloaked = 0//Set to 1 by cloaking devices, optimises update_icons
 
 	var/tesla_ignore = 0	// If true, mob is not affected by tesla bolts.
+
+	var/stop_sight_update = 0 //If true, it won't reset the mob vision flags
+
+	var/burn_mod = 1
+	var/brute_mod = 1

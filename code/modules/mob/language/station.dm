@@ -39,10 +39,12 @@
 		"ra", "ar", "re", "er", "ri", "ir", "ro", "or", "ru", "ur", "rs", "sr",
 		"a",  "a",  "e",  "e",  "i",  "i",  "o",  "o",  "u",  "u",  "s",  "s"
 	)
+	partial_understanding = list(LANGUAGE_AZAZIBA = 25)
 
+// tajaran languages
 /datum/language/tajaran
 	name = LANGUAGE_SIIK_MAAS
-	desc = "The traditionally employed tongue of Adhomai, composed of expressive yowls and chirps. Native to the Tajaran."
+	desc = "The traditionally employed tongue of Adhomai, composed of expressive yowls and chirps. Native to the Tajara."
 	speech_verb = "mrowls"
 	ask_verb = "mrowls"
 	exclaim_verb = "yowls"
@@ -53,6 +55,7 @@
 	"mi","jri","dynh","manq","rhe","zar","rrhaz","kal","chur","eech","thaa","dra","jurl","mah","sanu","dra","ii'r",
 	"ka","aasi","far","wa","baq","ara","qara","zir","sam","mak","hrar","nja","rir","khan","jun","dar","rik","kah",
 	"hal","ket","jurl","mah","tul","cresh","azu","ragh","mro","mra","mrro","mrra")
+	partial_understanding = list(LANGUAGE_SIIK_TAJR = 50, LANGUAGE_YA_SSA = 25, LANGUAGE_DELVAHII = 50, LANGUAGE_SIIK_TAU = 40)
 
 /datum/language/tajaran/get_random_name(var/gender)
 
@@ -64,8 +67,7 @@
 	new_name += " "
 	new_name += pick(list("Alfarsi","Alekseev","Al-Barik","Al-Hamdan","Al-Mansur","Al-Kandari","Al-Shahrani","Antonov","Bogdanov","El-Hasem","El-Amin","Rrhakaslav","Mrrazhughran","Jrruzhani","Rrhamrare","Mrakiizar","Hirron","Prruzhulkanich","El-Tusi","Nejem","Hanar","Karimi","Markov","Saif","Yakub","Zaman","Zaydan","Zidan","Zahawi"))
 	return new_name
-	
-// tajaran sign language
+
 /datum/language/tajaran_sign
 	name = LANGUAGE_SIGN_TAJARA
 	desc = "A sign language developed by Adhomai hunters"
@@ -74,7 +76,8 @@
 	colour = "i"
 	key = "i"
 	flags = NO_STUTTER | SIGNLANG | WHITELISTED
-	
+	partial_understanding = list(LANGUAGE_SIIK_TAJR = 50)
+
 /datum/language/siik_tajr
 	name = LANGUAGE_SIIK_TAJR
 	desc = "A language native to the tajaran, it employes both verbal and non-verbal elements."
@@ -89,6 +92,50 @@
 	"mi","jri","dynh","manq","rhe","zar","rrhaz","kal","chur","eech","thaa","dra","jurl","mah","sanu","dra","ii'r",
 	"ka","aasi","far","wa","baq","ara","qara","zir","sam","mak","hrar","nja","rir","khan","jun","dar","rik","kah",
 	"hal","ket","jurl","mah","tul","cresh","azu","ragh","mro","mra","mrro","mrra")
+	partial_understanding = list(LANGUAGE_SIIK_MAAS = 50, LANGUAGE_SIGN_TAJARA = 25, LANGUAGE_SIIK_TAU= 20)
+
+/datum/language/yassa
+	name = LANGUAGE_YA_SSA
+	desc = "The traditional language of the tajaran nobility."
+	speech_verb = "mrowls"
+	ask_verb = "mrowls"
+	exclaim_verb = "yowls"
+	colour = "yassa"
+	key = "r"
+	flags = WHITELISTED
+	syllables = list("hrr","rhr","tarj","khir","rajh","kir","mier","kre","ahek","nlhal","veh","khaz","dri","rhan","darrer",
+	"mi","jhri","dynher","manqi","rhas","shar","drhaz","kalh","shur","echi","tha","draer","jurl","maher","sanii","dra","ii'r",
+	"kan","aesi","fare","we","bash","arha","quara","zhir","sem","make","hrer","nja","rir","can","jhun","dar","rik","kah",
+	"hal","kete","juril","mah","tul","cresh","azu","ragh","miro","mara","mrero","mrara")
+	partial_understanding = list(LANGUAGE_SIIK_MAAS = 50)
+
+/datum/language/delvahhi
+	name = LANGUAGE_DELVAHII
+	desc = "A dialect developed by the Zhan-Khazan communities, commonly used in religious ceremonies dedicated to the Snow God and amongst settlements comprised mostly of Zhan-Khazan."
+	speech_verb = "mrowls"
+	ask_verb = "mrowls"
+	exclaim_verb = "yowls"
+	colour = "delvahhi"
+	key = "n"
+	flags = WHITELISTED
+	syllables = list("hrr","rhr","tarj","khir","rajh","kir","mier","kre","ahek","nlhal","veh","khaz","dri","rhan","darrer",
+	"mi","jhri","dynher","manqi","rhas","shar","drhaz","kalh","shur","echi","tha","draer","jurl","maher","sanii","dra","ii'r",
+	"kan","aesi","fare","we","bash","arha","quara","zhir","sem","make","hrer","nja","rir","can","jhun","dar","rik","kah",
+	"hal","kete","juril","mah","tul","cresh","azu","ragh","miro","mara","mrero","mrara")
+	partial_understanding = list(LANGUAGE_SIIK_MAAS = 50)
+
+/datum/language/siik_tau
+	name = LANGUAGE_SIIK_TAU
+	desc = "A macaronic form of Tau Ceti Basic and Siik'maas, developed in Mendell City soon after Tajara entered the galactic field."
+	speech_verb = "slurs"
+	ask_verb = "mrowmbles"
+	exclaim_verb = "exclaims"
+	colour = "siiktau"
+	key = "t"
+	flags = WHITELISTED
+	syllables = list("m'Rr","rr","tahjr","kir","rrahj","kii","mirr","krah","ahhk","nahl","vahh","khahz","jri","rahn","dahrr",
+	"mi","j'Rri","dy'Nh","mah'nq","rhe","zahr","r'Rhahz","kahl")
+	partial_understanding = list(LANGUAGE_SIIK_MAAS = 40,  LANGUAGE_SIIK_TAJR = 20, LANGUAGE_TCB = 60)
 
 /datum/language/skrell
 	name = LANGUAGE_SKRELLIAN
@@ -128,7 +175,8 @@
 
 	var/msg = "<i><span class='game say'>[name], <span class='name'>[speaker_mask]</span>[format_message(message, get_spoken_verb(message))]</span></i>"
 
-	speaker.custom_emote(1, "[pick("twitches their antennae", "twitches their antennae rythmically")].")
+	if(isvaurca(speaker))
+		speaker.custom_emote(1, "[pick("twitches their antennae", "twitches their antennae rythmically")].")
 
 	if (within_jamming_range(speaker))
 		// The user thinks that the message got through.
@@ -136,7 +184,7 @@
 		return
 
 	for(var/mob/player in player_list)
-		if(istype(player,/mob/dead) || ((src in player.languages && !within_jamming_range(player)) || check_special_condition(player)))
+		if(istype(player,/mob/abstract/observer) || ((src in player.languages && !within_jamming_range(player)) || check_special_condition(player)))
 			player << msg
 
 /datum/language/bug/check_special_condition(var/mob/other)
@@ -146,11 +194,13 @@
 	var/mob/living/carbon/human/M = other
 	if(!istype(M))
 		return 0
-	if(istype(M, /mob/new_player))
+	if(istype(M, /mob/abstract/new_player))
 		return 0
 	if(within_jamming_range(other))
 		return 0
-	if(locate(/obj/item/organ/vaurca/neuralsocket) in M.internal_organs)
+	if(M.internal_organs_by_name["neural socket"])
+		return 1
+	if(M.internal_organs_by_name["blackkois"])
 		return 1
 
 	if (M.l_ear || M.r_ear)
@@ -169,7 +219,7 @@
 
 /datum/language/human
 	name = LANGUAGE_SOL_COMMON
-	desc = "A bastardized hybrid of informal English and elements of Mandarin Chinese; the common language of the Sol system."
+	desc = "With its roots in Mandarin Chinese, Common evolved as the official language of the Sol Alliance, with officials working to tie it together with a common tongue. It's spoken by state officials, taught in schools, and spoken by those who either feel a sense of national pride in the Alliance or otherwise fell sway to the culture."
 	speech_verb = "says"
 	whisper_verb = "whispers"
 	colour = "solcom"
@@ -230,7 +280,7 @@
 
 /datum/language/resomi/get_random_name(gender)
 	return ..(gender, 1, 4, 1.5)
-	
+
 /datum/language/unathi_azaziba
 	name = LANGUAGE_AZAZIBA
 	desc = "A language of Moghes consisting of a combination of spoken word and gesticulation. While waning since Moghes entered the galactic stage, it enjoys popular use by Unathi that never fell to the Hegemony's cultural dominance."
@@ -242,12 +292,12 @@
 	key = "p"
 	flags = WHITELISTED | NONVERBAL
 	syllables = list("azs","zis","zau","azua","skiu","zuakz","izo","aei","ki","kut","zo")
+	partial_understanding = list(LANGUAGE_UNATHI = 50)
 
 //Syllable Lists
 /*
 	This list really long, mainly because I can't make up my mind about which mandarin syllables should be removed,
 	and the english syllables had to be duplicated so that there is roughly a 50-50 weighting.
-
 	Sources:
 	http://www.sttmedia.com/syllablefrequency-english
 	http://www.chinahighlights.com/travelguide/learning-chinese/pinyin-syllables.htm

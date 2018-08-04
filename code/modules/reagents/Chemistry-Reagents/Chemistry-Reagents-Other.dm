@@ -64,11 +64,25 @@
 		T.color = color
 
 /datum/reagent/paint/touch_obj(var/obj/O)
-	if(istype(O))
+	//special checks for special items
+	if(istype(O, /obj/item/weapon/reagent_containers))
+		return
+	else if(istype(O, /obj/item/weapon/light))
+		var/obj/item/weapon/light/L = O
+		L.brightness_color = color
+		L.update()
+	else if(istype(O, /obj/machinery/light))
+		var/obj/machinery/light/L = O
+		L.brightness_color = color
+		L.update()
+	else if(istype(O, /obj/item/clothing/suit/storage/toggle/det_trench/technicolor) || istype(O, /obj/item/clothing/head/det/technicolor))
+		return
+
+	else if(istype(O))
 		O.color = color
 
 /datum/reagent/paint/touch_mob(var/mob/M)
-	if(istype(M) && !istype(M, /mob/dead)) //painting ghosts: not allowed
+	if(istype(M) && !istype(M, /mob/abstract)) //painting ghosts: not allowed
 		M.color = color //maybe someday change this to paint only clothes and exposed body parts for human mobs.
 
 /datum/reagent/paint/get_data()
@@ -189,6 +203,14 @@
 				new /obj/effect/decal/cleanable/greenglow(T)
 			return
 
+/datum/reagent/platinum
+	name ="Platinum"
+	id = "platinum"
+	description = "Platinum is a naturally occuring silvery metalic element."
+	reagent_state = SOLID
+	color = "#E0E0E0"
+	taste_description = "salty metalic miner tears"
+
 /datum/reagent/adrenaline
 	name = "Adrenaline"
 	id = "adrenaline"
@@ -198,8 +220,6 @@
 	taste_description = "bitterness"
 
 /datum/reagent/adrenaline/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
-	if(alien == IS_DIONA)
-		return
 	M.SetParalysis(0)
 	M.SetWeakened(0)
 	M.adjustToxLoss(rand(3)*removed)
@@ -222,11 +242,19 @@
 			vampire.frenzy += removed * 5
 		else if(M.mind && cult.is_antagonist(M.mind) && prob(10))
 			cult.remove_antagonist(M.mind)
+	if(alien && alien == IS_UNDEAD)
+		M.adjust_fire_stacks(10)
+		M.IgniteMob()
 
 /datum/reagent/water/holywater/touch_turf(var/turf/T)
 	if(volume >= 5)
 		T.holy = 1
 	return
+
+/datum/reagent/water/holywater/affect_touch(var/mob/living/carbon/M, var/alien, var/removed)
+	if(alien && alien == IS_UNDEAD)
+		M.adjust_fire_stacks(5)
+		M.IgniteMob()
 
 /datum/reagent/diethylamine
 	name = "Diethylamine"
@@ -408,3 +436,184 @@
 
 /datum/reagent/luminol/touch_mob(var/mob/living/L)
 	L.reveal_blood()
+
+/datum/reagent/estus
+	name = "Liquid Light"
+	id = "estus"
+	description = "This impossible substance slowly converts from a liquid into actual light."
+	reagent_state = LIQUID
+	color = "#ffff40"
+	scannable = 1
+	metabolism = REM * 0.25
+	taste_description = "bottled fire"
+	var/datum/modifier/modifier
+
+/datum/reagent/estus/affect_blood(var/mob/living/carbon/M, var/removed)
+	if (!modifier)
+		modifier = M.add_modifier(/datum/modifier/luminous, MODIFIER_REAGENT, src, _strength = 4, override = MODIFIER_OVERRIDE_STRENGTHEN)
+	if(isskeleton(M))
+		M.heal_organ_damage(10 * removed, 15 * removed)
+
+/datum/reagent/estus/affect_ingest(var/mob/living/carbon/M, var/removed)
+	if (!modifier)
+		modifier = M.add_modifier(/datum/modifier/luminous, MODIFIER_REAGENT, src, _strength = 4, override = MODIFIER_OVERRIDE_STRENGTHEN)
+	if(isskeleton(M))
+		M.heal_organ_damage(10 * removed, 15 * removed)
+
+/datum/reagent/estus/affect_touch(var/mob/living/carbon/M, var/removed)
+	if (!modifier)
+		modifier = M.add_modifier(/datum/modifier/luminous, MODIFIER_REAGENT, src, _strength = 4, override = MODIFIER_OVERRIDE_STRENGTHEN)
+	if(isskeleton(M))
+		M.heal_organ_damage(10 * removed, 15 * removed)
+
+/datum/reagent/liquid_fire
+	name = "Liquid Fire"
+	id = "liquid_fire"
+	description = "A dangerous flammable chemical, capable of causing fires when in contact with organic matter."
+	reagent_state = LIQUID
+	color = "#E25822"
+	touch_met = 5
+	taste_description = "metal"
+
+/datum/reagent/liquid_fire/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
+	if(istype(M))
+		M.adjust_fire_stacks(10)
+		M.IgniteMob()
+
+/datum/reagent/liquid_fire/touch_mob(var/mob/living/L, var/amount)
+	if(istype(L))
+		L.adjust_fire_stacks(10)
+		L.IgniteMob()
+
+/datum/reagent/black_matter
+	name = "Unstable Black Matter"
+	id = "black_matter"
+	description = "A pitch black blend of cosmic origins, handle with care."
+	color = "#000000"
+	taste_description = "emptyness"
+
+/datum/reagent/black_matter/touch_turf(var/turf/T)
+	var/obj/effect/portal/P = new /obj/effect/portal(T)
+	P.creator = null
+	P.icon = 'icons/obj/objects.dmi'
+	P.failchance = 0
+	P.icon_state = "anom"
+	P.name = "wormhole"
+	var/list/pick_turfs = list()
+	for(var/turf/simulated/floor/exit in turfs)
+		if(exit.z in current_map.station_levels)
+			pick_turfs += exit
+	P.target = pick(pick_turfs)
+	QDEL_IN(P, rand(150,300))
+	remove_self(volume)
+	return
+
+/datum/reagent/bluespace_dust
+	name = "Bluespace Dust"
+	id = "bluespace_dust"
+	description = "A dust composed of microscopic bluespace crystals."
+	color = "#1f8999"
+	taste_description = "fizzling blue"
+
+/datum/reagent/bluespace_dust/affect_blood(var/mob/living/carbon/M, var/alien, var/removed)
+	if(prob(25))
+		M.make_jittery(5)
+		M << "<span class='warning'>You feel unstable...</span>"
+
+	if(prob(10))
+		do_teleport(M, get_turf(M), 5, asoundin = 'sound/effects/phasein.ogg')
+
+/datum/reagent/bluespace_dust/touch_mob(var/mob/living/L, var/amount)
+	do_teleport(L, get_turf(L), amount, asoundin = 'sound/effects/phasein.ogg')
+
+/datum/reagent/philosopher_stone
+	name = "Philosopher's Stone"
+	id = "philosopher_stone"
+	description = "A mythical compound, rumored to be the catalyst of fantastic reactions."
+	color = "#f4c430"
+	taste_description = "heavenly knowledge"
+
+/datum/reagent/sglue
+	name = "Sovereign Glue"
+	id = "sglue"
+	description = "A very potent adhesive which can be applied to inanimate surfaces."
+	reagent_state = LIQUID
+	color = "#EDE8E2"
+	taste_description = "horses"
+
+/datum/reagent/sglue/touch_obj(var/obj/O)
+	if((istype(O, /obj/item) && !istype(O, /obj/item/weapon/reagent_containers)) && (volume > 10*O.w_class))
+		var/obj/item/I = O
+		I.canremove = 0
+		I.desc += " It appears to glisten with some gluey substance."
+		remove_self(10*I.w_class)
+		I.visible_message("<span class='notice'>[I] begins to glisten with some gluey substance.</span>")
+
+/datum/reagent/usolve
+	name = "Universal Solvent"
+	id = "usolve"
+	description = "A very potent solvent which can be applied to inanimate surfaces."
+	reagent_state = LIQUID
+	color = "#EDE8E2"
+	taste_description = "alcohol"
+
+/datum/reagent/usolve/touch_obj(var/obj/O)
+	if((istype(O, /obj/item) && !istype(O, /obj/item/weapon/reagent_containers)) && (volume > 10*O.w_class))
+		var/obj/item/I = O
+		I.canremove = initial(I.canremove)
+		I.desc = initial(I.desc)
+		I.visible_message("<span class='notice'>A thin shell of glue cracks off of [I].</span>")
+		remove_self(10*I.w_class)
+
+/datum/reagent/shapesand
+	name = "Shapesand"
+	id = "shapesand"
+	description = "A strangely animate clump of sand which can shift its color and consistency."
+	reagent_state = SOLID
+	color = "#c2b280"
+	taste_description = "sand"
+
+/datum/reagent/shapesand/touch_obj(var/obj/O)
+	if((istype(O, /obj/item) && !istype(O, /obj/item/weapon/reagent_containers)) && (volume > 10*O.w_class))
+		var/obj/item/shapesand/mimic = new /obj/item/shapesand(O.loc)
+		mimic.name = O.name
+		mimic.desc = O.desc
+		mimic.icon = O.icon
+		mimic.icon_state = O.icon_state
+		mimic.item_state = O.item_state
+		mimic.overlays = O.overlays
+		remove_self(10*O.w_class)
+		mimic.visible_message("<span class='notice'>The sand forms into an exact duplicate of [O].</span>")
+
+/obj/item/shapesand
+	name = "shapesand"
+	desc = "A strangely animate clump of sand which can shift its color and consistency."
+	icon = 'icons/obj/mining.dmi'
+	w_class = 1.0
+	icon_state = "ore_glass"
+
+/obj/item/shapesand/attack() //can't be used to actually bludgeon things
+	return 1
+
+/obj/item/shapesand/afterattack(atom/A, mob/living/user)
+	user << "<span class='warning'>As you attempt to use the [src], it crumbles into inert sand!</span>"
+	new /obj/item/weapon/ore/glass(get_turf(src))
+	qdel(src)
+	return
+
+/datum/reagent/love_potion
+	name = "Philter of Love"
+	id = "love"
+	description = "A sickly sweet compound that induces chemical dependency on the first person the subject sees."
+	reagent_state = LIQUID
+	color = "#ff69b4"
+	taste_description = "sickly sweet candy"
+
+/datum/reagent/love_potion/affect_blood(var/mob/living/carbon/human/H, var/alien, var/removed)
+
+	if(!istype(H))
+		return
+
+	var/obj/item/organ/brain/B = H.internal_organs_by_name["brain"]
+	if(!H.has_trauma_type(/datum/brain_trauma/special/love))
+		B.gain_trauma(/datum/brain_trauma/special/love,FALSE)

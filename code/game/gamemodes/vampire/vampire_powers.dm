@@ -27,6 +27,10 @@
 		to_chat(src, "<span class='warning'>[T] is not a creature you can drain useful blood from.</span>")
 		return
 
+	if(T.head && (T.head.item_flags & AIRTIGHT))
+		to_chat(src, "<span class='warning'>[T]'s headgear is blocking the way to the neck.</span>")
+		return
+
 	if (vampire.status & VAMP_DRAINING)
 		to_chat(src, "<span class='warning'>Your fangs are already sunk into a victim's neck!</span>")
 		return
@@ -46,7 +50,9 @@
 
 	to_chat(T, "<span class='warning'>You are unable to resist or even move. Your mind blanks as you're being fed upon.</span>")
 
-	T.Stun(10)
+	playsound(src.loc, 'sound/effects/drain_blood.ogg', 50, 1)
+
+	T.Stun(20)
 
 	while (do_mob(src, T, 50))
 		if (!mind.vampire)
@@ -103,8 +109,7 @@
 		T.vessel.remove_reagent("blood", 25)
 
 	vampire.status &= ~VAMP_DRAINING
-	to_chat(src, "<span class='notice'>You extract your fangs from [T.name]'s neck and stop draining them of blood. They will remember nothing of this occurance. Provided they survived.</span>")
-
+	visible_message("<span class='danger'>[src.name] stops biting [T.name]'s neck!</span>", "<span class='notice'>You extract your fangs from [T.name]'s neck and stop draining them of blood. They will remember nothing of this occurance. Provided they survived.</span>")
 	if (T.stat != 2)
 		to_chat(T, "<span class='warning'>You remember nothing about being fed upon. Instead, you simply remember having a pleasant encounter with [src.name].</span>")
 
@@ -192,7 +197,7 @@
 		to_chat(src, "<span class='warning'>You broke your gaze.</span>")
 
 // Targeted teleportation, must be to a low-light tile.
-/mob/living/carbon/human/proc/vampire_veilstep(var/turf/T in world)
+/mob/living/carbon/human/proc/vampire_veilstep(var/turf/T in turfs)
 	set category = "Vampire"
 	set name = "Veil Step (20)"
 	set desc = "For a moment, move through the Veil and emerge at a shadow of your choice."
@@ -213,7 +218,7 @@
 		to_chat(src, "<span class='warning'>Your powers are not capable of taking you that far.</span>")
 		return
 
-	if (!T.dynamic_lighting || T.get_lumcount() > 0.1)
+	if (T.get_lumcount() > 0.1)
 		// Too bright, cannot jump into.
 		to_chat(src, "<span class='warning'>The destination is too bright.</span>")
 		return
@@ -510,7 +515,7 @@
 
 	log_and_message_admins("activated blood heal.")
 
-	while (do_after(src, 20, 5, 0))
+	while (do_after(src, 20, 0))
 		if (!(vampire.status & VAMP_HEALING))
 			to_chat(src, "<span class='warning'>Your concentration is broken! You are no longer regenerating!</span>")
 			break
@@ -545,6 +550,26 @@
 			// Heal an absurd amount, basically regenerate one organ.
 			heal_organ_damage(50, 50)
 			blood_used += 12
+
+		for (var/A in organs)
+			var/healed = FALSE
+			var/obj/item/organ/external/E = A
+			for (var/X in E.wounds)
+				var/datum/wound/W = X
+				if (W && W.internal)
+					E.wounds -= W
+					blood_used += 12
+					healed = TRUE
+					break
+
+			if(E.status & ORGAN_BROKEN)
+				E.status &= ~ORGAN_BROKEN
+				E.stage = 0
+				blood_used += 12
+				healed = TRUE
+
+			if (healed)
+				break
 
 		var/list/emotes_lookers = list("[src]'s skin appears to liquefy for a moment, sealing up their wounds.",
 									"[src]'s veins turn black as their damaged flesh regenerates before your eyes!",
@@ -582,7 +607,7 @@
 // Dominate a victim, imbed a thought into their mind.
 /mob/living/carbon/human/proc/vampire_dominate()
 	set category = "Vampire"
-	set name = "Dominate (25)"
+	set name = "Dominate (50)"
 	set desc = "Dominate the mind of a victim, make them obey your will."
 
 	var/datum/vampire/vampire = vampire_power(25, 0)
@@ -629,7 +654,7 @@
 	to_chat(src, "<span class='notice'>You command [T], and they will obey.</span>")
 	emote("me", 1, "whispers.")
 
-	vampire.use_blood(25)
+	vampire.use_blood(50)
 	verbs -= /mob/living/carbon/human/proc/vampire_dominate
 	ADD_VERB_IN_IF(src, 1800, /mob/living/carbon/human/proc/vampire_dominate, CALLBACK(src, .proc/finish_vamp_timeout))
 
@@ -655,6 +680,9 @@
 	var/mob/living/carbon/human/T = G.affecting
 	if (!istype(T))
 		to_chat(src, "<span class='warning'>[T] is not a creature you can enthrall.</span>")
+		return
+
+	if (!vampire_can_affect_target(T, 1, 1))
 		return
 
 	if (!T.client || !T.mind)
@@ -688,10 +716,10 @@
 // Gives a lethal disease to the target.
 /mob/living/carbon/human/proc/vampire_diseasedtouch()
 	set category = "Vampire"
-	set name = "Diseased Touch (200)"
+	set name = "Diseased Touch (100)"
 	set desc = "Infects the victim with corruption from the Veil, causing their organs to fail."
 
-	var/datum/vampire/vampire = vampire_power(200, 0)
+	var/datum/vampire/vampire = vampire_power(100, 0)
 	if (!vampire)
 		return
 
@@ -724,7 +752,7 @@
 
 	admin_attack_log(src, T, "used diseased touch on [key_name(T)]", "was given a lethal disease by [key_name(src)]", "used diseased touch (<a href='?src=\ref[lethal];info=1'>virus info</a>) on")
 
-	vampire.use_blood(200)
+	vampire.use_blood(100)
 	verbs -= /mob/living/carbon/human/proc/vampire_diseasedtouch
 	ADD_VERB_IN_IF(src, 1800, /mob/living/carbon/human/proc/vampire_diseasedtouch, CALLBACK(src, .proc/finish_vamp_timeout))
 
@@ -815,7 +843,7 @@
 		return
 
 	var/mob/living/carbon/human/T = G.affecting
-	if (!vampire_can_affect_target(T))
+	if (!vampire_can_affect_target(T, ignore_thrall = TRUE))
 		return
 
 	if (!T.client)
@@ -824,6 +852,10 @@
 
 	if (T.stat == 2)
 		to_chat(src, "<span class='warning'>[T]'s body is broken and damaged beyond salvation. You have no use for them.</span>")
+		return
+
+	if (T.species.flags & NO_BLOOD)
+		to_chat(src, "<span class='warning'>[T] has no blood and can not be affected by your powers!</span>")
 		return
 
 	if (vampire.status & VAMP_DRAINING)
@@ -875,7 +907,7 @@
 
 	// You ain't goin' anywhere, bud.
 	if (!T.client && T.mind)
-		for (var/mob/dead/observer/ghost in player_list)
+		for (var/mob/abstract/observer/ghost in player_list)
 			if (ghost.mind == T.mind)
 				ghost.can_reenter_corpse = 1
 				ghost.reenter_corpse()

@@ -29,10 +29,9 @@
 			new/obj/item/weapon/reagent_containers/food/snacks/grown/ambrosiadeus(src)
 			new/obj/item/weapon/flame/lighter/zippo(src)
 		if(6 to 10)
-			new/obj/item/weapon/pickaxe/drill(src)
-			new/obj/item/device/taperecorder(src)
-			new/obj/item/clothing/suit/space(src)
-			new/obj/item/clothing/head/helmet/space(src)
+			new/obj/random/custom_ka(src)
+			new/obj/random/custom_ka(src)
+			new/obj/random/custom_ka(src)
 		if(11 to 15)
 			new/obj/item/weapon/reagent_containers/glass/beaker/bluespace(src)
 		if(16 to 20)
@@ -104,7 +103,7 @@
 		if(87)
 			new/obj/item/xenos_claw(src)
 		if(88)
-			new/obj/item/weapon/gun/projectile/boltaction(src)
+			new/obj/item/weapon/gun/projectile/shotgun/pump/rifle(src)
 			new/obj/item/ammo_magazine/boltaction(src)
 			new/obj/item/clothing/under/soviet(src)
 			new/obj/item/clothing/head/ushanka(src)
@@ -113,7 +112,7 @@
 		if(90)
 			new/obj/item/organ/heart(src)
 		if(91)
-			new/obj/item/device/soulstone(src)
+			new/obj/item/poppet(src)
 		if(92)
 			new/obj/item/weapon/material/sword/katana(src)
 		if(93)
@@ -199,7 +198,7 @@
 
 /obj/structure/closet/crate/secure/loot/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(locked)
-		if (istype(W, /obj/item/device/multitool)) // Greetings Urist McProfessor, how about a nice game of cows and bulls?
+		if (ismultitool(W)) // Greetings Urist McProfessor, how about a nice game of cows and bulls?
 			user << "<span class='notice'>DECA-CODE LOCK ANALYSIS:</span>"
 			if (attempts == 1)
 				user << "<span class='warning'>* Anti-Tamper system will activate on the next failed access attempt.</span>"

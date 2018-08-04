@@ -78,7 +78,7 @@
 
 /obj/item/glass_jar/update_icon() // Also updates name and desc
 	underlays.Cut()
-	overlays.Cut()
+	cut_overlays()
 	switch(contains)
 		if(0)
 			name = initial(name)
@@ -96,7 +96,11 @@
 					underlays += A
 		if(2)
 			for(var/mob/M in src)
-				var/image/victim = image(M.icon, M.icon_state)
+				var/image/victim = new()
+				victim.appearance = M
+				victim.layer = FLOAT_LAYER
+				victim.plane = FLOAT_PLANE
+				victim.pixel_x = 0
 				victim.pixel_y = 6
 				underlays += victim
 				name = "glass jar with [M]"
@@ -108,3 +112,15 @@
 				name = "glass jar with [S]"
 				desc = "A small jar with [S] inside."
 	return
+
+/obj/item/glass_jar/peter/
+	name = "Peter's Jar"
+/obj/item/glass_jar/peter/Initialize()
+	. = ..()
+	var/obj/effect/spider/spiderling/S = new
+	S.name = "Peter"
+	S.desc = "The journalist's pet spider, Peter. It has a miniature camera around its neck and seems to glow faintly."
+	S.forceMove(src)
+	contains = 3
+	STOP_PROCESSING(SSprocessing, S)
+	update_icon()

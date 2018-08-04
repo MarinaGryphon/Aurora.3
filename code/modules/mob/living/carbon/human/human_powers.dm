@@ -49,7 +49,7 @@
 		if ((O.client && !( O.blinded )))
 			O.show_message(text("<span class='danger'>[] [failed ? "tried to tackle" : "has tackled"] down []!</span>", src, T), 1)
 
-/mob/living/carbon/human/proc/leap(mob/living/T as mob in view(4))
+/mob/living/carbon/human/proc/leap(mob/living/T as mob in oview(4))
 	set category = "Abilities"
 	set name = "Leap"
 	set desc = "Leap at a target and grab them aggressively."
@@ -194,7 +194,7 @@
 
 	var/mob/M = targets[target]
 
-	if(istype(M, /mob/dead/observer) || M.stat == DEAD)
+	if(istype(M, /mob/abstract/observer) || M.stat == DEAD)
 		src << "Not even a [src.species.name] can speak to the dead."
 		return
 
@@ -229,8 +229,8 @@
 	var/msg = sanitize(input("Message:", "Psychic Whisper") as text|null)
 	if(msg)
 		log_say("PsychicWhisper: [key_name(src)]->[M.key] : [msg]",ckey=key_name(src))
-		M << "\green You hear a strange, alien voice in your head... \italic [msg]"
-		src << "\green You said: \"[msg]\" to [M]"
+		M << "<span class ='alium'>You hear a strange, alien voice in your head... \italic [msg]</span>"
+		src << "<span class ='alium'>You said: \"[msg]\" to [M]</span>"
 	return
 
 /mob/living/carbon/human/proc/bugbite()
@@ -255,21 +255,27 @@
 		src << "<span class='warning'>You must have an aggressive grab to gut your prey!</span>"
 		return
 
-	last_special = world.time + 25
-
-	visible_message("<span class='warning'><b>\The [src]</b> rips viciously at \the [G.affecting]'s flesh with its mandibles!</span>")
-
 	if(istype(G.affecting,/mob/living/carbon/human))
 		var/mob/living/carbon/human/H = G.affecting
-		H.apply_damage(25,BRUTE, sharp=1, edge=1)
+		var/hit_zone = zone_sel.selecting
+		var/obj/item/organ/external/affected = H.get_organ(hit_zone)
+
+		if(!affected || affected.is_stump())
+			H << "<span class='danger'>They are missing that limb!</span>"
+			return
+
+		H.apply_damage(25, BRUTE, hit_zone, sharp = 1, edge = 1)
+		visible_message("<span class='warning'><b>\The [src]</b> rips viciously at \the [G.affecting]'s [affected] with its mandibles!</span>")
 		msg_admin_attack("[key_name_admin(src)] mandible'd [key_name_admin(H)] (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[src.x];Y=[src.y];Z=[src.z]'>JMP</a>)",ckey=key_name(src),ckey_target=key_name(H))
 	else
 		var/mob/living/M = G.affecting
 		if(!istype(M))
 			return
 		M.apply_damage(25,BRUTE, sharp=1, edge=1)
+		visible_message("<span class='warning'><b>\The [src]</b> rips viciously at \the [G.affecting]'s flesh with its mandibles!</span>")
 		msg_admin_attack("[key_name_admin(src)] mandible'd [key_name_admin(M)] (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[src.x];Y=[src.y];Z=[src.z]'>JMP</a>)",ckey=key_name(src),ckey_target=key_name(M))
 	playsound(src.loc, 'sound/weapons/slash.ogg', 50, 1)
+	last_special = world.time + 25
 
 /mob/living/carbon/human/proc/detonate_flechettes()
 	set category = "Hunter-Killer"
@@ -428,7 +434,7 @@
 
 	var/mob/M = targets[target]
 
-	if(istype(M, /mob/dead/observer) || M.stat == DEAD)
+	if(istype(M, /mob/abstract/observer) || M.stat == DEAD)
 		src << "<span class='danger'>[M]'s hivenet implant is inactive!</span>"
 		return
 
@@ -459,7 +465,6 @@
 		src << "<span class='danger'>Your spine still aches!</span>"
 		return
 
-
 	if(stat || paralysis || stunned || weakened || lying || restrained() || buckled)
 		src << "You cannot launch a quill in your current state."
 		return
@@ -471,5 +476,276 @@
 	src.apply_damage(10,BRUTE)
 	playsound(src.loc, 'sound/weapons/bladeslice.ogg', 50, 1)
 	var/obj/item/weapon/arrow/quill/A = new /obj/item/weapon/arrow/quill(usr.loc)
-	A.throw_at(target, 10, 30, user)
+	A.throw_at(target, 10, 30, usr)
 	msg_admin_attack("[key_name_admin(src)] launched a quill at [key_name_admin(target)] (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[src.x];Y=[src.y];Z=[src.z]'>JMP</a>)",ckey=key_name(src),ckey_target=key_name(target))
+
+
+/mob/living/carbon/human/proc/shatter_light()
+	set category = "Abilities"
+	set name = "Shatter Lights"
+	set desc = "Shatter all lights around yourself."
+
+	if(last_special > world.time)
+		src << "<span class='danger'>You're still regaining your strength!</span>"
+		return
+
+	last_special = world.time + 50
+
+	visible_message("<span class='danger'>\The [src] shrieks!</span>")
+	playsound(src.loc, 'sound/species/shadow/grue_screech.ogg', 100, 1)
+
+	for(var/obj/machinery/light/L in range(7))
+		L.broken()
+
+/mob/living/carbon/human/proc/create_darkness()
+	set category = "Abilities"
+	set name = "Create Darkness"
+	set desc = "Create a field of darkness around yourself."
+
+	if(last_special > world.time)
+		src << "<span class='danger'>You're still regaining your strength!</span>"
+		return
+
+	last_special = world.time + 100
+
+	playsound(src.loc, 'sound/species/shadow/grue_growl.ogg', 100, 1)
+
+	src.set_light(4,-20)
+
+	addtimer(CALLBACK(src, /atom/.proc/set_light, 0), 30 SECONDS)
+
+/mob/living/carbon/human/proc/darkness_eyes()
+	set category = "Abilities"
+	set name = "Toggle Shadow Vision"
+	set desc = "Toggle between seeing shadows or not."
+
+	if (!stop_sight_update)
+		src << "<span class='notice'>Your eyes shift around, allowing you to see in the dark.</span>"
+		src.stop_sight_update = 1
+		src.see_invisible = SEE_INVISIBLE_NOLIGHTING
+
+	else
+		src << "<span class='notice'>You return your vision to normal.</span>"
+		src.stop_sight_update = 0
+
+/mob/living/carbon/human/proc/shadow_step(var/turf/T in turfs)
+	set category = "Abilities"
+	set name = "Shadow Step"
+	set desc = "Travel from place to place using the shadows."
+
+	if(last_special > world.time)
+		src << "<span class='danger'>You're still regaining your strength!</span>"
+		return
+
+	if (!T || T.density || T.contains_dense_objects())
+		src << "<span class='warning'>You cannot do that.</span>"
+		return
+
+	if(!isturf(loc))
+		to_chat(src, "<span class='warning'>You cannot teleport out of your current location.</span>")
+		return
+
+	if (T.z != src.z || get_dist(T, get_turf(src)) > world.view)
+		src << "<span class='warning'>Your powers are not capable of taking you that far.</span>"
+		return
+
+	if (T.get_lumcount() > 0.1)
+		src << "<span class='warning'>The destination is too bright.</span>"
+		return
+
+	last_special = world.time + 200
+
+	visible_message("<span class='danger'>\The [src] vanishes into the shadows!</span>")
+
+	anim(get_turf(loc), loc,'icons/mob/mob.dmi',,"shadow", null ,loc.dir)
+
+	forceMove(T)
+
+	for (var/obj/item/weapon/grab/G in contents)
+		if (G.affecting)
+			G.affecting.forceMove(locate(T.x + rand(-1,1), T.y + rand(-1,1), T.z))
+		else
+			qdel(G)
+
+/mob/living/carbon/human/proc/trample()
+	set category = "Abilities"
+	set name = "Trample"
+	set desc = "Charge forward, trampling anything in your path until you hit something more stubborn than you are."
+
+	if(last_special > world.time)
+		to_chat(src, "<span class='danger'>You are too tired to charge!</span>")
+		return
+
+	if(stat || paralysis || stunned || weakened || lying || restrained() || buckled)
+		to_chat(src, "<span class='danger'>You cannot charge in your current state!</span>")
+		return
+
+	last_special = world.time + 100
+
+	src.visible_message("<span class='warning'>\The [src] takes a step backwards and rears up.</span>",
+			"<span class='notice'>You take a step backwards and then...</span>")
+	if(do_after(src,5))
+		playsound(loc, 'sound/species/shadow/grue_screech.ogg', 100, 1)
+		src.visible_message("<span class='danger'>\The [src] charges!</span>")
+		trampling()
+
+
+/mob/living/carbon/human/proc/trampling()
+
+	var/brokesomething = 0//true if we break anything
+	var/done = 0//Set true if we fail to break something. We won't try to break anything for the rest of the proc
+
+	var/turf/target = get_step(src, dir)
+
+	for(var/obj/obstacle in get_turf(src))
+		if((obstacle.flags & ON_BORDER) && (src != obstacle))
+			if(!obstacle.CheckExit(src, target))
+				brokesomething++
+				if (!crash_into(obstacle))
+					done = 1
+
+	if (!done && !target.CanPass(src, target))
+		crash_into(target)
+		brokesomething++
+		if (!target.CanPass(src, target))
+			done = 1
+
+	if (!done)
+		for (var/atom/A in target)
+			if (A.density && A != src && A.loc != src)
+				brokesomething++
+				if (!crash_into(A))
+					done = 1
+			if(istype(A, /mob/living) && !A.density)
+				brokesomething++
+				crash_into(A)
+
+	if (brokesomething)
+		playsound(get_turf(target), 'sound/weapons/heavysmash.ogg', 100, 1)
+		attack_log += "\[[time_stamp()]\]<font color='red'>crashed into [brokesomething] objects at ([target.x];[target.y];[target.z]) </font>"
+		msg_admin_attack("[key_name(src)] crashed into [brokesomething] objects at (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[target.x];Y=[target.y];Z=[target.z]'>JMP</a>)" )
+
+	if (!done && target.Enter(src, null))
+		if(stat || paralysis || stunned || weakened || lying || restrained() || buckled)
+			return 0
+
+		step(src, dir)
+		playsound(src,'sound/mecha/mechstep.ogg',25,1)
+		if (brokesomething)
+			src.visible_message("<span class='danger'>[src.name] breaks through!</span>")
+		addtimer(CALLBACK(src, .proc/trampling), 1)
+
+	else
+		target = get_step(src, dir)
+		do_attack_animation(target)
+
+/mob/living/carbon/human/proc/crash_into(var/atom/A)
+	var/aname = A.name
+	var/oldtype = A.type
+	if(stat || paralysis || stunned || weakened || lying || restrained() || buckled)
+		return 0
+
+	if (istype(A, /mob/living))
+		var/mob/living/M = A
+		attack_log += "\[[time_stamp()]\]<font color='red'> Crashed into [key_name(M)]</font>"
+		M.attack_log += "\[[time_stamp()]\]<font color='orange'> Was rammed by [key_name(src)]</font>"
+		msg_admin_attack("[key_name(src)] crashed into [key_name(M)] at (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[M.x];Y=[M.y];Z=[M.z]'>JMP</a>)" )
+
+	A.ex_act(2)
+
+	sleep(1)
+	if (A && !(A.gcDestroyed) && A.type == oldtype)
+		src.visible_message("<span class='danger'>[src.name] plows into \the [aname]!</span>")
+		return 0
+
+	return 1
+
+/mob/living/carbon/human/proc/rebel_yell()
+	set category = "Abilities"
+	set name = "Screech"
+	set desc = "Emit a powerful screech which stuns hearers in a two-tile radius."
+
+	if(last_special > world.time)
+		to_chat(src, "<span class='danger'>You are too tired to screech!</span>")
+		return
+
+	if(stat || paralysis || stunned || weakened)
+		to_chat(src, "<span class='danger'>You cannot screech in your current state!</span>")
+		return
+
+	last_special = world.time + 100
+
+	visible_message("<span class='danger'>[src.name] lets out an ear piercing shriek!</span>",
+			"<span class='danger'>You let out an ear-shattering shriek!</span>",
+			"<span class='danger'>You hear a painfully loud shriek!</span>")
+
+	playsound(loc, 'sound/voice/shriek1.ogg', 100, 1)
+
+	var/list/victims = list()
+
+	for (var/mob/living/carbon/human/T in hearers(2, src))
+		if (T == src)
+			continue
+
+		if (istype(T) && (T:l_ear || T:r_ear) && istype((T:l_ear || T:r_ear), /obj/item/clothing/ears/earmuffs))
+			continue
+
+		to_chat(T, "<span class='danger'>You hear an ear piercing shriek and feel your senses go dull!</span>")
+		T.Weaken(5)
+		T.ear_deaf = 20
+		T.stuttering = 20
+		T.Stun(5)
+
+		victims += T
+
+	for (var/obj/structure/window/W in view(2))
+		W.shatter()
+
+	for (var/obj/machinery/light/L in view(4))
+		L.broken()
+
+	if (victims.len)
+		admin_attacker_log_many_victims(src, victims, "used rebel yell to stun", "was stunned by [key_name(src)] using rebel yell", "used rebel yell to stun")
+
+/mob/living/carbon/human/proc/formic_spray()
+	set category = "Abilities"
+	set name = "Napalm"
+	set desc = "Spew a cone of ignited napalm in front of you"
+
+	if(last_special > world.time)
+		to_chat(src,"<span class='notice'>You are too tired to spray napalm!</span>")
+		return
+
+	if(stat || paralysis || stunned || weakened || lying || restrained() || buckled)
+		to_chat(src,"<span class='notice'>You cannot spray napalm in your current state.</span>")
+		return
+
+	last_special = world.time + 100
+	playsound(loc, 'sound/species/shadow/grue_screech.ogg', 100, 1)
+	visible_message("<span class='danger'>\The [src] unleashes a torrent of raging flame!</span>",
+			"<span class='danger'>You unleash a gust of fire!</span>",
+			"<span class='danger'>You hear the roar of an inferno!</span>")
+
+	var/turf/T  = get_step(get_step(src, dir), dir)
+	var/turf/T1 = get_step(T, dir)
+	var/turf/T2 = get_step(T1,turn(dir, 90))
+	var/turf/T3 = get_step(T1,turn(dir, -90))
+	var/turf/T4 = get_step(T1, dir)
+	var/turf/T5 = get_step(T2, dir)
+	var/turf/T6 = get_step(T3, dir)
+	var/turf/T7 = get_step(T5,turn(dir, 90))
+	var/turf/T8 = get_step(T6,turn(dir, -90))
+	var/list/the_targets = list(T,T1,T2,T3,T4,T5,T6,T7,T8)
+
+	playsound(src.loc, 'sound/magic/Fireball.ogg', 200, 1)
+	for(var/turf/FuelSpot in the_targets)
+		spawn(0)
+			var/obj/effect/effect/water/firewater/D = new/obj/effect/effect/water/firewater(get_turf(get_step(src, dir)))
+			var/turf/my_target = FuelSpot
+			D.create_reagents(200)
+			if(!src)
+				return
+			D.reagents.add_reagent("greekfire", 200)
+			D.set_color()
+			D.set_up(my_target, rand(6,8), 1, 50)
+	return

@@ -26,10 +26,8 @@
 
 	var/list/ports = new()
 
-/obj/machinery/atmospherics/omni/New()
-	..()
+/obj/machinery/atmospherics/omni/Initialize()
 	icon_state = "base"
-
 	ports = new()
 	for(var/d in cardinal)
 		var/datum/omni_port/new_port = new(src, d)
@@ -45,6 +43,7 @@
 		if(new_port.mode > 0)
 			initialize_directions |= d
 		ports += new_port
+	. = ..()
 
 /obj/machinery/atmospherics/omni/update_icon()
 	cut_overlays()
@@ -84,7 +83,7 @@
 		update_icon()
 
 /obj/machinery/atmospherics/omni/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if(!istype(W, /obj/item/weapon/wrench))
+	if(!iswrench(W))
 		return ..()
 
 	var/int_pressure = 0

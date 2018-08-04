@@ -94,26 +94,17 @@
 		DB_ban_record(bantype, playermob, banduration, banreason, banjob, null, banckey, banip, bancid )
 
 	else if(href_list["dbbanmirrors"])
-		var/ban_id = text2num(href_list["dbbanmirrors"])
+		display_mirrors_panel(usr, text2num(href_list["dbbanmirrors"]))
+		return
 
-		var/list/mirrors = get_ban_mirrors(ban_id)
-
-		if (!mirrors)
-			usr << "<span class='warning'>Something went horribly wrong.</span>"
-			return
-
-		if (!mirrors.len)
-			usr << "<span class='warning'>No mirrors for this ban found.</span>"
-			return
-
-		var/output = "<b><center>Ban mirrors for ban #[ban_id]</center></b><br>"
-		output += "<center>Each line indicates a new bypass attempt.</center><hr>"
-		for (var/mirror in mirrors)
-			var/list/details = mirrors[mirror]
-
-			output += "[details["date"]] - [details["ckey"]] - IP: [details["ip"]] - CID: [details["computerid"]]<br>"
-
-		usr << browse(output, "window=banmirrors")
+	else if(href_list["dbbanmirroract"])
+		// Mirror act contains the ID of the mirror being acted upon.
+		var/mirror_id = text2num(href_list["dbbanmirroract"])
+		if (href_list["mirrorckeys"])
+			display_mirrors_ckeys(usr, mirror_id)
+		else if (href_list["mirrorstatus"])
+			toggle_mirror_status(usr, mirror_id, text2num(href_list["mirrorstatus"]))
+		return
 
 	else if(href_list["editrights"])
 		if(!check_rights(R_PERMISSIONS))
@@ -288,7 +279,7 @@
 		message_admins("<span class='notice'>[key_name_admin(usr)] has used rudimentary transformation on [key_name_admin(M)]. Transforming to [href_list["simplemake"]]; deletemob=[delmob]</span>", 1)
 
 		switch(href_list["simplemake"])
-			if("observer")			M.change_mob_type( /mob/dead/observer , null, null, delmob )
+			if("observer")			M.change_mob_type( /mob/abstract/observer , null, null, delmob )
 			if("larva")				M.change_mob_type( /mob/living/carbon/alien/larva , null, null, delmob )
 			if("nymph")				M.change_mob_type( /mob/living/carbon/alien/diona , null, null, delmob )
 			if("human")				M.change_mob_type( /mob/living/carbon/human , null, null, delmob, href_list["species"])
@@ -810,8 +801,8 @@
 		if(!check_rights(R_SPAWN))	return
 
 		var/mob/M = locate(href_list["makeanimal"])
-		if(istype(M, /mob/new_player))
-			usr << "This cannot be used on instances of type /mob/new_player"
+		if(istype(M, /mob/abstract/new_player))
+			usr << "This cannot be used on instances of type /mob/abstract/new_player"
 			return
 
 		usr.client.cmd_admin_animalize(M)
@@ -858,6 +849,14 @@
 		sleep(2)
 		C.jumptocoord(x,y,z)
 
+	else if(href_list["take_ticket"])
+		var/datum/ticket/ticket = locate(href_list["take_ticket"])
+
+		if(!istype(ticket))
+			return
+
+		ticket.take(usr.client)
+
 	else if(href_list["adminchecklaws"])
 		output_ai_laws()
 
@@ -871,6 +870,7 @@
 		var/special_role_description = ""
 		var/health_description = ""
 		var/gender_description = ""
+		var/species_description = "N/A"
 		var/turf/T = get_turf(M)
 
 		//Location
@@ -899,13 +899,19 @@
 		else
 			health_description = "This mob type has no health to speak of."
 
-		//Gener
+		//Species
+		if (ishuman(M))
+			var/mob/living/carbon/human/H = M
+			if (H.species)
+				species_description = "<b>[H.species.name]</b>"
+
+		//GenDer
 		switch(M.gender)
 			if(MALE,FEMALE)	gender_description = "[M.gender]"
 			else			gender_description = "<font color='red'><b>[M.gender]</b></font>"
 
 		src.owner << "<b>Info about [M.name]:</b> "
-		src.owner << "Mob type = [M.type]; Gender = [gender_description] Damage = [health_description]"
+		src.owner << "Mob type = [M.type]; Species = [species_description] Gender = [gender_description] Damage = [health_description]"
 		src.owner << "Name = <b>[M.name]</b>; Real_name = [M.real_name]; Mind_name = [M.mind?"[M.mind.name]":""]; Key = <b>[M.key]</b>;"
 		src.owner << "Location = [location_description];"
 		src.owner << "[special_role_description]"
@@ -967,6 +973,8 @@
 		if(istype(T))
 			if(prob(80))	T.break_tile_to_plating()
 			else			T.break_tile()
+
+		playsound(T, 'sound/effects/yamato_fire.ogg', 75, 1)
 
 		if(M.health == 1)
 			M.gib()
@@ -1216,7 +1224,7 @@
 			alert("Select fewer object types, (max 5)")
 			return
 		else if(length(removed_paths))
-			alert("Removed:\n" + list2text(removed_paths, "\n"))
+			alert("Removed:\n" + jointext(removed_paths, "\n"))
 
 		var/list/offset = text2list(href_list["offset"],",")
 		var/number = dd_range(1, 100, text2num(href_list["object_count"]))
@@ -1304,7 +1312,8 @@
 
 	else if(href_list["ac_submit_new_channel"])
 		var/check = 0
-		for(var/datum/feed_channel/FC in news_network.network_channels)
+		for(var/channel in SSnews.network_channels)
+			var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
 			if(FC.channel_name == src.admincaster_feed_channel.channel_name)
 				check = 1
 				break
@@ -1313,7 +1322,7 @@
 		else
 			var/choice = alert("Please confirm Feed channel creation","Network Channel Handler","Confirm","Cancel")
 			if(choice=="Confirm")
-				news_network.CreateFeedChannel(admincaster_feed_channel.channel_name, admincaster_signature, admincaster_feed_channel.locked, 1)
+				SSnews.CreateFeedChannel(admincaster_feed_channel.channel_name, admincaster_signature, admincaster_feed_channel.locked, 1)
 				feedback_inc("newscaster_channels",1)                  //Adding channel to the global network
 				log_admin("[key_name_admin(usr)] created command feed channel: [src.admincaster_feed_channel.channel_name]!",admin_key=key_name(usr))
 				src.admincaster_screen=5
@@ -1321,8 +1330,9 @@
 
 	else if(href_list["ac_set_channel_receiving"])
 		var/list/available_channels = list()
-		for(var/datum/feed_channel/F in news_network.network_channels)
-			available_channels += F.channel_name
+		for(var/channel in SSnews.network_channels)
+			var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
+			available_channels += FC.channel_name
 		src.admincaster_feed_channel.channel_name = sanitizeSafe(input(usr, "Choose receiving Feed Channel", "Network Channel Handler") in available_channels )
 		src.access_news_network()
 
@@ -1335,7 +1345,8 @@
 			src.admincaster_screen = 6
 		else
 			feedback_inc("newscaster_stories",1)
-			news_network.SubmitArticle(src.admincaster_feed_message.body, src.admincaster_signature, src.admincaster_feed_channel.channel_name, null, 1)
+			var/datum/feed_channel/ch =  SSnews.GetFeedChannel(src.admincaster_feed_channel.channel_name)
+			SSnews.SubmitArticle(src.admincaster_feed_message.body, src.admincaster_signature, ch, null, 1)
 			src.admincaster_screen=4
 
 		log_admin("[key_name_admin(usr)] submitted a feed story to channel: [src.admincaster_feed_channel.channel_name]!",admin_key=key_name(usr))
@@ -1359,12 +1370,12 @@
 
 	else if(href_list["ac_menu_wanted"])
 		var/already_wanted = 0
-		if(news_network.wanted_issue)
+		if(SSnews.wanted_issue)
 			already_wanted = 1
 
 		if(already_wanted)
-			src.admincaster_feed_message.author = news_network.wanted_issue.author
-			src.admincaster_feed_message.body = news_network.wanted_issue.body
+			src.admincaster_feed_message.author = SSnews.wanted_issue.author
+			src.admincaster_feed_message.body = SSnews.wanted_issue.body
 		src.admincaster_screen = 14
 		src.access_news_network()
 
@@ -1389,15 +1400,15 @@
 					WANTED.body = src.admincaster_feed_message.body                   //Wanted desc
 					WANTED.backup_author = src.admincaster_signature                  //Submitted by
 					WANTED.is_admin_message = 1
-					news_network.wanted_issue = WANTED
+					SSnews.wanted_issue = WANTED
 					for(var/obj/machinery/newscaster/NEWSCASTER in allCasters)
 						NEWSCASTER.newsAlert()
 						NEWSCASTER.update_icon()
 					src.admincaster_screen = 15
 				else
-					news_network.wanted_issue.author = src.admincaster_feed_message.author
-					news_network.wanted_issue.body = src.admincaster_feed_message.body
-					news_network.wanted_issue.backup_author = src.admincaster_feed_message.backup_author
+					SSnews.wanted_issue.author = src.admincaster_feed_message.author
+					SSnews.wanted_issue.body = src.admincaster_feed_message.body
+					SSnews.wanted_issue.backup_author = src.admincaster_feed_message.backup_author
 					src.admincaster_screen = 19
 				log_admin("[key_name_admin(usr)] issued a Station-wide Wanted Notification for [src.admincaster_feed_message.author]!",admin_key=key_name(usr))
 		src.access_news_network()
@@ -1405,7 +1416,7 @@
 	else if(href_list["ac_cancel_wanted"])
 		var/choice = alert("Please confirm Wanted Issue removal","Network Security Handler","Confirm","Cancel")
 		if(choice=="Confirm")
-			news_network.wanted_issue = null
+			SSnews.wanted_issue = null
 			for(var/obj/machinery/newscaster/NEWSCASTER in allCasters)
 				NEWSCASTER.update_icon()
 			src.admincaster_screen=17
@@ -1479,6 +1490,66 @@
 
 	else if(href_list["ac_set_signature"])
 		src.admincaster_signature = sanitize(input(usr, "Provide your desired signature", "Network Identity Handler", ""))
+		src.access_news_network()
+	
+	else if(href_list["ac_add_comment"])
+		var/com_msg = sanitize(input(usr, "Write your Comment", "Network Comment Handler", "") as message, encode = 0, trim = 0, extra = 0)
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if(!istype(viewing_story))
+			return
+		var/datum/feed_comment/comment = new
+		comment.author = src.admincaster_signature
+		comment.message = com_msg
+		comment.posted = "[worldtime2text()]"
+		viewing_story.comments += comment
+		to_chat(usr, "Comment successfully added!")
+		src.admincaster_screen = 20
+		src.access_news_network()
+		
+	else if(href_list["ac_view_comments"])
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if(!istype(viewing_story))
+			return
+		src.admincaster_screen = 20
+		src.admincaster_viewing_message = viewing_story
+		src.access_news_network()
+		
+	else if(href_list["ac_like"])
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if((src.admincaster_signature in viewing_story.interacted) || !istype(viewing_story))
+			return
+		viewing_story.interacted += src.admincaster_signature
+		viewing_story.likes += 1
+		src.access_news_network()
+		
+	else if(href_list["ac_dislike"])
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if((src.admincaster_signature in viewing_story.interacted) || !istype(viewing_story))
+			return
+		viewing_story.interacted += src.admincaster_signature
+		viewing_story.dislikes += 1
+		src.access_news_network()
+	
+	else if(href_list["ac_setlikes"])
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if(!istype(viewing_story))
+			return
+		var/amount = input(usr, "Provide your desired number of likes", "Network Social Manager", "") as num
+		viewing_story.likes = amount
+		src.access_news_network()
+	else if(href_list["ac_setdislikes"])
+		var/datum/feed_message/viewing_story = locate(href_list["ac_story"])
+		if(!istype(viewing_story))
+			return
+		var/amount = input(usr, "Provide your desired number of dislikes", "Network Social Manager", "") as num
+		viewing_story.dislikes = amount
+		src.access_news_network()
+	else if(href_list["ac_censorcomment"])
+		var/datum/feed_comment/comment = locate(href_list["ac_comment"])
+		if(!istype(comment))
+			return
+		comment.message = "\[REDACTED\]"
+		src.admincaster_screen = 20
 		src.access_news_network()
 
 	else if(href_list["populate_inactive_customitems"])
@@ -1587,32 +1658,6 @@
 
 		paralyze_mob(M)
 
-	else if(href_list["admindibs"])
-		if (!check_rights(R_ADMIN|R_MOD))
-			return
-
-		var/client/C = locate(href_list["admindibs"])
-
-		if (!istype(C) || !C)
-			usr << "<span class='danger'>Player not found!</span>"
-			return
-
-		if (C.adminhelped >= 2)
-			log_and_message_admins("has called <font color='red'>dibs</font> on [key_name_admin(C)]'s adminhelp!")
-			usr << "<font color='blue'><b>You have taken over [key_name_admin(C)]'s adminhelp.</b></font>'"
-			usr << "[get_options_bar(C, 2, 1, 1)]"
-
-			C << "<font color='red'><b>Your adminhelp will be tended [usr.client.holder.fakekey ? "shortly" : "by [key_name(usr, 0, 0)]"]. Please allow the staff member a minute or two to write up a response.</b></font>"
-
-			if (C.adminhelped == 3)
-				discord_bot.send_to_admins("Request for Help from [key_name(C)] is being tended to by [key_name(usr)].")
-
-			C.adminhelped = 1
-		else
-			usr << "<font color='red'><b>The adminhelp has already been claimed!</b></font>"
-
-		return
-
 	else if(href_list["access_control"])
 		access_control_topic(href_list["access_control"])
 		return
@@ -1626,6 +1671,9 @@ mob/living/carbon/human/can_centcom_reply()
 mob/living/silicon/ai/can_centcom_reply()
 	return common_radio != null && !check_unable(2)
 
+/client/proc/extra_admin_link()
+	return
+
 /atom/proc/extra_admin_link()
 	return
 
@@ -1633,7 +1681,7 @@ mob/living/silicon/ai/can_centcom_reply()
 	if(client && eyeobj)
 		return "|<A HREF='?[source];adminplayerobservejump=\ref[eyeobj]'>EYE</A>"
 
-/mob/dead/observer/extra_admin_link(var/source)
+/mob/abstract/observer/extra_admin_link(var/source)
 	if(mind && mind.current)
 		return "|<A HREF='?[source];adminplayerobservejump=\ref[mind.current]'>BDY</A>"
 
