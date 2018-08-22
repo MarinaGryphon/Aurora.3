@@ -16,14 +16,14 @@
 
 /mob/living/carbon/slime/proc/invalidFeedTarget(var/mob/living/M)
 	if (!M || !istype(M))
-		return "This subject is incomparable..."
+		return "This subject is incompatible..."
 	if (istype(M, /mob/living/carbon/slime)) // No cannibalism... yet
 		return "I cannot feed on other slimes..."
 	if (!Adjacent(M))
 		return "This subject is too far away..."
-	if (istype(M, /mob/living/carbon) && M.getCloneLoss() >= M.maxHealth * 1.5 || istype(M, /mob/living/simple_animal) && M.stat == DEAD)
+	if (istype(M, /mob/living/carbon) && (M.getCloneLoss() >= M.maxHealth * 1.5) || (istype(M, /mob/living/simple_animal) && M.stat == DEAD))
 		return "This subject does not have an edible life energy..."
-	if (istype(M, /mob/living/carbon))
+	if (istype(M, /mob/living/carbon/human))
 		var/mob/living/carbon/human/H = M
 		if(istype(H) && (H.species.flags & NO_SCAN))
 			return "This subject has nothing for us to take..."
@@ -56,7 +56,7 @@
 				Victim.adjustBruteLoss(is_adult ? rand(7, 15) : rand(4, 12))
 
 			else
-				src << "<span class='warning'>[pick("This subject is incompatable", "This subject does not have a life energy", "This subject is empty", "I am not satisified", "I can not feed from this subject", "I do not feel nourished", "This subject is not food")]...</span>"
+				src << "<span class='warning'>[pick("This subject is incompatible", "This subject does not have a life energy", "This subject is empty", "I am not satisified", "I cannot feed from this subject", "I do not feel nourished", "This subject is not food")]...</span>"
 				Feedstop()
 				break
 
