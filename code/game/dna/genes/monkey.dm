@@ -8,13 +8,11 @@
 	return ishuman(M)
 
 /datum/dna/gene/monkey/activate(var/mob/living/carbon/C)
-	var/mob/living/carbon/human/H
-	if(ishuman(C))
-		H = C
-	else
+	if(!ishuman(C))
 		return
+	var/mob/living/carbon/human/H = C
 	if(!islesserform(H))
-		H = H.monkeyize(1)
+		H = H.monkeyize()
 		H.name = H.species.get_random_name() // keep the realname
 
 /datum/dna/gene/monkey/deactivate(var/mob/living/carbon/C)
@@ -25,7 +23,7 @@
 		return
 
 	if(islesserform(H))
-		H = H.humanize(1) // woo transform procs!
+		H = H.humanize() // woo transform procs!
 
 		if(!H.dna.real_name)
 			var/randomname = H.species.get_random_name()

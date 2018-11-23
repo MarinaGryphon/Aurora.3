@@ -1,4 +1,4 @@
-/mob/living/carbon/human/proc/monkeyize(var/kpg=0)
+/mob/living/carbon/human/proc/monkeyize()
 	if (transforming)
 		return
 	for(var/obj/item/W in src)
@@ -31,15 +31,13 @@
 	for(var/obj/item/W in src)
 		drop_from_inventory(W)
 	set_species(species.primitive_form)
-	if(!kpg)
-		dna.SetSEState(MONKEYBLOCK,1)
 
 	src << "<B>You are now [species.name]. </B>"
 	qdel(animation)
 
 	return src
 
-/mob/living/carbon/human/proc/humanize(var/kpg=0) // we needed this a lot to be honest, why wasn't it made before?
+/mob/living/carbon/human/proc/humanize() // we needed this a lot to be honest, why wasn't it made before?
 	if (transforming)
 		return
 	for(var/obj/item/W in src)
@@ -69,8 +67,6 @@
 	for(var/obj/item/W in src)
 		drop_from_inventory(W)
 	set_species(species.greater_form)
-	if(!kpg)
-		dna.SetSEState(MONKEYBLOCK,0)
 
 	src << "<B>You are now [species.name]. </B>"
 	qdel(animation)

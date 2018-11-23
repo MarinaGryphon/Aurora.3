@@ -352,7 +352,7 @@
 
 	return
 
-/datum/species/proc/handle_post_spawn(var/mob/living/carbon/human/H,var/kpg = 0) //Handles anything not already covered by basic species assignment. Keepgene value should only be used by genetics.
+/datum/species/proc/handle_post_spawn(var/mob/living/carbon/human/H) //Handles anything not already covered by basic species assignment.
 	add_inherent_verbs(H)
 	H.mob_bump_flag = bump_flag
 	H.mob_swap_flags = swap_flags
@@ -361,11 +361,10 @@
 	H.mob_size = mob_size
 	H.mouth_size = mouth_size || 2
 	H.eat_types = allowed_eat_types
-	if(!kpg)
-		if(islesserform(H))
-			H.dna.SetSEState(MONKEYBLOCK,1)
-		else
-			H.dna.SetSEState(MONKEYBLOCK,0)
+	if(islesserform(H) && !H.dna.GetSEState(MONKEYBLOCK))
+		H.dna.SetSEState(MONKEYBLOCK,1)
+	else if(!islesserform(H) && H.dna.GetSEState(MONKEYBLOCK))
+		H.dna.SetSEState(MONKEYBLOCK,0)
 
 /datum/species/proc/handle_death(var/mob/living/carbon/human/H, var/gibbed = 0) //Handles any species-specific death events (such as dionaea nymph spawns).
 	return
