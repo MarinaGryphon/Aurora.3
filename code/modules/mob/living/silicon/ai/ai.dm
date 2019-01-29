@@ -611,15 +611,13 @@ var/list/ai_verbs_default = list(
 		if(personnel_list.len)
 			input = input("Select a crew member:") as null|anything in personnel_list
 			var/selection = personnel_list[input]
-			var/icon/character_icon 
+			var/icon/character_icon
 			if(selection && istype(selection, /list))
 				var/mob/living/carbon/human/H = selection["mob"]
 				if (H.near_camera())
 					character_icon = new('icons/mob/human.dmi', "blank")
-					character_icon.Insert(getHologramIcon(getFlatIcon(H, SOUTH)), dir = SOUTH)
-					character_icon.Insert(getHologramIcon(getFlatIcon(H, NORTH)), dir = NORTH)
-					character_icon.Insert(getHologramIcon(getFlatIcon(H, EAST)), dir = EAST)
-					character_icon.Insert(getHologramIcon(getFlatIcon(H, WEST)), dir = WEST)
+					for(var/renderdir in cardinal)
+						character_icon.Insert(getHologramIcon(getFlatIcon(H, renderdir, always_use_defdir=1)), dir = renderdir)
 				else
 					character_icon = getHologramIcon(icon(selection["image"]))
 			if(selection && istype(selection, /icon))
@@ -699,7 +697,7 @@ var/list/ai_verbs_default = list(
 		var/obj/item/weapon/aicard/card = W
 		card.grab_ai(src, user)
 
-	else if(iswrench(W))
+	else if(W.iswrench())
 		if(anchored)
 			user.visible_message("<span class='notice'>\The [user] starts to unbolt \the [src] from the plating...</span>")
 			if(!do_after(user,40))

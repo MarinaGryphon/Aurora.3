@@ -35,7 +35,7 @@
 	if (eyeobj)
 		return eyeobj.zMove(direction)
 
-	if (istype(src.loc,/obj/mecha))
+	if(istype(src.loc,/obj/mecha)||istype(src.loc,/obj/machinery/cryopod)||istype(src.loc,/obj/machinery/recharge_station))
 		return FALSE
 
 	// Check if we can actually travel a Z-level.
@@ -145,7 +145,13 @@
 		return
 
 	if(destination.density)
+		to_chat(src, "<span class='notice'>There is something obstructing your destination!</span>")
 		return
+
+	for(var/obj/O in destination)
+		if(O.density)
+			to_chat(src, "<span class='notice'>There is something obstructing your destination!</span>")
+			return
 
 	visible_message("<span class='notice'>The [src] begins to climb [(direction == UP) ? "upwards" : "downwards"].</span>",
 		"<span class='notice'>You begin to climb [(direction == UP) ? "upwards" : "downwards"].</span>")

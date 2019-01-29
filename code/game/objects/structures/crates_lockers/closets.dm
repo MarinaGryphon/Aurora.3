@@ -221,7 +221,7 @@
 			return 0
 		if(istype(W,/obj/item/tk_grab))
 			return 0
-		if(iswelder(W))
+		if(W.iswelder())
 			var/obj/item/weapon/weldingtool/WT = W
 			if(WT.isOn())
 				user.visible_message(
@@ -256,12 +256,13 @@
 			return
 		if(!dropsafety(W))
 			return
-		usr.drop_item()
 		if(W)
-			W.forceMove(loc)
+			user.drop_from_inventory(W,loc)
+		else
+			user.drop_item()
 	else if(istype(W, /obj/item/weapon/packageWrap))
 		return
-	else if(iswelder(W))
+	else if(W.iswelder())
 		var/obj/item/weapon/weldingtool/WT = W
 		if(WT.isOn())
 			user.visible_message(

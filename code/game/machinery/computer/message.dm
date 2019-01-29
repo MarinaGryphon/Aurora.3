@@ -45,7 +45,7 @@
 		return
 	if(!istype(user))
 		return
-	if(isscrewdriver(O) && emag)
+	if(O.isscrewdriver() && emag)
 		//Stops people from just unscrewing the monitor and putting it back to get the console working again.
 		user << "<span class='warning'>It is too hot to mess with!</span>"
 		return
@@ -62,7 +62,7 @@
 			screen = 2
 			src.spark_system.queue()
 			var/obj/item/weapon/paper/monitorkey/MK = new/obj/item/weapon/paper/monitorkey
-			MK.loc = src.loc
+			MK.forceMove(src.loc)
 			// Will help make emagging the console not so easy to get away with.
 			MK.info += "<br><br><font color='red'>£%@%(*$%&(£&?*(%&£/{}</font>"
 			addtimer(CALLBACK(src, .proc/UnmagConsole), 100 * length(linkedServer.decryptkey))

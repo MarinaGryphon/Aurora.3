@@ -25,10 +25,10 @@
 	return ..()
 
 /obj/item/weapon/plastique/attackby(var/obj/item/I, var/mob/user)
-	if(isscrewdriver(I))
+	if(I.isscrewdriver())
 		open_panel = !open_panel
 		user << "<span class='notice'>You [open_panel ? "open" : "close"] the wire panel.</span>"
-	else if(iswirecutter(I) || ismultitool(I) || istype(I, /obj/item/device/assembly/signaler ))
+	else if(I.iswirecutter() || I.ismultitool() || istype(I, /obj/item/device/assembly/signaler ))
 		wires.Interact(user)
 	else
 		..()
@@ -49,7 +49,7 @@
 	user.do_attack_animation(target)
 
 	if(do_after(user, 50) && in_range(user, target))
-		user.drop_item()
+		user.drop_item() //TODO: Look into this
 		src.target = target
 		loc = null
 
