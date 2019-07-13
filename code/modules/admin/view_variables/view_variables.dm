@@ -108,12 +108,14 @@
 	. = ""
 	var/list/variables = list()
 	for(var/x in D.vars)
+		CHECK_TICK
 		if(x in view_variables_hide_vars)
 			continue
 		variables += x
 	variables = sortList(variables)
 	for(var/x in variables)
 		. += make_view_variables_var_entry(D, x, D.vars[x])
+		CHECK_TICK
 
 /proc/make_view_variables_value(value, varname = "*")
 	var/vtext = ""
@@ -146,6 +148,7 @@
 					extra += "<li>[index]: [make_view_variables_value(entry)] -> [make_view_variables_value(L[entry])]</li>"
 				else
 					extra += "<li>[index]: [make_view_variables_value(entry)]</li>"
+				CHECK_TICK // for long lists
 			extra += "</ul>"
 	else
 		vtext = "[value]"
