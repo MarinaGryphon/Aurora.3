@@ -82,6 +82,7 @@
 				edges += borderline
 
 			possible_expansions -= borderline
+			CHECK_TICK
 
 	air.volume = volume
 
