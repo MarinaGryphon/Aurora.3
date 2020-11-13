@@ -2083,6 +2083,9 @@
 /obj/item/modular_computer/console/preset/security/investigations,
 /turf/simulated/floor/lino/grey,
 /area/security/detectives_office)
+"eE" = (
+/turf/simulated/wall,
+/area/security/training_crimescene)
 "eF" = (
 /obj/structure/bed/chair/comfy/beige,
 /obj/structure/window/reinforced{
@@ -2310,6 +2313,23 @@
 	},
 /turf/simulated/floor/carpet,
 /area/security/detectives_office)
+"ff" = (
+/obj/machinery/door/firedoor,
+/obj/structure/window/reinforced,
+/obj/machinery/door/blast/shutters{
+	density = 0;
+	dir = 2;
+	icon_state = "shutter0";
+	id = "LCKDshutters";
+	name = "MedBay Lockdown Shutters";
+	opacity = 0
+	},
+/obj/structure/grille,
+/obj/structure/window/reinforced{
+	dir = 1
+	},
+/turf/simulated/floor/plating,
+/area/medical/psych)
 "fh" = (
 /obj/effect/floor_decal/corner/green{
 	dir = 10
@@ -5902,6 +5922,17 @@
 /obj/structure/lattice,
 /turf/unsimulated/floor/asteroid/ash/rocky,
 /area/maintenance/interstitial_construction_site/zone_2)
+"mZ" = (
+/obj/machinery/atmospherics/pipe/simple/hidden/supply{
+	dir = 4
+	},
+/obj/structure/cable/green{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/simulated/floor/tiled,
+/area/security/training_crimescene)
 "na" = (
 /obj/machinery/door/firedoor,
 /obj/structure/window/reinforced{
@@ -6274,6 +6305,21 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled/white,
 /area/maintenance/medbay_virology)
+"pj" = (
+/obj/effect/floor_decal/corner/beige/diagonal,
+/obj/machinery/atmospherics/pipe/simple/hidden/supply{
+	dir = 4
+	},
+/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
+	dir = 4
+	},
+/obj/structure/cable/green{
+	d1 = 2;
+	d2 = 8;
+	icon_state = "2-8"
+	},
+/turf/simulated/floor/tiled/white,
+/area/security/forensics_laboratory)
 "pk" = (
 /obj/structure/table/standard,
 /obj/effect/floor_decal/corner/paleblue/diagonal,
@@ -6411,6 +6457,18 @@
 "pT" = (
 /turf/simulated/wall,
 /area/medical/upperlevel)
+"pV" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced/polarized{
+	dir = 1;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	id = "FT Op"
+	},
+/turf/simulated/floor/plating,
+/area/security/forensics_laboratory)
 "pZ" = (
 /turf/simulated/open/airless,
 /area/mine/unexplored)
@@ -6571,6 +6629,9 @@
 /obj/structure/closet/crate,
 /turf/simulated/floor/tiled,
 /area/quartermaster/storage)
+"qS" = (
+/turf/simulated/wall,
+/area/security/forensics_laboratory)
 "qT" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply{
 	dir = 4
@@ -6621,23 +6682,6 @@
 	},
 /turf/simulated/floor/plating,
 /area/maintenance/interstitial_cargo)
-"rb" = (
-/obj/machinery/door/firedoor,
-/obj/structure/window/reinforced,
-/obj/machinery/door/blast/shutters{
-	density = 0;
-	dir = 2;
-	icon_state = "shutter0";
-	id = "LCKDshutters";
-	name = "MedBay Lockdown Shutters";
-	opacity = 0
-	},
-/obj/structure/grille,
-/obj/structure/window/reinforced{
-	dir = 1
-	},
-/turf/simulated/floor/plating,
-/area/medical/psych)
 "re" = (
 /obj/machinery/atmospherics/pipe/zpipe/up/scrubbers{
 	dir = 4
@@ -6672,6 +6716,9 @@
 /obj/structure/lattice/catwalk/indoor,
 /turf/simulated/open,
 /area/quartermaster/storage)
+"rp" = (
+/turf/simulated/wall,
+/area/security/training_theoretical)
 "rr" = (
 /obj/structure/disposalpipe/segment{
 	dir = 4
@@ -6703,22 +6750,6 @@
 	},
 /turf/simulated/floor/plating,
 /area/maintenance/medbay_virology)
-"rx" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced/polarized{
-	dir = 1;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	dir = 4;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	id = "FT Op"
-	},
-/turf/simulated/floor/plating,
-/area/security/forensics_laboratory)
 "rA" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/machinery/floodlight{
@@ -6787,22 +6818,6 @@
 	icon_state = "asteroidplating"
 	},
 /area/mine/unexplored)
-"rN" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced/polarized{
-	dir = 1;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	dir = 8;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	id = "FT Op"
-	},
-/turf/simulated/floor/plating,
-/area/security/forensics_laboratory)
 "sd" = (
 /obj/effect/decal/cleanable/dirt,
 /obj/machinery/pipedispenser/disposal,
@@ -6966,17 +6981,6 @@
 	},
 /turf/simulated/floor/plating,
 /area/maintenance/telecoms_ladder)
-"sM" = (
-/obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 4
-	},
-/obj/structure/cable/green{
-	d1 = 2;
-	d2 = 8;
-	icon_state = "2-8"
-	},
-/turf/simulated/floor/tiled,
-/area/security/training_crimescene)
 "sN" = (
 /obj/structure/table/standard,
 /obj/item/autopsy_scanner,
@@ -7543,6 +7547,23 @@
 	temperature = 278
 	},
 /area/security/forensics_morgue)
+"wq" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced/polarized{
+	dir = 1;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	dir = 4;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	dir = 8;
+	id = "FT Op"
+	},
+/turf/simulated/floor/plating,
+/area/security/forensics_laboratory)
 "wr" = (
 /obj/effect/floor_decal/corner/brown{
 	dir = 9
@@ -7839,23 +7860,6 @@
 	icon_state = "asteroidplating"
 	},
 /area/mine/unexplored)
-"yn" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced/polarized{
-	dir = 1;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	dir = 4;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	dir = 8;
-	id = "FT Op"
-	},
-/turf/simulated/floor/plating,
-/area/security/forensics_laboratory)
 "yq" = (
 /obj/structure/cable/green{
 	d1 = 4;
@@ -8194,6 +8198,22 @@
 	},
 /turf/simulated/floor/tiled,
 /area/maintenance/interstitial_main)
+"Aw" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced/polarized{
+	dir = 4;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	dir = 8;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	id = "FT Op"
+	},
+/turf/simulated/floor/plating,
+/area/security/forensics_laboratory)
 "AB" = (
 /obj/structure/ladder{
 	pixel_y = 16
@@ -8332,18 +8352,6 @@
 /obj/structure/grille/broken,
 /turf/unsimulated/floor/asteroid/ash/rocky,
 /area/maintenance/interstitial_construction_site/zone_2)
-"BI" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced,
-/obj/structure/window/reinforced{
-	dir = 4
-	},
-/obj/structure/window/reinforced{
-	dir = 8
-	},
-/turf/simulated/floor/plating,
-/area/security/training_theoretical)
 "BJ" = (
 /obj/item/modular_computer/console/preset/engineering,
 /turf/simulated/floor/tiled,
@@ -8946,6 +8954,18 @@
 	},
 /turf/simulated/floor/tiled/dark,
 /area/maintenance/medbay_virology)
+"Fe" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced,
+/obj/structure/window/reinforced{
+	dir = 4
+	},
+/obj/structure/window/reinforced{
+	dir = 8
+	},
+/turf/simulated/floor/plating,
+/area/security/training_theoretical)
 "Ff" = (
 /obj/structure/bed/chair/office/light{
 	dir = 8
@@ -9103,9 +9123,6 @@
 	},
 /turf/simulated/floor/tiled,
 /area/maintenance/interstitial_construction_site/office)
-"Gf" = (
-/turf/simulated/wall,
-/area/security/training_crimescene)
 "Gg" = (
 /obj/structure/cable/green{
 	d1 = 1;
@@ -9311,21 +9328,6 @@
 	icon_state = "asteroidplating"
 	},
 /area/mine/unexplored)
-"He" = (
-/obj/effect/floor_decal/corner/beige/diagonal,
-/obj/machinery/atmospherics/pipe/simple/hidden/supply{
-	dir = 4
-	},
-/obj/machinery/atmospherics/pipe/simple/hidden/scrubbers{
-	dir = 4
-	},
-/obj/structure/cable/green{
-	d1 = 2;
-	d2 = 8;
-	icon_state = "2-8"
-	},
-/turf/simulated/floor/tiled/white,
-/area/security/forensics_laboratory)
 "Hh" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 4
@@ -9353,6 +9355,22 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled/white,
 /area/maintenance/medbay_virology)
+"Hw" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced/polarized{
+	dir = 1;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	dir = 4;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	id = "FT Op"
+	},
+/turf/simulated/floor/plating,
+/area/security/forensics_laboratory)
 "HC" = (
 /obj/machinery/power/smes/buildable{
 	RCon_tag = "Substation - Construction Level"
@@ -9460,9 +9478,6 @@
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers,
 /turf/simulated/floor/plating,
 /area/maintenance/interstitial_cargo)
-"Ij" = (
-/turf/simulated/wall,
-/area/security/forensics_morgue)
 "Im" = (
 /obj/structure/disposalpipe/segment,
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
@@ -9546,6 +9561,22 @@
 	},
 /turf/simulated/floor/plating,
 /area/maintenance/medbay_interstitial)
+"IB" = (
+/obj/machinery/door/firedoor,
+/obj/structure/grille,
+/obj/structure/window/reinforced/polarized{
+	dir = 1;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	dir = 8;
+	id = "FT Op"
+	},
+/obj/structure/window/reinforced/polarized{
+	id = "FT Op"
+	},
+/turf/simulated/floor/plating,
+/area/security/forensics_laboratory)
 "IC" = (
 /obj/effect/floor_decal/industrial/warning/dust{
 	dir = 1
@@ -9819,10 +9850,6 @@
 	},
 /turf/simulated/floor/tiled,
 /area/maintenance/interstitial_main)
-"Jk" = (
-/obj/structure/trash_pile,
-/turf/simulated/floor/plating,
-/area/maintenance/interstitial_cargo)
 "Jm" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/supply,
 /obj/structure/cable{
@@ -9942,6 +9969,10 @@
 	},
 /turf/simulated/floor/tiled/white,
 /area/maintenance/medbay_virology)
+"JB" = (
+/obj/structure/trash_pile,
+/turf/simulated/floor/plating,
+/area/maintenance/interstitial_cargo)
 "JC" = (
 /turf/simulated/floor/tiled,
 /area/maintenance/bridge_elevator)
@@ -10043,9 +10074,6 @@
 	},
 /turf/simulated/floor/plating,
 /area/maintenance/medbay_interstitial)
-"JS" = (
-/turf/simulated/wall,
-/area/security/forensics_laboratory)
 "JU" = (
 /obj/effect/floor_decal/industrial/warning/dust/corner{
 	dir = 4
@@ -11950,18 +11978,6 @@
 	},
 /turf/simulated/floor/tiled/white,
 /area/security/forensics_office)
-"To" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced/polarized{
-	dir = 1;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	id = "FT Op"
-	},
-/turf/simulated/floor/plating,
-/area/security/forensics_laboratory)
 "Ts" = (
 /obj/machinery/light{
 	dir = 8;
@@ -12142,22 +12158,6 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/tiled,
 /area/maintenance/interstitial_cargo)
-"Ul" = (
-/obj/machinery/door/firedoor,
-/obj/structure/grille,
-/obj/structure/window/reinforced/polarized{
-	dir = 4;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	dir = 8;
-	id = "FT Op"
-	},
-/obj/structure/window/reinforced/polarized{
-	id = "FT Op"
-	},
-/turf/simulated/floor/plating,
-/area/security/forensics_laboratory)
 "Un" = (
 /obj/item/modular_computer/console/preset/security/investigations,
 /obj/effect/floor_decal/corner/paleblue/diagonal,
@@ -12574,9 +12574,6 @@
 	},
 /turf/simulated/floor/tiled/white,
 /area/medical/upperlevel)
-"WI" = (
-/turf/simulated/wall,
-/area/security/training_theoretical)
 "WJ" = (
 /obj/structure/disposalpipe/segment{
 	dir = 4
@@ -12974,6 +12971,9 @@
 /obj/effect/decal/cleanable/dirt,
 /turf/simulated/floor/airless,
 /area/maintenance/interstitial_construction_site)
+"Zt" = (
+/turf/simulated/wall,
+/area/security/forensics_morgue)
 "Zu" = (
 /obj/item/device/radio/intercom{
 	dir = 8;
@@ -44370,7 +44370,7 @@ aa
 aa
 aa
 KJ
-Jk
+JB
 Lv
 Ly
 KJ
@@ -45297,15 +45297,15 @@ dc
 dc
 dc
 dc
-WI
+rp
 fz
 fV
-WI
+rp
 gE
-WI
+rp
 fz
 fV
-WI
+rp
 aa
 aa
 aa
@@ -45554,7 +45554,7 @@ ew
 eI
 eU
 dM
-WI
+rp
 fA
 fW
 gp
@@ -45562,7 +45562,7 @@ gF
 gY
 hq
 hG
-WI
+rp
 aa
 aa
 aa
@@ -45811,7 +45811,7 @@ ex
 jB
 eV
 mk
-WI
+rp
 fB
 fX
 gq
@@ -45819,7 +45819,7 @@ gG
 gZ
 hr
 hH
-WI
+rp
 aa
 aa
 aa
@@ -46068,7 +46068,7 @@ ex
 eJ
 eW
 fh
-WI
+rp
 fC
 fY
 gq
@@ -46076,7 +46076,7 @@ gH
 ha
 hs
 hI
-WI
+rp
 aa
 aa
 aa
@@ -46325,7 +46325,7 @@ ey
 eK
 eX
 fi
-WI
+rp
 fD
 fZ
 gr
@@ -46333,7 +46333,7 @@ gG
 gZ
 ht
 ml
-WI
+rp
 aa
 aa
 aa
@@ -46582,7 +46582,7 @@ ez
 eL
 eY
 fj
-WI
+rp
 fA
 fZ
 gs
@@ -46590,7 +46590,7 @@ gI
 hb
 hu
 hK
-WI
+rp
 aa
 aa
 aa
@@ -46839,15 +46839,15 @@ eA
 jC
 jD
 eA
-WI
+rp
 fE
 ga
 ga
-BI
-WI
+Fe
+rp
 hv
 hL
-WI
+rp
 aa
 aa
 aa
@@ -47599,7 +47599,7 @@ aa
 aa
 dc
 dc
-Gf
+eE
 dB
 dL
 dU
@@ -47856,7 +47856,7 @@ aa
 aa
 aa
 aa
-Gf
+eE
 dC
 Ci
 dV
@@ -48113,7 +48113,7 @@ aa
 aa
 aa
 aa
-Gf
+eE
 dD
 dN
 dW
@@ -48370,11 +48370,11 @@ aa
 aa
 aa
 aa
-Gf
+eE
 dE
 dO
 dX
-sM
+mZ
 jz
 et
 eF
@@ -48627,7 +48627,7 @@ aa
 aa
 aa
 aa
-Gf
+eE
 dF
 dP
 dY
@@ -48884,7 +48884,7 @@ aa
 aa
 aa
 aa
-Gf
+eE
 dG
 dG
 dZ
@@ -49141,12 +49141,12 @@ aa
 aa
 aa
 aa
-Gf
-Gf
-Gf
-Gf
-Gf
-Gf
+eE
+eE
+eE
+eE
+eE
+eE
 et
 eC
 eO
@@ -50185,10 +50185,10 @@ fO
 TH
 gy
 gR
-Ij
-Ij
-Ij
-Ij
+Zt
+Zt
+Zt
+Zt
 ab
 ab
 ab
@@ -50442,13 +50442,13 @@ UP
 gl
 gz
 gS
-Ij
-Ij
-Ij
-Ij
-Ij
-Ij
-Ij
+Zt
+Zt
+Zt
+Zt
+Zt
+Zt
+Zt
 ab
 ab
 ab
@@ -50705,7 +50705,7 @@ hV
 if
 im
 wo
-Ij
+Zt
 ab
 ab
 ab
@@ -50956,14 +50956,14 @@ fR
 Tn
 gB
 gU
-Ij
-Ij
+Zt
+Zt
 Yk
 hX
 vS
 qf
-Ij
-Ij
+Zt
+Zt
 ab
 aa
 aa
@@ -51208,19 +51208,19 @@ ab
 fw
 fN
 gj
-JS
+qS
 hp
 Ai
 EC
 gV
-JS
-Ij
+qS
+Zt
 uo
 Rz
 Rz
 Ls
 zU
-Ij
+Zt
 ab
 aa
 aa
@@ -51465,19 +51465,19 @@ ab
 ab
 ab
 ab
-rN
+IB
 fT
 gm
 hW
 gW
-JS
+qS
 hF
 hX
 mn
 vZ
 Fo
 sN
-Ij
+Zt
 ab
 ab
 aa
@@ -51722,19 +51722,19 @@ aa
 ab
 ab
 ab
-To
+pV
 fU
-He
+pj
 gD
 gX
-JS
+qS
 hF
 hX
 hX
 hX
 hX
 xT
-Ij
+Zt
 ab
 aa
 aa
@@ -51752,7 +51752,7 @@ aa
 ab
 ab
 ab
-rb
+ff
 jA
 kB
 kP
@@ -51979,19 +51979,19 @@ aa
 ab
 ab
 ab
-To
+pV
 NS
 Qk
 KA
 RS
-JS
-Ij
+qS
+Zt
 QH
 PG
 Uv
 PF
-Ij
-Ij
+Zt
+Zt
 mo
 mo
 aa
@@ -52236,18 +52236,18 @@ aa
 ab
 ab
 ab
-rx
+Hw
 wt
 YM
 OM
 NL
-JS
-Ij
-Ij
-Ij
-Ij
-Ij
-Ij
+qS
+Zt
+Zt
+Zt
+Zt
+Zt
+Zt
 mo
 mo
 mo
@@ -52493,12 +52493,12 @@ aa
 ab
 ab
 ab
-JS
-yn
+qS
+wq
 go
 go
-Ul
-JS
+Aw
+qS
 mo
 mo
 mo

@@ -1998,6 +1998,10 @@
 /obj/structure/window/reinforced,
 /turf/simulated/floor/plating,
 /area/hallway/secondary/entry/dock)
+"dN" = (
+/obj/effect/shuttle_landmark/research/yellow,
+/turf/unsimulated/chasm_mask,
+/area/mine/explored)
 "dO" = (
 /obj/structure/bed/chair,
 /obj/structure/window/reinforced{
@@ -6529,10 +6533,6 @@
 /obj/effect/floor_decal/industrial/hatch/yellow,
 /turf/simulated/floor/tiled,
 /area/hallway/secondary/entry/fore)
-"mb" = (
-/obj/structure/trash_pile,
-/turf/simulated/floor/plating,
-/area/maintenance/telecoms_ladder)
 "mc" = (
 /obj/structure/closet/cabinet{
 	layer = 2.9
@@ -12828,6 +12828,10 @@
 	},
 /turf/simulated/floor/wood,
 /area/store)
+"yt" = (
+/obj/structure/trash_pile,
+/turf/simulated/floor/plating,
+/area/turret_protected/tcomsat)
 "yu" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 4
@@ -21272,10 +21276,6 @@
 /obj/structure/disposalpipe/segment,
 /turf/simulated/floor/tiled,
 /area/hallway/secondary/entry/aft)
-"NP" = (
-/obj/structure/trash_pile,
-/turf/simulated/floor/plating,
-/area/turret_protected/tcomsat)
 "NQ" = (
 /obj/random/junk,
 /turf/simulated/floor/plating,
@@ -22812,6 +22812,10 @@
 	},
 /turf/simulated/floor/tiled,
 /area/hallway/secondary/entry/port)
+"QZ" = (
+/obj/structure/trash_pile,
+/turf/simulated/floor/plating,
+/area/maintenance/telecoms_ladder)
 "Ra" = (
 /turf/simulated/wall/shuttle/unique/research{
 	desc = "The largest commercially available sublight engine, with a shuttle built around it and painted in NanoTrasen research division colors. Looks sleek, and fast.";
@@ -26229,10 +26233,6 @@
 /obj/machinery/cell_charger,
 /turf/simulated/floor/tiled,
 /area/storage/tools)
-"XG" = (
-/obj/effect/shuttle_landmark/research/yellow,
-/turf/unsimulated/chasm_mask,
-/area/mine/explored)
 "XH" = (
 /obj/structure/cable/green{
 	d1 = 1;
@@ -36913,7 +36913,7 @@ aP
 aa
 bg
 bg
-NP
+yt
 bW
 cr
 cI
@@ -41053,7 +41053,7 @@ bg
 Of
 Mp
 cl
-mb
+QZ
 Nc
 ag
 ag
@@ -47646,7 +47646,7 @@ aa
 aa
 aa
 aa
-XG
+dN
 aa
 aa
 aa

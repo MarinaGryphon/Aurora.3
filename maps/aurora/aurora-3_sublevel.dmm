@@ -30283,10 +30283,6 @@
 	},
 /turf/simulated/floor/tiled/white,
 /area/medical/medbay4)
-"kCx" = (
-/obj/structure/trash_pile,
-/turf/simulated/floor/plating,
-/area/maintenance/research_xenobiology)
 "kGt" = (
 /obj/machinery/light/small/emergency{
 	dir = 4
@@ -30492,6 +30488,10 @@
 /obj/effect/decal/cleanable/mucus,
 /turf/simulated/floor/tiled/white,
 /area/maintenance/medsublevel_port)
+"lgq" = (
+/obj/machinery/slime_extractor,
+/turf/simulated/floor/tiled/white,
+/area/rnd/xenobiology)
 "lht" = (
 /obj/structure/grille,
 /obj/structure/window/phoronreinforced{
@@ -33815,10 +33815,6 @@
 	},
 /turf/simulated/floor/plating,
 /area/engineering/storage_tesla)
-"saQ" = (
-/obj/machinery/slime_extractor,
-/turf/simulated/floor/tiled/white,
-/area/rnd/xenobiology)
 "sbs" = (
 /turf/simulated/floor/tiled/white,
 /area/medical/patient_wing_library)
@@ -34941,6 +34937,10 @@
 	},
 /turf/simulated/floor/tiled,
 /area/outpost/engineering/hallway)
+"uMk" = (
+/obj/structure/trash_pile,
+/turf/simulated/floor/tiled,
+/area/maintenance/disposal)
 "uMH" = (
 /obj/effect/floor_decal/corner/green{
 	dir = 1
@@ -35001,6 +35001,10 @@
 /obj/machinery/power/tesla_coil,
 /turf/simulated/floor/plating,
 /area/outpost/engineering/power)
+"uRE" = (
+/obj/structure/trash_pile,
+/turf/simulated/floor/plating,
+/area/maintenance/research_xenobiology)
 "uRU" = (
 /obj/structure/table/standard,
 /obj/structure/window/reinforced,
@@ -35493,10 +35497,6 @@
 	},
 /turf/simulated/floor/tiled/white,
 /area/rnd/xenobiology/xenoflora_hazard)
-"vPY" = (
-/obj/structure/trash_pile,
-/turf/simulated/floor/tiled,
-/area/maintenance/disposal)
 "vQH" = (
 /obj/machinery/atmospherics/unary/vent_pump/on{
 	dir = 4
@@ -61953,7 +61953,7 @@ aFV
 aFV
 aFV
 aFV
-kCx
+uRE
 awa
 aFW
 aba
@@ -63218,7 +63218,7 @@ aEQ
 wbr
 aGK
 aHO
-saQ
+lgq
 aJU
 aKQ
 aKQ
@@ -65789,7 +65789,7 @@ aFW
 aGS
 aHX
 aHX
-kCx
+uRE
 aKY
 aMb
 aMb
@@ -66084,7 +66084,7 @@ aaa
 aaa
 aaa
 aZV
-vPY
+uMk
 aZW
 aZW
 bcb
