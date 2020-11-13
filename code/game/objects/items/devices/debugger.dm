@@ -10,7 +10,5 @@
 	throwforce = 5
 	throw_range = 15
 	throw_speed = 3
-
 	matter = list(DEFAULT_WALL_MATERIAL = 50, MATERIAL_GLASS = 20)
-
 	origin_tech = "{'magnets':1,'engineering':1}"

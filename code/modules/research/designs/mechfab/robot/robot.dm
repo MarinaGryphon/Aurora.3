@@ -1,6 +1,6 @@
 /datum/design/item/mechfab
 	build_type = MECHFAB
-	req_tech = "{}"
+	req_tech = "{'}"
 
 /datum/design/item/mechfab/robot
 	category = "Robot"

@@ -223,7 +223,7 @@
 	name = "subspace ansible"
 	icon_state = "subspace_ansible"
 	desc = "A compact module capable of sensing extradimensional activity."
-	origin_tech = "{'programming':3,'magnets':5 ,'materials':4,'bluespace':2}"
+	origin_tech = "{'programming':3,'magnets':5,'materials':4,'bluespace':2}"
 	matter = list(DEFAULT_WALL_MATERIAL = 30, MATERIAL_GLASS = 10)
 
 /obj/item/stock_parts/subspace/filter

@@ -85,7 +85,7 @@
 /datum/design/item/medical/inhaler_combat
 	name = "Combat Inhaler"
 	desc = "An improved inhaler design that injects the entirety of the chemicals in the loaded cartridge in a single button press."
-	req_tech = "{'biotech':4,'materials':4,'engineering':4 }"
+	req_tech = "{'biotech':4,'materials':4,'engineering':4}"
 	materials = list(DEFAULT_WALL_MATERIAL = 6000, MATERIAL_GLASS = 3000, MATERIAL_SILVER = 1500)
 	build_path = /obj/item/personal_inhaler/combat
 
@@ -116,7 +116,7 @@
 /datum/design/item/beaker/noreact
 	desc = "A cryostasis beaker that allows for chemical storage without reactions. Can hold up to 50 units."
 	req_tech = "{'materials':2}"
-	materials = list(DEFAULT_WALL_MATERIAL = 3000)
+	materials = list(DEFAULT_WALL_MATERIAL = 2000, MATERIAL_GLASS = 1000)
 	build_path = /obj/item/reagent_containers/glass/beaker/noreact
 
 /datum/design/item/beaker/bluespace
