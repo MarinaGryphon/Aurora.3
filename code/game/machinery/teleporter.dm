@@ -2,7 +2,7 @@
 	name = "Teleporter Control Console"
 	desc = "Used to control a linked teleportation Hub and Station."
 	icon_screen = "teleport"
-	circuit = /obj/item/weapon/circuitboard/teleporter
+	circuit = /obj/item/circuitboard/teleporter
 	dir = 4
 	var/obj/item/locked = null
 	var/id = null
@@ -32,8 +32,8 @@
 		hub.set_dir(dir)
 
 /obj/machinery/computer/teleporter/attackby(I as obj, mob/living/user as mob)
-	if(istype(I, /obj/item/weapon/card/data/))
-		var/obj/item/weapon/card/data/C = I
+	if(istype(I, /obj/item/card/data/))
+		var/obj/item/card/data/C = I
 		if(stat & (NOPOWER|BROKEN) & (C.function != "teleporter"))
 			src.attack_hand()
 
@@ -77,7 +77,9 @@
 
 	return
 
-/obj/machinery/teleport/station/attack_ai()
+/obj/machinery/teleport/station/attack_ai(mob/user)
+	if(!ai_can_interact(user))
+		return
 	src.attack_hand()
 
 /obj/machinery/computer/teleporter/attack_hand(user as mob)
@@ -93,7 +95,7 @@
 		var/turf/T = get_turf(R)
 		if (!T)
 			continue
-		if(!(T.z in current_map.player_levels))
+		if(isNotStationLevel(T.z))
 			continue
 		var/tmpname = T.loc.name
 		if(areaindex[tmpname])
@@ -102,7 +104,7 @@
 			areaindex[tmpname] = 1
 		L[tmpname] = R
 
-	for (var/obj/item/weapon/implant/tracking/I in implants)
+	for (var/obj/item/implant/tracking/I in implants)
 		if (!I.implanted || !ismob(I.loc))
 			continue
 		else
@@ -232,10 +234,7 @@
 	..()
 	set_overlays("controller-wires")
 
-/obj/machinery/teleport/station/attackby(var/obj/item/weapon/W)
-	src.attack_hand()
-
-/obj/machinery/teleport/station/attack_ai()
+/obj/machinery/teleport/station/attackby(var/obj/item/W)
 	src.attack_hand()
 
 /obj/machinery/teleport/station/attack_hand()

@@ -189,7 +189,9 @@
 		if("Cn9")	soundfile = 'sound/violin/Cn9.mid'
 		else		return
 
-	hearers(15, get_turf(src)) << sound(soundfile)
+	var/turf/source = get_turf(src)
+	for(var/mob/M in hearers(15, source))
+		M.playsound_simple(source, file(soundfile), 100, falloff = 5, required_asfx_toggles = ASFX_INSTRUMENT)
 
 /obj/item/device/violin/proc/playsong()
 	do
@@ -206,12 +208,12 @@
 					if(!playing || !isliving(loc))//If the violin is playing, or isn't held by a person
 						playing = 0
 						return
-					if(lentext(note) == 0)
+					if(length(note) == 0)
 						continue
 					var/cur_note = text2ascii(note) - 96
 					if(cur_note < 1 || cur_note > 7)
 						continue
-					for(var/i=2 to lentext(note))
+					for(var/i=2 to length(note))
 						var/ni = copytext(note,i,i+1)
 						if(!text2num(ni))
 							if(ni == "#" || ni == "b" || ni == "n")
@@ -317,7 +319,7 @@
 				return
 			if(song.lines.len > 50)
 				return
-			if(lentext(newline) > 50)
+			if(length(newline) > 50)
 				newline = copytext(newline, 1, 50)
 			song.lines.Add(newline)
 
@@ -332,7 +334,7 @@
 			var/content = html_encode(input("Enter your line: ", "violin", song.lines[num]) as text|null)
 			if(!content)
 				return
-			if(lentext(content) > 50)
+			if(length(content) > 50)
 				content = copytext(content, 1, 50)
 			if(num > song.lines.len || num < 1)
 				return
@@ -354,11 +356,11 @@
 				if(!in_range(src, usr))
 					return
 
-				if(lentext(t) >= 3072)
+				if(length(t) >= 3072)
 					var/cont = input(usr, "Your message is too long! Would you like to continue editing it?", "", "yes") in list("yes", "no")
 					if(cont == "no")
 						break
-			while(lentext(t) > 3072)
+			while(length(t) > 3072)
 
 			//split into lines
 			spawn()
@@ -372,7 +374,7 @@
 					lines.Cut(51)
 				var/linenum = 1
 				for(var/l in lines)
-					if(lentext(l) > 50)
+					if(length(l) > 50)
 						to_chat(usr, "Line [linenum] too long!")
 						lines.Remove(l)
 					else
@@ -391,5 +393,5 @@
 	..()
 	user.visible_message("<span class='danger'>\The [user] shatters \the [src] into pieces!</span>")
 	playsound(loc, 'sound/effects/kabong.ogg', 50, 1)
-	new /obj/item/weapon/material/shard/wood(get_turf(user))
+	new /obj/item/material/shard/wood(get_turf(user))
 	qdel(src)

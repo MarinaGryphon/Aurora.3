@@ -140,14 +140,14 @@
 		arrest_type = 0
 
 	if(isnull(target))
-		custom_emote(2, "[emote_hear], \"Error, unit is unable to find target in view range!\"")
+		custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Error, unit is unable to find target in view range!\"")
 		return 0
 	else
 		if(ishuman(target))
 			idcheck = TRUE
 			var/mob/living/carbon/human/H = target
 			var/perpname = H.name
-			var/obj/item/weapon/card/id/id = H.GetIdCard()
+			var/obj/item/card/id/id = H.GetIdCard()
 			if(id)
 				perpname = id.registered_name
 
@@ -155,10 +155,10 @@
 			if(R && R.security)
 				R.security.criminal = "*Arrest*"
 			else
-				custom_emote(2, "[emote_hear], \"Warning, [target] does not have Security records! Enabling security records check mode!\"")
+				custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Warning, [target] does not have Security records! Enabling security records check mode!\"")
 				check_records = TRUE
 			mode = SECBOT_HUNT
-			custom_emote(2, "[emote_hear], \"[arrest_type ? ("Detaining") : ("Arresting")] [target]\"")
+			custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"[arrest_type ? ("Detaining") : ("Arresting")] [target]\"")
 
 /mob/living/bot/secbot/ed209/proc/stay_command(var/mob/speaker,var/text)
 	walk_to(src, src, 0, move_to_delay)
@@ -166,7 +166,7 @@
 	auto_patrol = 0
 	target = null
 	check_records = FALSE
-	custom_emote(2, "[emote_hear], \"Roger that, going into idle mode. Auto patrol disabled.\"")
+	custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Roger that, going into idle mode. Auto patrol disabled.\"")
 	return 1
 
 /mob/living/bot/secbot/ed209/proc/stop_command(var/mob/speaker,var/text)
@@ -174,7 +174,7 @@
 		return
 	walk_to(src, src, 0, move_to_delay)
 	check_records = FALSE
-	custom_emote(2, "[emote_hear], \"Roger that, unit going offline.\"")
+	custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Roger that, unit going offline.\"")
 	turn_off()
 	return 1
 
@@ -183,7 +183,7 @@
 	mode = SECBOT_IDLE
 	auto_patrol = 1
 	target = null
-	custom_emote(2, "[emote_hear], \"Roger that, starting patrol now.\"")
+	custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Roger that, starting patrol now.\"")
 	return 1
 
 /mob/living/bot/secbot/ed209/proc/follow_command(var/mob/speaker,var/text)
@@ -191,7 +191,7 @@
 	if(findtext(text,"me"))
 		mode = SECBOT_FOLLOW
 		target = speaker
-		custom_emote(2, "[emote_hear], \"Roger that, following you\"")
+		custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Roger that, following you\"")
 		return 1
 
 	target = get_target_by_name(text)
@@ -202,7 +202,7 @@
 		return 0
 
 	mode = SECBOT_FOLLOW
-	custom_emote(2, "[emote_hear], \"Roger that, following [target]\"")
+	custom_emote(AUDIBLE_MESSAGE, "[emote_hear], \"Roger that, following [target]\"")
 
 	return 1
 
@@ -217,7 +217,7 @@
 	if(ishuman(usr))
 		var/mob/living/carbon/human/H = usr
 		var/perpname = H.name
-		var/obj/item/weapon/card/id/id = H.GetIdCard()
+		var/obj/item/card/id/id = H.GetIdCard()
 		if(id)
 			perpname = id.registered_name
 
@@ -236,7 +236,7 @@
 		short_name = short_input
 		return 1
 
-/mob/living/bot/secbot/ed209/update_icons()
+/mob/living/bot/secbot/ed209/update_icon()
 	if(on && is_attacking)
 		icon_state = "ed209-c"
 	else
@@ -246,9 +246,9 @@
 	visible_message("<span class='danger'>[src] blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 
-	new /obj/item/weapon/secbot_assembly/ed209_assembly(Tsec)
+	new /obj/item/secbot_assembly/ed209_assembly(Tsec)
 
-	var/obj/item/weapon/gun/energy/taser/G = new /obj/item/weapon/gun/energy/taser(Tsec)
+	var/obj/item/gun/energy/taser/G = new /obj/item/gun/energy/taser(Tsec)
 	G.power_supply.charge = 0
 	if(prob(50))
 		new /obj/item/robot_parts/l_leg(Tsec)
@@ -278,13 +278,13 @@
 	if(emagged)
 		projectile = /obj/item/projectile/beam
 
-	playsound(loc, emagged ? 'sound/weapons/Laser.ogg' : 'sound/weapons/Taser.ogg', 50, 1)
+	playsound(loc, emagged ? 'sound/weapons/laser1.ogg' : 'sound/weapons/Taser.ogg', 50, 1)
 	var/obj/item/projectile/P = new projectile(loc)
 	var/def_zone = get_exposed_defense_zone(A)
 	P.launch_projectile(A, def_zone)
 // Assembly
 
-/obj/item/weapon/secbot_assembly/ed209_assembly
+/obj/item/secbot_assembly/ed209_assembly
 	name = "ED-209 assembly"
 	desc = "Some sort of bizarre assembly."
 	icon = 'icons/obj/aibots.dmi'
@@ -293,7 +293,7 @@
 	created_name = "ED-209 Security Robot"
 	var/lasercolor = ""
 
-/obj/item/weapon/secbot_assembly/ed209_assembly/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+/obj/item/secbot_assembly/ed209_assembly/attackby(var/obj/item/W as obj, var/mob/user as mob)
 	..()
 
 	if(W.ispen())
@@ -334,7 +334,7 @@
 
 		if(3)
 			if(W.iswelder())
-				var/obj/item/weapon/weldingtool/WT = W
+				var/obj/item/weldingtool/WT = W
 				if(WT.remove_fuel(0, user))
 					build_step++
 					name = "shielded frame assembly"
@@ -377,7 +377,7 @@
 				return
 
 		if(7)
-			if(istype(W, /obj/item/weapon/gun/energy/taser))
+			if(istype(W, /obj/item/gun/energy/taser))
 				name = "taser ED-209 assembly"
 				build_step++
 				to_chat(user, "<span class='notice'>You add [W] to [src].</span>")
@@ -399,7 +399,7 @@
 					to_chat(user, "<span class='notice'>Taser gun attached.</span>")
 
 		if(9)
-			if(istype(W, /obj/item/weapon/cell))
+			if(istype(W, /obj/item/cell))
 				build_step++
 				to_chat(user, "<span class='notice'>You complete the ED-209.</span>")
 				var/turf/T = get_turf(src)

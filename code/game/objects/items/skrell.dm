@@ -3,9 +3,10 @@
 	desc = "An antique and delicate looking instrument used to study the stars."
 	icon = 'icons/obj/skrell_items.dmi'
 	icon_state = "starscope"
-	w_class = 1
-	matter = list("glass" = 200)
+	w_class = ITEMSIZE_TINY
+	matter = list(MATERIAL_GLASS = 200)
 	drop_sound = 'sound/items/drop/glass.ogg'
+	pickup_sound = 'sound/items/pickup/glass.ogg'
 	var/list/constellations = list("Island", "Hatching Egg", "Star Chanter", "Jiu'x'klua", "Stormcloud", "Gnarled Tree", "Poet", "Bloated Toad", "Qu'Poxiii", "Fisher")
 	var/selected_constellation
 	var/projection_ready = TRUE
@@ -26,7 +27,7 @@
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
 		if(isskrell(H))
-			H.visible_message("<span class='notice'>\The [H] holds the brassy instrument up to \his eye and peers at something unseen.</span>",
+			H.visible_message("<span class='notice'>\The [H] holds the brassy instrument up to [H.get_pronoun("his")] eye and peers at something unseen.</span>",
 							"<span class='notice'>You see the starry edge of srom floating on the void of space.</span>")
 			if(projection_ready)
 				new/obj/effect/temp_visual/constellation (get_turf(user))
@@ -49,10 +50,17 @@
 	icon_state = "starprojection"
 	mouse_opacity = TRUE
 	duration = 30 SECONDS
-	layer = LIGHTING_LAYER + 0.1
+	layer = EFFECTS_ABOVE_LIGHTING_LAYER
 	light_power = 1
 	light_range = 1
 	light_color = LIGHT_COLOR_HALOGEN
+	var/global/image/glow_state
+
+/obj/effect/temp_visual/constellation/Initialize()
+	. = ..()
+	if(!glow_state)
+		glow_state = make_screen_overlay(icon, icon_state)
+	add_overlay(glow_state)
 
 /obj/effect/temp_visual/constellation/attackby(obj/item/W as obj, mob/user as mob)
 	visible_message("<span class='notice'>\The [src] vanishes!</span>")
@@ -75,9 +83,10 @@
 	desc = "A projector meant to help Federation Skrell feel like theyre carrying home with them wherever they go. It looks very complex."
 	icon = 'icons/obj/skrell_items.dmi'
 	icon_state = "projector"
-	w_class = 1
-	matter = list("glass" = 200)
+	w_class = ITEMSIZE_TINY
+	matter = list(MATERIAL_GLASS = 200)
 	drop_sound = 'sound/items/drop/glass.ogg'
+	pickup_sound = 'sound/items/pickup/glass.ogg'
 	var/list/worlds_selection = list("Xrim", "Kal'lo", "Nralakk")
 	var/selected_world
 	var/working = FALSE
@@ -153,3 +162,55 @@
 
 		if(hologram_message)
 			visible_message("<span class='notice'>[hologram_message]</span>")
+
+/obj/item/jargontag
+	name = "\improper Jargon Federation loyalty ear-tag"
+	desc = "An ear-tag that shows the wearer is loyal to the Jargon Federation. A small cable travels into the ear canal..."
+	w_class = ITEMSIZE_SMALL
+	slot_flags = SLOT_EARS
+	icon = 'icons/obj/skrell_items.dmi'
+	icon_state = "jargtag"
+	item_state = "jargtag"
+	contained_sprite = TRUE
+	var/fried = FALSE // Doesn't work anymore
+
+/obj/item/jargontag/equipped(mob/living/carbon/human/M)
+	..()
+	if(fried)
+		return
+	if(ishuman(M))
+		var/mob/living/carbon/human/H = M
+		if(H.l_ear == src || H.r_ear == src)
+			clamp_on(H)
+
+// Could add some stuff to this in the future? I dunno. I just couldn't figure out how to callback to_chat LOL - geeves
+/obj/item/jargontag/proc/do_loyalty(var/mob/wearer)
+	to_chat(wearer, SPAN_GOOD("You feel an intense feeling of loyalty towards the Jargon Federation surge through your brain."))
+
+/obj/item/jargontag/proc/clamp_on(var/mob/wearer)
+	if(fried)
+		return
+	canremove = FALSE
+	icon_state = "[initial(icon_state)]_active"
+	to_chat(wearer, SPAN_WARNING("\The [src] clamps down around your ear, releasing a burst of static before going silent. Something probes at your ear canal..."))
+	addtimer(CALLBACK(src, .proc/do_loyalty, wearer), 15)
+
+/obj/item/jargontag/proc/unclamp()
+	if(fried)
+		return
+	if(!canremove)
+		icon_state = initial(icon_state)
+		visible_message(SPAN_WARNING("\The [src] fizzles loudly, then clicks open!"))
+		canremove = TRUE
+		fried = TRUE
+
+/obj/item/jargontag/emp_act(severity)
+	unclamp()
+
+/obj/item/jargontag/emag_act(var/remaining_charges, var/mob/user)
+	if(anchored && !canremove)
+		unclamp()
+		return TRUE
+	else
+		to_chat(user, SPAN_NOTICE("\The [src] isn't locked down, your e-mag has no effect!"))
+		return FALSE

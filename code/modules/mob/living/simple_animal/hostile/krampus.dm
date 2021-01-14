@@ -15,6 +15,7 @@
 
 	tameable = FALSE
 
+	organ_names = list("chest", "lower body", "left arm", "right arm", "left leg", "right leg", "head")
 	response_help  = "pets"
 	response_disarm = "shoves"
 	response_harm   = "harmlessly punches"
@@ -23,6 +24,7 @@
 	harm_intent_damage = 0
 	melee_damage_lower = 30
 	melee_damage_upper = 30
+	resist_mod = 15
 	mob_size = 25
 	environment_smash = 2
 	attacktext = "punished"
@@ -109,7 +111,7 @@
 	for(var/i in 1 to 5)
 		var/mob/living/simple_animal/hostile/gift/T = new /mob/living/simple_animal/hostile/gift(get_turf(src))
 		var/turf/landing = get_step(src, pick(alldirs))
-		addtimer(CALLBACK(T, /atom/movable/.proc/throw_at, landing, 30, 5), 0)
+		INVOKE_ASYNC(T, /atom/movable/.proc/throw_at, landing, 30, 5)
 
 /mob/living/simple_animal/hostile/krampus/proc/send_to_hell(mob/living/M)
 	if(!M)
@@ -189,12 +191,12 @@
 	switch(size)
 
 		if("medium")
-			new /obj/item/weapon/xmasgift/medium(get_turf(src))
+			new /obj/item/xmasgift/medium(get_turf(src))
 
 		if("big")
-			new /obj/item/weapon/xmasgift/large(get_turf(src))
+			new /obj/item/xmasgift/large(get_turf(src))
 
 		else
-			new /obj/item/weapon/xmasgift/small(get_turf(src))
+			new /obj/item/xmasgift(get_turf(src))
 
 	qdel(src)

@@ -6,7 +6,6 @@
 
 <script>
 export default {
-  name: 'vui-progress',
   props: {
     value: {
       type: Number,
@@ -23,7 +22,7 @@ export default {
   },
   computed: {
     percentage() {
-      return (this.value - this.min) / (this.max - this.min) * 100
+      return (Math.min(this.max, Math.max(this.value, this.min)) - this.min) / (this.max - this.min) * 100;
     }
   }
 }
@@ -34,6 +33,7 @@ export default {
     line-height: 1em;
     white-space: nowrap;
     overflow: visible;
+    text-align: center;
     span {
       vertical-align: middle;
       margin-left: 2px;

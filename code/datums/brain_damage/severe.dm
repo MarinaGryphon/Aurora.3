@@ -1,6 +1,5 @@
 //Severe traumas, when your brain gets abused way too much.
 //These range from very annoying to completely debilitating.
-//They can be suppressed with paroxetine, and require brain surgery to solve.
 
 /datum/brain_trauma/severe
 
@@ -80,7 +79,7 @@
 	if(owner.stat == UNCONSCIOUS || owner.sleeping > 0)
 		return
 	var/sleep_chance = 5
-	if(owner.m_intent == "run")
+	if(owner.m_intent == M_RUN)
 		sleep_chance += 15
 	if(owner.drowsyness)
 		sleep_chance += owner.drowsyness + 5
@@ -139,7 +138,7 @@
 				to_chat(owner, "<span class='warning'>You feel sick...</span>")
 			else
 				to_chat(owner, "<span class='warning'>You feel really sick at the thought of being alone!</span>")
-			addtimer(CALLBACK(owner, /mob/living/carbon.proc/vomit, high_stress), 50) //blood vomit if high stress
+			addtimer(CALLBACK(owner, /mob/living/carbon/human.proc/vomit, high_stress), 50) //blood vomit if high stress
 		if(2)
 			if(!high_stress)
 				to_chat(owner, "<span class='warning'>You can't stop shaking...</span>")
@@ -167,7 +166,7 @@
 			else
 				if(prob(15) && ishuman(owner))
 					var/mob/living/carbon/human/H = owner
-					var/obj/item/organ/heart/heart = H.internal_organs_by_name["heart"]
+					var/obj/item/organ/internal/heart/heart = H.internal_organs_by_name[BP_HEART]
 					heart.take_damage(heart.min_bruised_damage)
 					to_chat(H, "<span class='danger'>You feel a stabbing pain in your heart!</span>")
 				else

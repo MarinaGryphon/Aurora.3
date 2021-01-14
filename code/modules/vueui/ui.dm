@@ -29,6 +29,8 @@ main ui datum.
 	var/windowid
 	// determines if ui state should be constantly be cheacked for updates
 	var/auto_update_content = FALSE
+	// list for storing ui sensitive data. this meant for object data tracking
+	var/list/metadata
 
 /**
   * Creates a new ui
@@ -44,11 +46,11 @@ main ui datum.
   *
   * @return nothing
   */
-/datum/vueui/New(var/nuser, var/nobject, var/nactiveui = 0, var/nwidth = 0, var/nheight = 0, var/ntitle, var/list/ndata, var/datum/topic_state/nstate = default_state)
+/datum/vueui/New(var/nuser, var/nobject, var/nactiveui = 0, var/nwidth = 0, var/nheight = 0, var/ntitle, var/list/ndata, var/datum/topic_state/state = default_state)
 	user = nuser
 	object = nobject
 	data = ndata
-	state = nstate
+	src.state = state
 	LAZYINITLIST(assets)
 
 	if (nactiveui)
@@ -60,7 +62,6 @@ main ui datum.
 	if (ntitle)
 		title = ntitle
 
-	SSvueui.ui_opened(src)
 	windowid = "vueui\ref[src]"
 	name = "Vueui [object]/[user]"
 
@@ -69,23 +70,27 @@ main ui datum.
   *
   * @return nothing
   */
-/datum/vueui/proc/open()
+/datum/vueui/proc/open(var/datum/asset/spritesheet/load_asset)
 	if(QDELETED(object))
 		return
+
 	if(!user.client)
 		return
 
 	if(!data)
 		data = object.vueui_data_change(null, user, src)
+
 	update_status()
 	if(!status || status == STATUS_CLOSE)
 		return
 
-	var/params = "window=[windowid];file=[windowid];"
+	SSvueui.ui_opened(src) // this starts processing and adds the UI to the mob and whatnot
+
+	var/params = "window=[windowid];file=[windowid];titlebar=0;can_resize=0;"
 	if(width && height)
 		params += "size=[width]x[height];"
-	send_resources_and_assets(user.client)
-	user << browse(generate_html(), params)
+	send_resources_and_assets(user.client, load_asset)
+	user << browse(generate_html(load_asset?.css_tag()), params)
 	winset(user, "mapwindow.map", "focus=true")
 	addtimer(CALLBACK(src, /datum/vueui/proc/setclose), 1)
 
@@ -98,7 +103,8 @@ main ui datum.
   * @return nothing
   */
 /datum/vueui/proc/close()
-	SSvueui.ui_closed(src)
+	object.vueui_on_close(src)
+	SSvueui.ui_closed(src) // this stops processing and cleans up references to this UI
 	user << browse(null, "window=[windowid]")
 	status = null
 
@@ -120,28 +126,27 @@ main ui datum.
   *
   * @return html code - text
   */
-/datum/vueui/proc/generate_html()
-#ifdef UIDEBUG
-	var/debugtxt = "<div id=\"dapp\"></div>"
-#else
-	var/debugtxt = ""
-#endif
+/datum/vueui/proc/generate_html(var/css_tag)
 	return {"
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
-		<meta charset="UTF-8">
-		<link rel="stylesheet" type="text/css" href="vueui.css">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+		<meta charset="UTF-8"/>
+		<meta id="vueui:windowId" content="[windowid]"/>
+		<link rel="stylesheet" type="text/css" href="vueui.css"/>
+		[css_tag]
 	</head>
 	<body class="[get_theme_class()]">
 		<div id="header">
 			<header-[header]></header-[header]>
+			<header-handles></header-handles>
 		</div>
 		<div id="app">
 			Javascript file has failed to load. <a href="?src=\ref[src]&vueuiforceresource=1">Click here to force load resources</a>
 		</div>
-		[debugtxt]
+		<div id="dapp">
+		</div>
 		<noscript>
 			<div id='uiNoScript'>
 				<h2>JAVASCRIPT REQUIRED</h2>
@@ -152,6 +157,9 @@ main ui datum.
 	</body>
 	<script type="application/json" id="initialstate">
 		[generate_data_json()]
+	</script>
+	<script type="text/javascript">
+		window.__windowId__ = document.getElementById('vueui:windowId').getAttribute('content');
 	</script>
 	<script type="text/javascript" src="vueui.js"></script>
 </html>
@@ -171,6 +179,8 @@ main ui datum.
 	sdata["status"] = status
 	sdata["title"] = title
 	sdata["wtime"] = world.time
+	sdata["debug"] = user && check_rights(R_DEV, FALSE, user=user)
+	sdata["roundstart_hour"] = roundstart_hour
 	for(var/asset_name in assets)
 		var/asset = assets[asset_name]
 		sdata["assets"][asset_name] = list("ref" = ckey("\ref[asset["img"]]"))
@@ -183,13 +193,15 @@ main ui datum.
   *
   * @return nothing
   */
-/datum/vueui/proc/send_resources_and_assets(var/client/cl)
+/datum/vueui/proc/send_resources_and_assets(var/client/cl, var/datum/asset/load_asset)
 	send_theme_resources(cl)
+	if(istype(load_asset))
+		load_asset.send(cl)
 	for(var/asset_name in assets)
 		var/asset = assets[asset_name]
-		if (!QDELETED(asset["img"]))
-			cl << browse_rsc(asset["img"], "vueuiimg_" + ckey("\ref[asset["img"]]") + ".png")
-
+		var/image/I = asset["img"]
+		if (!QDELETED(I))
+			cl << browse_rsc(I, "vueuiimg_" + ckey("\ref[asset["img"]]") + ".png")
 /**
   * Sends requested asset to ui's client
   *
@@ -201,9 +213,9 @@ main ui datum.
 	if (QDELETED(user) || !user.client)
 		return
 	var/asset = assets[ckey(name)]
-	if (asset && !QDELETED(asset["img"]))
-		user.client << browse_rsc(asset["img"], "vueuiimg_" + ckey("\ref[asset["img"]]") + ".png")
-
+	var/image/I = asset["img"]
+	if (asset && !QDELETED(I))
+		user.client << browse_rsc(I, "vueuiimg_" + ckey("\ref[asset["img"]]") + ".png")
 /**
   * Adds / sets dynamic asset for this ui's use
   *
@@ -278,7 +290,7 @@ main ui datum.
 /datum/vueui/proc/push_change(var/list/ndata)
 	if(ndata && status > STATUS_DISABLED)
 		src.data = ndata
-	to_chat(user, output(list2params(list(generate_data_json())),"[windowid].browser:receiveUIState"))
+	send_output(user, list2params(list(generate_data_json())),"[windowid].browser:receiveUIState")
 
 /**
   * Check for change and push that change of data
@@ -302,7 +314,7 @@ main ui datum.
 				src.data = ret
 				return 2
 		else if (force)
-			if(!nopush) 
+			if(!nopush)
 				push_change(null)
 				return 1
 			else
@@ -330,7 +342,7 @@ main ui datum.
 		if(nstatus > STATUS_DISABLED)
 			return check_for_change(TRUE, !autopush) == 2 // Gather data and update it
 		else if (nstatus == STATUS_DISABLED && autopush)
-			if(autopush) 
+			if(autopush)
 				push_change(null) // Only update ui data
 			else
 				return 1
@@ -371,10 +383,10 @@ main ui datum.
   * @return themes class - text
   */
 /datum/vueui/proc/get_theme_class()
-	return SStheming.get_html_theme_class(user)
+	return "vueui " + SStheming.get_html_theme_class(user)
 
 /datum/vueui/modularcomputer
 	header = "modular-computer"
 
 /datum/vueui/modularcomputer/get_theme_class()
-	return "theme-nano dark-theme"
+	return "vueui theme-nano dark-theme"

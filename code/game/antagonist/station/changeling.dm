@@ -4,28 +4,30 @@
 	role_text_plural = "Changelings"
 	bantype = "changeling"
 	feedback_tag = "changeling_objective"
-	restricted_jobs = list("AI", "Cyborg", "Head of Security", "Captain", "Internal Affairs Agent")
+	restricted_jobs = list("AI", "Cyborg", "Head of Security", "Captain", "Chief Engineer", "Research Director", "Chief Medical Officer", "Head of Personnel")
 
 	protected_jobs = list("Security Officer", "Security Cadet", "Warden", "Detective", "Forensic Technician")
-	chance_restricted_jobs = list("Security Officer" = 50, "Security Cadet" = 75, "Warden" = 40, "Detective" = 50, "Forensic Technician" = 50, "Head of Personnel" = 25, "Chief Engineer" = 25, "Research Director" = 25, "Chief Medical Officer" = 25) //Second value is chance to be considered for antag. Unlisted roles here are 100 by default.
 	restricted_species = list(
-		"Baseline Frame",
-		"Shell Frame",
-		"Hephaestus G1 Industrial Frame",
-		"Hephaestus G2 Industrial Frame",
-		"Xion Industrial Frame",
-		"Zeng-Hu Mobility Frame",
-		"Bishop Accessory Frame"
+		SPECIES_IPC,
+		SPECIES_IPC_SHELL,
+		SPECIES_IPC_G1,
+		SPECIES_IPC_G2,
+		SPECIES_IPC_XION,
+		SPECIES_IPC_ZENGHU,
+		SPECIES_IPC_BISHOP
 	)
+	required_age = 10
 
 	welcome_text = "Use say \"#g message\" to communicate with your fellow changelings. Remember: you get all of their absorbed DNA if you perform a Full DNA Extraction them."
+	antag_sound = 'sound/effects/antag_notice/ling_alert.ogg'
 	flags = ANTAG_SUSPICIOUS | ANTAG_RANDSPAWN | ANTAG_VOTABLE
 	antaghud_indicator = "hudchangeling"
 
 	faction = "Changeling"
 
 /datum/antagonist/changeling/get_special_objective_text(var/datum/mind/player)
-	return "<br><b>Changeling ID:</b> [player.changeling.changelingID].<br><b>Genomes Absorbed:</b> [player.changeling.absorbedcount]"
+	var/datum/changeling/changeling = player.antag_datums[MODE_CHANGELING]
+	return "<br><b>Changeling ID:</b> [changeling.changelingID].<br><b>Genomes Absorbed:</b> [changeling.absorbedcount]"
 
 /datum/antagonist/changeling/update_antag_mob(var/datum/mind/player)
 	..()
@@ -87,3 +89,10 @@
 						return 0
 					return 1
  	return 0
+
+/datum/antagonist/changeling/remove_antagonist(var/datum/mind/player, var/show_message = TRUE, var/implanted)
+	. = ..()
+	if(.)
+		player.current.verbs -= /datum/changeling/proc/EvolutionMenu
+		for(var/datum/power/changeling/P in powerinstances)
+			player.current.verbs -= P.verbpath

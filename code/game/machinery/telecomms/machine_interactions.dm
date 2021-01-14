@@ -69,7 +69,7 @@
 					to_chat(user, "<span class='warning'>You need five coils of wire for this.</span>")
 			if(P.iscrowbar())
 				to_chat(user, "You begin prying out the circuit board other components...")
-				playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(src.loc, P.usesound, 50, 1)
 				if(do_after(user,60/P.toolspeed))
 					to_chat(user, "You finish prying out the components.")
 
@@ -82,7 +82,7 @@
 						// If the machine wasn't made during runtime, probably doesn't have components:
 						// manually find the components and drop them!
 						var/newpath = text2path(circuitboard)
-						var/obj/item/weapon/circuitboard/C = new newpath
+						var/obj/item/circuitboard/C = new newpath
 						for(var/I in C.req_components)
 							for(var/i = 1, i <= C.req_components[I], i++)
 								newpath = text2path(I)
@@ -103,6 +103,8 @@
 	update_icon()
 
 /obj/machinery/telecomms/attack_ai(var/mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	attack_hand(user)
 
 /obj/machinery/telecomms/attack_hand(var/mob/user as mob)

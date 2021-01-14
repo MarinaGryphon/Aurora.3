@@ -10,7 +10,7 @@ var/global/list/rad_collectors = list()
 	density = 1
 	req_access = list(access_engine_equip)
 //	use_power = 0
-	var/obj/item/weapon/tank/phoron/P = null
+	var/obj/item/tank/phoron/P = null
 	var/last_power = 0
 	var/last_power_new = 0
 	var/active = 0
@@ -32,11 +32,11 @@ var/global/list/rad_collectors = list()
 
 
 	if(P)
-		if(P.air_contents.gas["phoron"] == 0)
-			investigate_log("<font color='red'>out of fuel</font>.","singulo")
+		if(P.air_contents.gas[GAS_PHORON] == 0)
+			investigate_log("<span class='warning'>out of fuel</span>.","singulo")
 			eject()
 		else
-			P.air_contents.adjust_gas("phoron", -0.001*drainratio)
+			P.air_contents.adjust_gas(GAS_PHORON, -0.001*drainratio)
 	return
 
 
@@ -46,7 +46,7 @@ var/global/list/rad_collectors = list()
 			toggle_power()
 			user.visible_message("[user.name] turns the [src.name] [active? "on":"off"].", \
 			"You turn the [src.name] [active? "on":"off"].")
-			investigate_log("turned [active?"<font color='green'>on</font>":"<font color='red'>off</font>"] by [user.key]. [P?"Fuel: [round(P.air_contents.gas["phoron"]/0.29)]%":"<font color='red'>It is empty</font>"].","singulo")
+			investigate_log("turned [active?"<font color='green'>on</font>":"<span class='warning'>off</span>"] by [user.key]. [P?"Fuel: [round(P.air_contents.gas[GAS_PHORON]/0.29)]%":"<span class='warning'>It is empty</span>"].","singulo")
 			return
 		else
 			to_chat(user, "<span class='warning'>The controls are locked!</span>")
@@ -55,7 +55,7 @@ var/global/list/rad_collectors = list()
 
 
 /obj/machinery/power/rad_collector/attackby(obj/item/W, mob/user)
-	if(istype(W, /obj/item/weapon/tank/phoron))
+	if(istype(W, /obj/item/tank/phoron))
 		if(!src.anchored)
 			to_chat(user, "<span class='warning'>The [src] needs to be secured to the floor first.</span>")
 			return 1
@@ -64,7 +64,7 @@ var/global/list/rad_collectors = list()
 			return 1
 		user.drop_from_inventory(W,src)
 		src.P = W
-		update_icons()
+		update_icon()
 		return 1
 	else if(W.iscrowbar())
 		if(P && !src.locked)
@@ -84,7 +84,7 @@ var/global/list/rad_collectors = list()
 		else
 			disconnect_from_network()
 		return 1
-	else if(istype(W, /obj/item/weapon/card/id)||istype(W, /obj/item/device/pda))
+	else if(W.GetID())
 		if (src.allowed(user))
 			if(active)
 				src.locked = !src.locked
@@ -111,7 +111,7 @@ var/global/list/rad_collectors = list()
 
 /obj/machinery/power/rad_collector/proc/eject()
 	locked = 0
-	var/obj/item/weapon/tank/phoron/Z = src.P
+	var/obj/item/tank/phoron/Z = src.P
 	if (!Z)
 		return
 	Z.forceMove(get_turf(src))
@@ -120,19 +120,19 @@ var/global/list/rad_collectors = list()
 	if(active)
 		toggle_power()
 	else
-		update_icons()
+		update_icon()
 
 /obj/machinery/power/rad_collector/proc/receive_pulse(var/pulse_strength)
 	if(P && active)
 		var/power_produced = 0
-		power_produced = P.air_contents.gas["phoron"]*pulse_strength*20
+		power_produced = P.air_contents.gas[GAS_PHORON]*pulse_strength*20
 		add_avail(power_produced)
 		last_power_new = power_produced
 		return
 	return
 
 
-/obj/machinery/power/rad_collector/proc/update_icons()
+/obj/machinery/power/rad_collector/update_icon()
 	cut_overlays()
 	if(P)
 		add_overlay("ptank")
@@ -150,6 +150,6 @@ var/global/list/rad_collectors = list()
 	else
 		icon_state = "ca"
 		flick("ca_deactive", src)
-	update_icons()
+	update_icon()
 	return
 

@@ -1,12 +1,13 @@
 /obj/machinery/chem_heater
 	name = "chemical heater"
+	desc = "A simple device that can be used to heat the contents of a beaker to a precise temperature."
 	icon = 'icons/obj/chemical.dmi'
 	icon_state = "mixer0b"
 	use_power = 0
 	idle_power_usage = 100
 	density = 1
 	anchored = 1
-	var/obj/item/weapon/reagent_containers/container
+	var/obj/item/reagent_containers/container
 	var/target_temperature = 300 //Measured in kelvin.
 	var/accept_drinking = FALSE
 	var/machine_strength = 0 //How much joules to add per process. Controlled by manipulators.
@@ -15,10 +16,10 @@
 	var/max_temperature = 600
 
 	component_types = list(
-		/obj/item/weapon/circuitboard/chem_heater,
-		/obj/item/weapon/stock_parts/manipulator,
-		/obj/item/weapon/stock_parts/manipulator,
-		/obj/item/weapon/stock_parts/manipulator
+		/obj/item/circuitboard/chem_heater,
+		/obj/item/stock_parts/manipulator,
+		/obj/item/stock_parts/manipulator,
+		/obj/item/stock_parts/manipulator
 	)
 
 /obj/machinery/chem_heater/attack_hand(mob/user)
@@ -32,19 +33,19 @@
 		return
 	if(default_part_replacement(user, O))
 		return
-	if(istype(O, /obj/item/weapon/reagent_containers/glass) || istype(O, /obj/item/weapon/reagent_containers/food))
+	if(istype(O, /obj/item/reagent_containers/glass) || istype(O, /obj/item/reagent_containers/food))
 		if(container)
-			to_chat(user,span("warning","There is already \a [container] on \the [src]!"))
+			to_chat(user, SPAN_WARNING("There is already \a [container] on \the [src]!"))
 			return
 
-		var/obj/item/weapon/reagent_containers/RC = O
+		var/obj/item/reagent_containers/RC = O
 		if(!RC.is_open_container())
-			to_chat(user,span("warning","You don't see how \the [src] could heat up the reagents in \the [RC]."))
+			to_chat(user, SPAN_WARNING("You don't see how \the [src] could heat up the reagents in \the [RC]."))
 			return
 
 		container =  RC
 		user.drop_from_inventory(RC,src)
-		to_chat(user,span("notice","You set \the [RC] in \the [src]."))
+		to_chat(user, SPAN_NOTICE("You set \the [RC] in \the [src]."))
 		updateUsrDialog()
 		return
 
@@ -52,33 +53,33 @@
 	if(stat & BROKEN)
 		return
 	user.set_machine(src)
-	var/dat ="<html>"
-	dat += "<head><TITLE>Chem Heater MKI</TITLE><style>body{font-family:Garamond}</style></head>"
-	dat += "<body><H1>Chem Heater MKI</H1>"
+	var/dat = "<html>"
 
-	dat += "<p>Power: <a href='?src=\ref[src];action=togglepower'>[use_power ? "On" : "Off"]</a></p>"
-	dat += "<p>Target Temp: [round(target_temperature)]K / [round(target_temperature - T0C,0.1)]C<br> "
+	dat += "Power: <a href='?src=\ref[src];action=togglepower'>[use_power ? "On" : "Off"]</a>"
 
-	dat += "("
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-100'>----</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-25'>---</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-5'>--</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-1'>-</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=1'>+</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=5'>++</a>|"
-	dat += "<a href='?src=\ref[src];action=adjusttemp;power=25'>+++</a>|"
+	dat += "<p>Target Temp: [round(target_temperature)]K / [round(target_temperature - T0C,0.1)]C<br>"
+
+	dat += "| "
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-100'>----</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-25'>---</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-5'>--</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=-1'>-</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=1'>+</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=5'>++</a>"
+	dat += "<a href='?src=\ref[src];action=adjusttemp;power=25'>+++</a>"
 	dat += "<a href='?src=\ref[src];action=adjusttemp;power=100'>++++</a>"
-	dat += ")</p>"
+	dat += "| </p>"
 
 	if(container)
-		dat += "<p>Beaker Temp: [round(container.get_temperature(),0.01)]K / [round(container.get_temperature() - T0C,0.1)]C (<a href='?src=\ref[src];action=removebeaker'>Remove</a>)</p>"
+		dat += "<p>Beaker Temp: [round(container.get_temperature(),0.01)]K / [round(container.get_temperature() - T0C,0.1)]C <a href='?src=\ref[src];action=removebeaker'>Remove</a></p>"
 	else
 		dat += "<p>No container loaded!</p>"
 
-	dat += "</body><html>"
+	dat += "</html>"
 
-	user << browse(dat, "window=chem_heater")
-	onclose(user, "chem_heater")
+	var/datum/browser/chem_win = new(user, "chem_heater", "Chem Heater MKI")
+	chem_win.set_content(dat)
+	chem_win.open()
 
 /obj/machinery/chem_heater/Topic(href, href_list)
 	if(stat & BROKEN) return
@@ -148,7 +149,7 @@
 
 /obj/machinery/chem_heater/RefreshParts()
 	machine_strength = initial(machine_strength)
-	for(var/obj/item/weapon/stock_parts/P in component_parts)
+	for(var/obj/item/stock_parts/P in component_parts)
 		if(ismanipulator(P))
 			machine_strength += P.rating
 

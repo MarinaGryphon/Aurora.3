@@ -22,17 +22,19 @@
 /obj/machinery/button/Destroy()
 	qdel(wifi_sender)
 	wifi_sender = null
-	return..()
+	return ..()
 
 /obj/machinery/button/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return attack_hand(user)
 
-/obj/machinery/button/attackby(obj/item/weapon/W, mob/user as mob)
+/obj/machinery/button/attackby(obj/item/W, mob/user as mob)
 	return attack_hand(user)
 
 /obj/machinery/button/attack_hand(mob/living/user)
 	if(..()) return 1
-	user.visible_message("<span class='notice'>[user] hits \the [src] button.</span>")
+	user.visible_message("<b>[user]</b> hits \the [src] button.")
 	activate(user)
 
 /obj/machinery/button/proc/activate(mob/living/user)
@@ -62,6 +64,9 @@
 
 /obj/machinery/button/switch/update_icon()
 	icon_state = "light[active]"
+
+/obj/machinery/button/switch/attack_hand()
+	playsound(src, /decl/sound_category/switch_sound, 30)
 
 //alternate button with the same functionality, except has a door control sprite instead
 /obj/machinery/button/alternate

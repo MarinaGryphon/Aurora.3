@@ -1,7 +1,5 @@
 #define HUMAN_STRIP_DELAY        40   // Takes 40ds = 4s to strip someone.
 
-#define SHOES_SLOWDOWN          -1.0  // How much shoes slow you down by default. Negative values speed you up.
-
 #define CANDLE_LUM 3 // For how bright candles are.
 
 // Item inventory slot bitmasks.
@@ -39,6 +37,8 @@
 #define NOSLIP                 0x8  // Prevents from slipping on wet floors, in space, etc.
 #define BLOCK_GAS_SMOKE_EFFECT 0x10 // Blocks the effect that chemical clouds would have on a mob -- glasses, mask and helmets ONLY! (NOTE: flag shared with ONESIZEFITSALL)
 #define FLEXIBLEMATERIAL       0x20 // At the moment, masks with this flag will not prevent eating even if they are covering your face.
+#define SOUNDPROTECTION        0x40 // whether wearing this item will protect you from loud noises such as flashbangs | this only works for ear slots or the head slot
+#define LIGHTSTEP              0x80 // When applied to footwear, this makes it so that they don't trigger things like landmines and mouse traps
 
 // Flags for pass_flags.
 #define PASSTABLE		0x1
@@ -46,26 +46,21 @@
 #define PASSGRILLE		0x4
 #define PASSDOORHATCH	0x8
 #define PASSMOB			0x10
+#define PASSTRACE       0x20 //Used by turrets in the check_trajectory proc to target mobs hiding behind certain things (such as closets)
 
 // Bitmasks for the flags_inv variable. These determine when a piece of clothing hides another, i.e. a helmet hiding glasses.
-// WARNING: The following flags apply only to the external suit!
 #define HIDEGLOVES      0x1
 #define HIDESUITSTORAGE 0x2
 #define HIDEJUMPSUIT    0x4
 #define HIDESHOES       0x8
 #define HIDETAIL        0x10
-
-// WARNING: The following flags apply only to the helmets and masks!
-#define HIDEMASK 0x1
-#define HIDEEARS 0x2 // Headsets and such.
-#define HIDEEYES 0x4 // Glasses.
-#define HIDEFACE 0x8 // Dictates whether we appear as "Unknown".
-
-#define BLOCKHEADHAIR   0x20    // Hides the user's hair overlay. Leaves facial hair.
-#define BLOCKHAIR       0x40    // Hides the user's hair, facial and otherwise.
-
-//This flag applies to gloves, uniforms, shoes, masks, ear items, glasses
-#define ALWAYSDRAW	0x80//If set, this item is always rendered even if its slot is hidden by other clothing
+#define HIDEMASK        0x20
+#define HIDEEARS		0x40 // Headsets and such.
+#define HIDEEYES		0x80 // Glasses.
+#define HIDEFACE		0x100// Dictates whether we appear as "Unknown".
+#define BLOCKHEADHAIR   0x200// Hides the user's hair overlay. Leaves facial hair.
+#define BLOCKHAIR       0x400// Hides the user's hair, facial and otherwise.
+#define ALWAYSDRAW		0x800//If set, this item is always rendered even if its slot is hidden by other clothing
 //Note that the item may still not be visible if its sprite is actually covered up.
 
 // Slots.
@@ -102,6 +97,9 @@
 #define slot_w_uniform_str	"slot_w_uniform"
 #define slot_head_str		"slot_head"
 #define slot_wear_suit_str	"slot_suit"
+#define slot_l_ear_str		"slot_l_ear"
+#define slot_r_ear_str		"slot_r_ear"
+#define slot_shoes_str "slot_shoes"
 
 //itemstate suffixes. Used for containedsprite worn items
 #define WORN_LHAND	"_lh"

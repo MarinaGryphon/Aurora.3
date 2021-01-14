@@ -6,9 +6,9 @@
 	name = "computer frame"
 	icon = 'icons/obj/computer.dmi'
 	icon_state = "0"
+	build_amt = 5
 	var/state = 0
-	var/obj/item/weapon/circuitboard/circuit = null
-//	weight = 1.0E8
+	var/obj/item/circuitboard/circuit = null
 
 /obj/structure/computerframe/attackby(obj/item/P as obj, mob/user as mob)
 	switch(state)
@@ -20,11 +20,11 @@
 					src.anchored = 1
 					src.state = 1
 			if(P.iswelder())
-				var/obj/item/weapon/weldingtool/WT = P
+				var/obj/item/weldingtool/WT = P
 				if(!WT.remove_fuel(0, user))
 					to_chat(user, "The welding tool must be on to complete this task.")
 					return
-				playsound(src.loc, 'sound/items/Welder.ogg', 50, 1)
+				playsound(src.loc, 'sound/items/welder.ogg', 50, 1)
 				if(do_after(user, 20/P.toolspeed))
 					if(!src || !WT.isOn()) return
 					to_chat(user, "<span class='notice'>You deconstruct the frame.</span>")
@@ -37,8 +37,8 @@
 					to_chat(user, "<span class='notice'>You unfasten the frame.</span>")
 					src.anchored = 0
 					src.state = 0
-			if(istype(P, /obj/item/weapon/circuitboard) && !circuit)
-				var/obj/item/weapon/circuitboard/B = P
+			if(istype(P, /obj/item/circuitboard) && !circuit)
+				var/obj/item/circuitboard/B = P
 				if(B.board_type == "computer")
 					playsound(src.loc, 'sound/items/Deconstruct.ogg', 50, 1)
 					to_chat(user, "<span class='notice'>You place the circuit board inside the frame.</span>")
@@ -53,7 +53,7 @@
 				src.state = 2
 				src.icon_state = "2"
 			if(P.iscrowbar() && circuit)
-				playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(src.loc, P.usesound, 50, 1)
 				to_chat(user, "<span class='notice'>You remove the circuit board.</span>")
 				src.state = 1
 				src.icon_state = "0"
@@ -79,7 +79,7 @@
 						icon_state = "3"
 		if(3)
 			if(P.iswirecutter())
-				playsound(src.loc, 'sound/items/Wirecutter.ogg', 50, 1)
+				playsound(src.loc, 'sound/items/wirecutter.ogg', 50, 1)
 				to_chat(user, "<span class='notice'>You remove the cables.</span>")
 				src.state = 2
 				src.icon_state = "2"
@@ -100,7 +100,7 @@
 						src.icon_state = "4"
 		if(4)
 			if(P.iscrowbar())
-				playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(src.loc, P.usesound, 50, 1)
 				to_chat(user, "<span class='notice'>You remove the glass keyboard.</span>")
 				src.state = 3
 				src.icon_state = "3"

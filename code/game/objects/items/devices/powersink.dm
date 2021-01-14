@@ -5,13 +5,13 @@
 	desc = "A nulling power sink which drains energy from electrical systems."
 	icon_state = "powersink0"
 	item_state = "powersink0"
-	w_class = 4.0
+	w_class = ITEMSIZE_LARGE
 	flags = CONDUCT
 	throwforce = 5
 	throw_speed = 1
 	throw_range = 2
 
-	matter = list(DEFAULT_WALL_MATERIAL = 750,"waste" = 750)
+	matter = list(DEFAULT_WALL_MATERIAL = 750)
 
 	origin_tech = list(TECH_POWER = 3, TECH_ILLEGAL = 5)
 	var/drain_rate = 1500000		// amount of power to drain per tick

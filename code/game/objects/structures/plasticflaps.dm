@@ -7,6 +7,8 @@
 	anchored = 1
 	layer = 4
 	explosion_resistance = 5
+	build_amt = 4
+	var/manipulating = FALSE //Prevents queueing up a ton of deconstructs
 	var/list/mobs_can_pass = list(
 		/mob/living/carbon/slime,
 		/mob/living/simple_animal/rat,
@@ -45,6 +47,20 @@
 		if (3)
 			if (prob(5))
 				qdel(src)
+
+/obj/structure/plasticflaps/attackby(obj/item/W, mob/user)
+	if(manipulating)	return
+	manipulating = TRUE
+	if(W.iswirecutter() || W.sharp && !W.noslice)
+		visible_message(SPAN_NOTICE("[user] begins cutting down \the [src]."),
+					SPAN_NOTICE("You begin cutting down \the [src]."))
+		if(!do_after(user, 30/W.toolspeed))
+			manipulating = FALSE
+			return
+		playsound(src.loc, 'sound/items/wirecutter.ogg', 50, 1)
+		visible_message(SPAN_NOTICE("[user] cuts down \the [src]."),
+		SPAN_NOTICE("You cut down \the [src]."))
+		dismantle()
 
 /obj/structure/plasticflaps/mining //A specific type for mining that doesn't allow airflow because of them damn crates
 	name = "airtight plastic flaps"

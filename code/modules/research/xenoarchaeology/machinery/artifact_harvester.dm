@@ -1,6 +1,6 @@
 
 /obj/machinery/artifact_harvester
-	name = "Exotic Particle Harvester"
+	name = "exotic particle harvester"
 	icon = 'icons/obj/virology.dmi'
 	icon_state = "incubator"	//incubator_on
 	anchored = 1
@@ -9,7 +9,7 @@
 	active_power_usage = 750
 	use_power = 1
 	var/harvesting = 0
-	var/obj/item/weapon/anobattery/inserted_battery
+	var/obj/item/anobattery/inserted_battery
 	var/obj/machinery/artifact/cur_artifact
 	var/obj/machinery/artifact_scanpad/owned_scanner = null
 	var/last_process = 0
@@ -22,7 +22,7 @@
 		owned_scanner = locate(/obj/machinery/artifact_scanpad) in orange(1, src)
 
 /obj/machinery/artifact_harvester/attackby(var/obj/I as obj, var/mob/user as mob)
-	if(istype(I,/obj/item/weapon/anobattery))
+	if(istype(I,/obj/item/anobattery))
 		if(!inserted_battery)
 			to_chat(user, "<span class='notice'>You insert [I] into [src].</span>")
 			user.drop_from_inventory(I,src)
@@ -63,11 +63,13 @@
 				dat += "No battery inserted.<BR>"
 	else
 		dat += "<B><font color=red>Unable to locate analysis pad.</font><BR></b>"
-	//
+
 	dat += "<HR>"
 	dat += "<A href='?src=\ref[src];refresh=1'>Refresh</A> <A href='?src=\ref[src];close=1'>Close<BR>"
-	user << browse(dat, "window=artharvester;size=450x500")
-	onclose(user, "artharvester")
+
+	var/datum/browser/harvester_win = new(user, "artharvester", capitalize_first_letters(name), 500, 500)
+	harvester_win.set_content(dat)
+	harvester_win.open()
 
 /obj/machinery/artifact_harvester/machinery_process()
 	if(stat & (NOPOWER|BROKEN))

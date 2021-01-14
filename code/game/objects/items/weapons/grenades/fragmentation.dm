@@ -1,4 +1,4 @@
-proc/fragem(var/source,var/fragx,var/fragy,var/light_dam,var/flash_dam,var/p_dam,var/p_range,var/can_cover=1)
+proc/fragem(var/source,var/fragx,var/fragy,var/light_dam,var/flash_dam,var/p_dam,var/p_range,var/can_cover=TRUE,var/shard_range = 50)
 	var/turf/O = get_turf(source)
 	var/fragger = rand(fragx,fragy)
 	explosion(O, -1, -1, light_dam, flash_dam)
@@ -13,7 +13,8 @@ proc/fragem(var/source,var/fragx,var/fragy,var/light_dam,var/flash_dam,var/p_dam
 		P.pellets = fragments_per_projectile
 		P.range_step = p_range
 		P.shot_from = source
-		P.name = "[source]'s shrapnel"
+		P.range = shard_range
+		P.name = "shrapnel"
 
 		P.launch_projectile(T)
 
@@ -38,7 +39,7 @@ proc/fragem(var/source,var/fragx,var/fragy,var/light_dam,var/flash_dam,var/p_dam
 	no_attack_log = 1
 	muzzle_type = null
 
-/obj/item/weapon/grenade/frag
+/obj/item/grenade/frag
 	name = "fragmentation grenade"
 	desc = "A military fragmentation grenade, designed to explode in a deadly shower of fragments."
 	icon_state = "frag"
@@ -51,10 +52,10 @@ proc/fragem(var/source,var/fragx,var/fragy,var/light_dam,var/flash_dam,var/p_dam
 	//The radius of the circle used to launch projectiles. Lower values mean less projectiles are used but if set too low gaps may appear in the spread pattern
 	var/spread_range = 7
 
-/obj/item/weapon/grenade/frag/prime()
+/obj/item/grenade/frag/prime()
 	set waitfor = 0
 	..()
 
-	fragem(src,num_fragments,num_fragments,explosion_size,explosion_size+1,fragment_damage,damage_step,1)
+	fragem(src,num_fragments,num_fragments,explosion_size,explosion_size+1,fragment_damage,damage_step,TRUE)
 
 	qdel(src)

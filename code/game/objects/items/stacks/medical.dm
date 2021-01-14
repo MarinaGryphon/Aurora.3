@@ -11,10 +11,15 @@ Contains:
 	name = "medical pack"
 	singular_name = "medical pack"
 	icon = 'icons/obj/stacks/medical.dmi'
-	drop_sound = 'sound/items/drop/box.ogg'
+	item_icons = list(
+		slot_l_hand_str = 'icons/mob/items/stacks/lefthand_medical.dmi',
+		slot_r_hand_str = 'icons/mob/items/stacks/righthand_medical.dmi',
+		)
+	drop_sound = 'sound/items/drop/cardboardbox.ogg'
+	pickup_sound = 'sound/items/pickup/cardboardbox.ogg'
 	amount = 5
 	max_amount = 5
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	throw_speed = 4
 	throw_range = 20
 	var/heal_brute = 0
@@ -35,7 +40,7 @@ Contains:
 		var/mob/living/carbon/human/H = M
 		var/obj/item/organ/external/affecting = H.get_organ(user.zone_sel.selecting)
 
-		if(affecting.name == "head")
+		if(affecting.name == BP_HEAD)
 			if(H.head && istype(H.head,/obj/item/clothing/head/helmet/space))
 				to_chat(user, "<span class='warning'>You can't apply [src] through [H.head]!</span>")
 				return 1
@@ -44,14 +49,31 @@ Contains:
 				to_chat(user, "<span class='warning'>You can't apply [src] through [H.wear_suit]!</span>")
 				return 1
 
+		if(affecting.status & ORGAN_LIFELIKE)
+			if(!(affecting.brute_dam || affecting.burn_dam))
+				to_chat(user, "<span class='notice'> [M] seems healthy, there are no wounds to treat! </span>")
+				return 1
+
+			user.visible_message( \
+					"<span class = 'notice'> [user] starts applying \the [src] to [M].</span>", \
+					"<span class = 'notice'> You start applying \the [src] to [M].</span>" \
+				)
+			if (do_mob(user, M, 30))
+				user.visible_message( \
+					"<span class = 'notice'> [M] has been applied with [src] by [user].</span>", \
+					"<span class = 'notice'> You apply \the [src] to [M].</span>" \
+				)
+				use(1)
+			return 1
+
 		if(affecting.status & ORGAN_ASSISTED)
-			to_chat(user, "<span class='warning'>This isn't useful at all on a robotic limb..</span>")
+			to_chat(user, "<span class='warning'>This isn't useful at all on a robotic limb.</span>")
 			return 1
 
 		H.UpdateDamageIcon()
 
 	else
-		if (!M.bruteloss && !M.fireloss)
+		if (!M.getBruteLoss() && !M.getFireLoss())
 			to_chat(user, "<span class='notice'> [M] seems healthy, there are no wounds to treat! </span>")
 			return 1
 
@@ -80,10 +102,19 @@ Contains:
 	icon_has_variants = TRUE
 	apply_sounds = list('sound/items/rip1.ogg','sound/items/rip2.ogg')
 	drop_sound = 'sound/items/drop/gloves.ogg'
+	pickup_sound = 'sound/items/pickup/gloves.ogg'
+
+/obj/item/stack/medical/bruise_pack/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
 
 /obj/item/stack/medical/bruise_pack/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
 		return 1
+
+	if (!can_use(1, user))
+		return 0
 
 	if (istype(M, /mob/living/carbon/human))
 		var/mob/living/carbon/human/H = M
@@ -99,8 +130,6 @@ Contains:
 						             "<span class='notice'>You start treating [M]'s [affecting.name].</span>" )
 				var/used = 0
 				for (var/datum/wound/W in affecting.wounds)
-					if (W.internal)
-						continue
 					if(W.bandaged)
 						continue
 					if(used == amount)
@@ -128,6 +157,7 @@ Contains:
 					else
 						to_chat(user, "<span class='warning'>\The [src] is used up, but there are more wounds to treat on \the [affecting.name].</span>")
 				use(used)
+				H.update_bandages(TRUE)
 		else
 			if (can_operate(H))        //Checks if mob is lying down on table for surgery
 				if (do_surgery(H,user,src))
@@ -147,10 +177,19 @@ Contains:
 	icon_has_variants = TRUE
 	apply_sounds = list('sound/items/ointment.ogg')
 	drop_sound = 'sound/items/drop/herb.ogg'
+	pickup_sound = 'sound/items/pickup/herb.ogg'
+
+/obj/item/stack/medical/ointment/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
 
 /obj/item/stack/medical/ointment/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
 		return 1
+
+	if (!can_use(1, user))
+		return 0
 
 	if (istype(M, /mob/living/carbon/human))
 		var/mob/living/carbon/human/H = M
@@ -189,9 +228,17 @@ Contains:
 	origin_tech = list(TECH_BIO = 1)
 	apply_sounds = list('sound/items/rip1.ogg','sound/items/rip2.ogg','sound/items/tape.ogg')
 
+/obj/item/stack/medical/advanced/bruise_pack/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
+
 /obj/item/stack/medical/advanced/bruise_pack/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
 		return 1
+
+	if (!can_use(1, user))
+		return 0
 
 	if (ishuman(M))
 		var/mob/living/carbon/human/H = M
@@ -207,8 +254,6 @@ Contains:
 						             "<span class='notice'>You start treating [M]'s [affecting.name].</span>" )
 				var/used = 0
 				for (var/datum/wound/W in affecting.wounds)
-					if (W.internal)
-						continue
 					if (W.bandaged && W.disinfected)
 						continue
 					if(used == amount)
@@ -238,6 +283,7 @@ Contains:
 					else
 						to_chat(user, "<span class='warning'>\The [src] is used up, but there are more wounds to treat on \the [affecting.name].</span>")
 				use(used)
+				H.update_bandages(TRUE)
 		else
 			if (can_operate(H))        //Checks if mob is lying down on table for surgery
 				if (do_surgery(H,user,src))
@@ -254,6 +300,11 @@ Contains:
 	heal_burn = 8
 	origin_tech = list(TECH_BIO = 1)
 	apply_sounds = list('sound/items/ointment.ogg')
+
+/obj/item/stack/medical/advanced/ointment/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
 
 /obj/item/stack/medical/advanced/ointment/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
@@ -298,6 +349,11 @@ Contains:
 	var/open = 0
 	var/used = 0
 
+/obj/item/stack/medical/advanced/bruise_pack/spaceklot/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
+
 /obj/item/stack/medical/advanced/bruise_pack/spaceklot/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
 		return 1
@@ -318,9 +374,6 @@ Contains:
 				if(!do_after(user, 100, act_target = M))
 					return
 				for (var/datum/wound/W in affecting.wounds)
-					if (W.internal)
-						if(prob(25)) // Space Klot technology.
-							W.heal_damage(heal_brute, 1)
 					if (W.bandaged)
 						continue
 					if(used == amount)
@@ -346,11 +399,20 @@ Contains:
 	amount = 5
 	max_amount = 5
 	drop_sound = 'sound/items/drop/hat.ogg'
-	var/list/splintable_organs = list("l_arm","r_arm","l_leg","r_leg", "l_hand", "r_hand", "r_foot", "l_foot")
+	pickup_sound = 'sound/items/pickup/hat.ogg'
+	var/list/splintable_organs = list(BP_L_ARM,BP_R_ARM,BP_L_LEG,BP_R_LEG, BP_L_HAND, BP_R_HAND, BP_R_FOOT, BP_L_FOOT)
+
+/obj/item/stack/medical/splint/full/Initialize()
+	. = ..()
+	amount = max_amount
+	update_icon()
 
 /obj/item/stack/medical/splint/attack(mob/living/carbon/M as mob, mob/user as mob)
 	if(..())
 		return 1
+
+	if (!can_use(1, user))
+		return 0
 
 	if (istype(M, /mob/living/carbon/human))
 		var/mob/living/carbon/human/H = M
@@ -365,7 +427,7 @@ Contains:
 		if (M != user)
 			user.visible_message("<span class='danger'>[user] starts to apply \the [src] to [M]'s [limb].</span>", "<span class='danger'>You start to apply \the [src] to [M]'s [limb].</span>", "<span class='danger'>You hear something being wrapped.</span>")
 		else
-			if((!user.hand && affecting.limb_name == "r_arm") || (user.hand && affecting.limb_name == "l_arm"))
+			if((!user.hand && affecting.limb_name == BP_R_ARM) || (user.hand && affecting.limb_name == BP_L_ARM))
 				to_chat(user, "<span class='danger'>You can't apply a splint to the arm you're using!</span>")
 				return
 			user.visible_message("<span class='danger'>[user] starts to apply \the [src] to their [limb].</span>", "<span class='danger'>You start to apply \the [src] to your [limb].</span>", "<span class='danger'>You hear something being wrapped.</span>")
@@ -389,4 +451,4 @@ Contains:
 	desc = "For holding your limbs in place with duct tape and scrap metal."
 	icon_state = "tape-splint"
 	amount = 1
-	splintable_organs = list("l_arm","r_arm","l_leg","r_leg")
+	splintable_organs = list(BP_L_ARM,BP_R_ARM,BP_L_LEG,BP_R_LEG)

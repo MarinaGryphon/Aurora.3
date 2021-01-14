@@ -11,9 +11,9 @@
 	var/max_complexity = IC_COMPLEXITY_BASE
 	var/opened = 0
 	var/can_anchor = FALSE // If true, wrenching it will anchor it.
-	var/obj/item/weapon/cell/device/battery // Internal cell which most circuits need to work.
+	var/obj/item/cell/device/battery // Internal cell which most circuits need to work.
 	var/detail_color = COLOR_ASSEMBLY_BLACK
-	var/obj/item/weapon/card/id/access_card
+	var/obj/item/card/id/access_card
 
 /obj/item/device/electronic_assembly/implant
 	name = "electronic implant"
@@ -22,14 +22,14 @@
 	w_class = ITEMSIZE_TINY
 	max_components = IC_COMPONENTS_BASE / 2
 	max_complexity = IC_COMPLEXITY_BASE / 2
-	var/obj/item/weapon/implant/integrated_circuit/implant = null
+	var/obj/item/implant/integrated_circuit/implant = null
 
 /obj/item/device/electronic_assembly/Initialize(mapload, printed = FALSE)
 	. = ..()
 	if (!printed)
 		battery = new(src)
 	START_PROCESSING(SSelectronics, src)
-	access_card = new /obj/item/weapon/card/id(src)
+	access_card = new /obj/item/card/id(src)
 
 /obj/item/device/electronic_assembly/Destroy()
 	QDEL_NULL(battery)
@@ -141,7 +141,7 @@
 		else
 			var/turf/T = get_turf(src)
 			battery.forceMove(T)
-			playsound(T, 'sound/items/Crowbar.ogg', 50, 1)
+			playsound(T, 'sound/items/crowbar_pry.ogg', 50, 1)
 			to_chat(usr, "<span class='notice'>You pull \the [battery] out of \the [src]'s power supply.</span>")
 			battery = null
 
@@ -247,7 +247,7 @@
 			return TRUE
 
 	else if(I.iswrench() && can_anchor)
-		playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
+		playsound(src.loc, I.usesound, 50, 1)
 		anchored = !anchored
 		if(anchored)
 			on_anchored()
@@ -257,20 +257,20 @@
 		return TRUE
 
 	else if(I.iscrowbar())
-		playsound(get_turf(src), 'sound/items/Crowbar.ogg', 50, 1)
+		playsound(get_turf(src), I.usesound, 50, 1)
 		opened = !opened
 		to_chat(user, "<span class='notice'>You [opened ? "open" : "close"] \the [src].</span>")
 		update_icon()
 		return TRUE
 
-	else if(istype(I, /obj/item/device/integrated_electronics/wirer) || istype(I, /obj/item/device/integrated_electronics/debugger) || I.isscrewdriver())
+	else if(istype(I, /obj/item/device/integrated_electronics/wirer) || istype(I, /obj/item/device/integrated_electronics/debugger) || I.ismultitool() || I.isscrewdriver())
 		if(opened)
 			interact(user)
 		else
 			to_chat(user, "<span class='warning'>\The [src] isn't open, so you can't fiddle with the internal components.  \
 			Try using a crowbar.</span>")
 
-	else if(istype(I, /obj/item/weapon/cell/device))
+	else if(istype(I, /obj/item/cell/device))
 		if(!opened)
 			to_chat(user, "<span class='warning'>\The [src] isn't open, so you can't put anything inside.  Try using a crowbar.</span>")
 			for(var/obj/item/integrated_circuit/input/S in contents)
@@ -283,7 +283,7 @@
 				S.attackby_react(I,user,user.a_intent)
 			return FALSE
 
-		var/obj/item/weapon/cell/device/cell = I
+		var/obj/item/cell/device/cell = I
 		user.drop_from_inventory(cell,src)
 		battery = cell
 		playsound(get_turf(src), 'sound/items/Deconstruct.ogg', 50, 1)

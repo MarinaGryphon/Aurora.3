@@ -13,12 +13,12 @@ Thus, the two variables affect pump operation are set in New():
 */
 
 /obj/machinery/atmospherics/binary/pump
+	name = "gas pump"
+	desc = "A pump."
+	desc_info = "This moves gas from one pipe to another.  A higher target pressure demands more energy.  The side with the red end is the output."
 	icon = 'icons/atmos/pump.dmi'
 	icon_state = "map_off"
 	level = 1
-
-	name = "gas pump"
-	desc = "A pump"
 
 	var/target_pressure = ONE_ATMOSPHERE
 
@@ -33,6 +33,8 @@ Thus, the two variables affect pump operation are set in New():
 	var/frequency = 0
 	var/id = null
 	var/datum/radio_frequency/radio_connection
+
+	var/broadcast_status_next_process = FALSE
 
 /obj/machinery/atmospherics/binary/pump/Initialize()
 	. = ..()
@@ -69,6 +71,10 @@ Thus, the two variables affect pump operation are set in New():
 	if((stat & (NOPOWER|BROKEN)) || !use_power)
 		return
 
+	if (broadcast_status_next_process)
+		broadcast_status()
+		broadcast_status_next_process = FALSE
+
 	var/power_draw = -1
 	var/pressure_delta = target_pressure - air2.return_pressure()
 
@@ -102,7 +108,7 @@ Thus, the two variables affect pump operation are set in New():
 		return 0
 
 	var/datum/signal/signal = new
-	signal.transmission_method = 1 //radio signal
+	signal.transmission_method = TRANSMISSION_RADIO
 	signal.source = src
 
 	signal.data = list(
@@ -169,12 +175,11 @@ Thus, the two variables affect pump operation are set in New():
 		)
 
 	if(signal.data["status"])
-		addtimer(CALLBACK(src, .proc/broadcast_status), 2, TIMER_UNIQUE)
+		broadcast_status_next_process = TRUE
 		return //do not update_icon
 
-	addtimer(CALLBACK(src, .proc/broadcast_status), 2, TIMER_UNIQUE)
+	broadcast_status_next_process = TRUE
 	update_icon()
-	return
 
 /obj/machinery/atmospherics/binary/pump/attack_hand(user as mob)
 	if(..())
@@ -213,15 +218,15 @@ Thus, the two variables affect pump operation are set in New():
 	if(old_stat != stat)
 		update_icon()
 
-/obj/machinery/atmospherics/binary/pump/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
-	if (!W.iswrench() && !istype(W, /obj/item/weapon/pipewrench))
+/obj/machinery/atmospherics/binary/pump/attackby(var/obj/item/W as obj, var/mob/user as mob)
+	if (!W.iswrench() && !istype(W, /obj/item/pipewrench))
 		return ..()
 	if (!(stat & NOPOWER) && use_power)
 		to_chat(user, "<span class='warning'>You cannot unwrench this [src], turn it off first.</span>")
 		return 1
 	var/datum/gas_mixture/int_air = return_air()
 	var/datum/gas_mixture/env_air = loc.return_air()
-	if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE && !istype(W, /obj/item/weapon/pipewrench))
+	if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE && !istype(W, /obj/item/pipewrench))
 		to_chat(user, "<span class='warning'>You cannot unwrench this [src], it's too exerted due to internal pressure.</span>")
 		add_fingerprint(user)
 		return 1
@@ -229,7 +234,7 @@ Thus, the two variables affect pump operation are set in New():
 		to_chat(user, "<span class='warning'>You struggle to unwrench \the [src] with your pipe wrench.</span>")
 	playsound(src.loc, W.usesound, 50, 1)
 	to_chat(user, "<span class='notice'>You begin to unfasten \the [src]...</span>")
-	if (do_after(user, istype(W, /obj/item/weapon/pipewrench) ? 80/W.toolspeed : 40/W.toolspeed, act_target = src))
+	if (do_after(user, istype(W, /obj/item/pipewrench) ? 80/W.toolspeed : 40/W.toolspeed, act_target = src))
 		user.visible_message( \
 			"<span class='notice'>\The [user] unfastens \the [src].</span>", \
 			"<span class='notice'>You have unfastened \the [src].</span>", \

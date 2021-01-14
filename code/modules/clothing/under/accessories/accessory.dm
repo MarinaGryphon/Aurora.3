@@ -6,7 +6,7 @@
 	item_state = ""	//no inhands
 	overlay_state = null
 	slot_flags = SLOT_TIE
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	var/slot = "decor"
 	var/obj/item/clothing/has_suit = null		//the suit the tie may be attached to
 	var/image/inv_overlay = null	//overlay used when attached to clothing.
@@ -89,7 +89,8 @@
 	if(flippable)
 		if(!flipped)
 			if(!overlay_state)
-				icon_state = "[icon_state]_flip"
+				icon_state = "[initial(icon_state)]_flip"
+				item_state = "[initial(item_state)]_flip"
 				flipped = 1
 			else
 				overlay_state = "[overlay_state]_flip"
@@ -97,6 +98,7 @@
 		else
 			if(!overlay_state)
 				icon_state = initial(icon_state)
+				item_state = initial(item_state)
 				flipped = 0
 			else
 				overlay_state = initial(overlay_state)
@@ -108,50 +110,54 @@
 		return
 	..()
 
-/obj/item/clothing/accessory/blue
-	name = "blue tie"
-	icon_state = "bluetie"
-
 /obj/item/clothing/accessory/red
 	name = "red tie"
 	icon_state = "redtie"
+
+/obj/item/clothing/accessory/tie/red_clip
+	name = "red tie with a clip"
+	icon_state = "redcliptie"
+
+/obj/item/clothing/accessory/tie/orange
+	name = "orange tie"
+	icon_state = "orangetie"
+
+/obj/item/clothing/accessory/tie/yellow
+	name = "yellow tie"
+	icon_state = "yellowtie"
 
 /obj/item/clothing/accessory/horrible
 	name = "horrible tie"
 	desc = "A neosilk clip-on tie. This one is disgusting."
 	icon_state = "horribletie"
 
-/obj/item/clothing/accessory/tie/blue_clip
-	name = "blue tie with a clip"
-	icon_state = "bluecliptie"
-
-/obj/item/clothing/accessory/tie/blue_long
-	name = "blue long tie"
-	icon_state = "bluelongtie"
-
-/obj/item/clothing/accessory/tie/red_clip
-	name = "red tie with a clip"
-	icon_state = "redcliptie"
-
-/obj/item/clothing/accessory/tie/red_long
-	name = "red long tie"
-	icon_state = "redlongtie"
-
-/obj/item/clothing/accessory/tie/black
-	name = "black tie"
-	icon_state = "blacktie"
+/obj/item/clothing/accessory/tie/green
+	name = "green tie"
+	icon_state = "greentie"
 
 /obj/item/clothing/accessory/tie/darkgreen
 	name = "dark green tie"
 	icon_state = "dgreentie"
 
-/obj/item/clothing/accessory/tie/yellow
-	name = "yellow tie"
-	icon_state = "yellowtie"
+/obj/item/clothing/accessory/blue
+	name = "blue tie"
+	icon_state = "bluetie"
+
+/obj/item/clothing/accessory/tie/blue_clip
+	name = "blue tie with a clip"
+	icon_state = "bluecliptie"
 
 /obj/item/clothing/accessory/tie/navy
 	name = "navy tie"
 	icon_state = "navytie"
+
+/obj/item/clothing/accessory/tie/purple
+	name = "purple tie"
+	icon_state = "purpletie"
+
+/obj/item/clothing/accessory/tie/black
+	name = "black tie"
+	icon_state = "blacktie"
 
 /obj/item/clothing/accessory/tie/white
 	name = "white tie"
@@ -166,167 +172,35 @@
 	name = "stethoscope"
 	desc = "An outdated medical apparatus for listening to the sounds of the human body. It also makes you look like you know what you're doing."
 	icon_state = "stethoscope"
+	item_icons = list(
+		slot_l_hand_str = 'icons/mob/items/lefthand_medical.dmi',
+		slot_r_hand_str = 'icons/mob/items/righthand_medical.dmi',
+		)
 	flippable = 1
 
-/obj/item/clothing/accessory/stethoscope/attack(mob/living/carbon/human/M, mob/living/user, var/target_zone)
+/obj/item/clothing/accessory/stethoscope/attack(mob/living/carbon/human/M, mob/living/user)
 	if(ishuman(M) && isliving(user))
 		if(user.a_intent == I_HELP)
-			var/body_part = parse_zone(target_zone)
-			if(body_part)
-				var/their = "their"
-				switch(M.gender)
-					if(MALE)	their = "his"
-					if(FEMALE)	their = "her"
-
-				var/sound = "heartbeat"
-				var/sound_strength = "cannot hear"
-				var/heartbeat = 0
-				if(M.species && M.species.has_organ["heart"])
-					var/obj/item/organ/heart/heart = M.internal_organs_by_name["heart"]
-					if(heart && !heart.robotic)
-						heartbeat = 1
-				if(M.stat == DEAD || (M.status_flags&FAKEDEATH))
-					sound_strength = "cannot hear"
-					sound = "anything"
-				else
-					switch(body_part)
-						if("chest")
-							sound_strength = "hear"
-							sound = "no heartbeat"
-							if(heartbeat)
-								var/obj/item/organ/heart/heart = M.internal_organs_by_name["heart"]
-								if(heart.is_bruised() || M.getOxyLoss() > 50)
-									sound = "[pick("odd noises in","weak")] heartbeat"
-								else
-									sound = "healthy heartbeat"
-
-							var/obj/item/organ/heart/L = M.internal_organs_by_name["lungs"]
-							if(!L || M.losebreath)
-								sound += " and no respiration"
-							else if(M.is_lung_ruptured() || M.getOxyLoss() > 50)
-								sound += " and [pick("wheezing","gurgling")] sounds"
-							else
-								sound += " and healthy respiration"
-						if("eyes","mouth")
-							sound_strength = "cannot hear"
-							sound = "anything"
-						else
-							if(heartbeat)
-								sound_strength = "hear a weak"
-								sound = "pulse"
-
-				user.visible_message("[user] places [src] against [M]'s [body_part] and listens attentively.", "You place [src] against [their] [body_part]. You [sound_strength] [sound].")
+			var/obj/item/organ/organ = M.get_organ(user.zone_sel.selecting)
+			if(organ)
+				user.visible_message(SPAN_NOTICE("[user] places [src] against [M]'s [organ.name] and listens attentively."),
+									 "You place [src] against [M]'s [organ.name]. You hear <b>[english_list(organ.listen())]</b>.")
 				return
 	return ..(M,user)
 
-//Medals
-/obj/item/clothing/accessory/medal
-	name = "bronze medal"
-	desc = "A bronze medal."
-	icon_state = "bronze"
-	overlay_state = "bronze"
+//Religious items
+/obj/item/clothing/accessory/rosary
+	name = "rosary"
+	desc = "A form of prayer psalter used in the Catholic Church, with a string of beads attached to it."
+	icon = 'icons/obj/clothing/chaplain.dmi'
+	icon_state = "rosary"
+	overlay_state = "rosary"
 	flippable = 1
 
-	drop_sound = 'sound/items/drop/scrap.ogg'
+	slot_flags = SLOT_BELT | SLOT_TIE
 
-/obj/item/clothing/accessory/medal/conduct
-	name = "distinguished conduct medal"
-	desc = "A bronze medal awarded for distinguished conduct. Whilst a great honor, this is most basic award on offer. It is often awarded by a captain to a member of their crew."
-	icon_state = "bronze_nt"
-
-/obj/item/clothing/accessory/medal/bronze_heart
-	name = "bronze heart medal"
-	desc = "A bronze heart-shaped medal awarded for sacrifice. It is often awarded posthumously or for severe injury in the line of duty."
-	icon_state = "bronze_heart"
-
-/obj/item/clothing/accessory/medal/nobel_science
-	name = "\improper Nobel science award"
-	desc = "A bronze medal which represents significant contributions to the field of science or engineering."
-
-/obj/item/clothing/accessory/medal/sol
-	name = "\improper ASSN medal of bravery"
-	desc = "A bronze medal dedicated to those who have demonstrated courageous acts in the name of the Alliance of Sovereign Solarian Nations."
-	icon_state = "bronze_sol"
-
-/obj/item/clothing/accessory/medal/iron
-	name = "iron medal"
-	desc = "A simple iron medal."
-	icon_state = "iron"
-	overlay_state = "iron"
-
-/obj/item/clothing/accessory/medal/iron/merit
-	name = "iron merit medal"
-	desc = "An iron medal awarded to NanoTrasen employees for merit."
-	icon_state = "iron_nt"
-
-/obj/item/clothing/accessory/medal/iron/star
-	name = "iron star medal"
-	desc = "An iron medal awarded to those who have provided service to their profession in the field of medical organisation, and/or to physicians by enhancing overall health and well-being of colleagues on both personal and professional levels."
-	icon_state = "iron_star"
-	overlay_state = "iron_star"
-
-/obj/item/clothing/accessory/medal/iron/sol
-	name = "\improper ASSN medal of effort"
-	desc = "An iron medal awarded for distinguished effort conducted by an individual in the name of the Alliance of Sovereign Solarion Nations."
-	icon_state = "iron_sol"
-
-/obj/item/clothing/accessory/medal/silver
-	name = "silver medal"
-	desc = "A silver medal."
-	icon_state = "silver"
-	overlay_state = "silver"
-
-/obj/item/clothing/accessory/medal/silver/valor
-	name = "medal of valor"
-	desc = "A silver medal awarded for acts of exceptional valor."
-	icon_state = "silver_sword"
-
-/obj/item/clothing/accessory/medal/silver/security
-	name = "robust security award"
-	desc = "An award for distinguished combat and sacrifice in defence of corporate commercial interests. Often awarded to security staff."
-	icon_state = "silver_nt"
-
-/obj/item/clothing/accessory/medal/silver/sol
-	name = "\improper ASSN medal of service"
-	desc = "A silver medal held for those who have served for long periods of time with pristine conduct in the name of the Alliance of Sovereign Solarian Nations."
-	icon_state = "silver_sol"
-
-/obj/item/clothing/accessory/medal/gold
-	name = "gold medal"
-	desc = "A prestigious golden medal."
-	icon_state = "gold"
-	overlay_state = "gold"
-
-/obj/item/clothing/accessory/medal/gold/star
-	name = "gold star medal"
-	desc = "Some sort of medal with finely-cut gold. There is a small arch depicted on it."
-	icon_state = "gold_star"
-
-/obj/item/clothing/accessory/medal/gold/sun
-	name = "gold sun medal"
-	desc = "A finely rounded gold medal with small, complicated engravings running all around it."
-	icon_state = "gold_sun"
-
-/obj/item/clothing/accessory/medal/gold/captain
-	name = "medal of captaincy"
-	desc = "A golden medal awarded exclusively to those promoted to the rank of captain. It signifies the codified responsibilities of a captain, and their undisputable authority over their crew."
-	icon_state = "gold_nt"
-
-/obj/item/clothing/accessory/medal/gold/heroism
-	name = "medal of exceptional heroism"
-	desc = "An extremely rare golden medal awarded only by company officials. To receive such a medal is the highest honor and as such, very few exist. This medal is almost never awarded to anybody but commanders."
-	icon_state = "gold_crest"
-
-/obj/item/clothing/accessory/medal/gold/sol
-	name = "\improper ASSN medal of distinction"
-	desc = "A gold medal reserved only for those with excellent performance in both combat and political training, for selflessness, and for bravery displayed in service under the Alliance of Sovereign Solarian Nations."
-	icon_state = "gold_sol"
-
-/obj/item/clothing/accessory/medal/white_heart
-	name = "distinguished volunteer's medal"
-	desc = "A white medal with a red cross on it for those who have performed outstanding medical services as a volunteer for the Interstellar Aid Corps."
-	icon_state = "white_heart"
-	overlay_state = "white_heart"
+	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
 
 /obj/item/clothing/accessory/suspenders
 	name = "suspenders"
@@ -335,60 +209,12 @@
 	item_state = "suspenders"
 
 /obj/item/clothing/accessory/scarf
-	name = "white scarf"
+	name = "scarf"
 	desc = "A simple scarf, to protect your neck from the cold of space."
-	icon_state = "whitescarf"
-	item_state = "whitescarf"
-	overlay_state = "whitescarf"
+	icon_state = "scarf"
+	item_state = "scarf"
+	overlay_state = "scarf"
 	flippable = 1
-
-/obj/item/clothing/accessory/scarf/yellow
-	name = "yellow scarf"
-	icon_state = "yellowscarf"
-	item_state = "yellowscarf"
-	overlay_state = "yellowscarf"
-
-/obj/item/clothing/accessory/scarf/green
-	name = "green scarf"
-	icon_state = "greenscarf"
-	item_state = "greenscarf"
-	overlay_state = "greenscarf"
-
-/obj/item/clothing/accessory/scarf/purple
-	name = "purple scarf"
-	icon_state = "purplescarf"
-	item_state = "purplescarf"
-	overlay_state = "purplescarf"
-
-/obj/item/clothing/accessory/scarf/black
-	name = "black scarf"
-	icon_state = "blackscarf"
-	item_state = "blackscarf"
-	overlay_state = "blackscarf"
-
-/obj/item/clothing/accessory/scarf/red
-	name = "red scarf"
-	icon_state = "redscarf"
-	item_state = "redscarf"
-	overlay_state = "redscarf"
-
-/obj/item/clothing/accessory/scarf/orange
-	name = "orange scarf"
-	icon_state = "orangescarf"
-	item_state = "orangescarf"
-	overlay_state = "orangescarf"
-
-/obj/item/clothing/accessory/scarf/light_blue
-	name = "light blue scarf"
-	icon_state = "lightbluescarf"
-	item_state = "lightbluescarf"
-	overlay_state = "lightbluescarf"
-
-/obj/item/clothing/accessory/scarf/dark_blue
-	name = "dark blue scarf"
-	icon_state = "darkbluescarf"
-	item_state = "darkbluescarf"
-	overlay_state = "darkbluescarf"
 
 /obj/item/clothing/accessory/scarf/zebra
 	name = "zebra scarf"
@@ -418,12 +244,11 @@
 	icon_state = "classicponcho"
 	item_state = "classicponcho"
 	icon_override = 'icons/mob/ties.dmi'
-	allowed = list(/obj/item/weapon/tank/emergency_oxygen,/obj/item/weapon/storage/bible,/obj/item/weapon/nullrod,/obj/item/weapon/reagent_containers/food/drinks/bottle/holywater)
-	armor = list(melee = 0, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
+	allowed = list(/obj/item/tank/emergency_oxygen,/obj/item/storage/bible,/obj/item/nullrod,/obj/item/reagent_containers/food/drinks/bottle/holywater)
 	slot_flags = SLOT_OCLOTHING | SLOT_TIE
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|LEGS
 	siemens_coefficient = 0.9
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	slot = "over"
 	var/allow_tail_hiding = TRUE //in case if you want to allow someone to switch the HIDETAIL var or not
 
@@ -434,7 +259,12 @@
 	if(allow_tail_hiding)
 		flags_inv ^= HIDETAIL
 		to_chat(usr, "<span class='notice'>[src] will now [flags_inv & HIDETAIL ? "hide" : "show"] your tail.</span>")
-	..()
+
+/obj/item/clothing/accessory/poncho/big
+	name = "large poncho"
+	desc = "A simple, comfortable poncho. Noticibly larger around the shoulders."
+	item_state = "classicponcho-big"
+	icon_state = "classicponcho-big"
 
 /obj/item/clothing/accessory/poncho/green
 	name = "green poncho"
@@ -442,11 +272,23 @@
 	icon_state = "greenponcho"
 	item_state = "greenponcho"
 
+/obj/item/clothing/accessory/poncho/green/big
+	name = "large green poncho"
+	desc = "A simple, comfortable cloak without sleeves. This one is green. Noticibly larger around the shoulders."
+	icon_state = "greenponcho-big"
+	item_state = "greenponcho-big"
+
 /obj/item/clothing/accessory/poncho/red
 	name = "red poncho"
 	desc = "A simple, comfortable cloak without sleeves. This one is red."
 	icon_state = "redponcho"
 	item_state = "redponcho"
+
+/obj/item/clothing/accessory/poncho/red/big
+	name = "large red poncho"
+	desc = "A simple, comfortable cloak without sleeves. This one is red. Noticibly larger around the shoulders."
+	icon_state = "redponcho-big"
+	item_state = "redponcho-big"
 
 /obj/item/clothing/accessory/poncho/purple
 	name = "purple poncho"
@@ -462,9 +304,15 @@
 
 /obj/item/clothing/accessory/poncho/roles/medical
 	name = "medical poncho"
-	desc = "A simple, comfortable cloak without sleeves. This one is white with green and blue tint, standard Medical colors."
+	desc = "A simple, comfortable cloak without sleeves. This one is white with a green tint, standard Medical colors."
 	icon_state = "medponcho"
 	item_state = "medponcho"
+
+/obj/item/clothing/accessory/poncho/roles/iac
+	name = "IAC poncho"
+	desc = "A simple, comfortable cloak without sleeves. This one is white with a blue tint, standard IAC colors."
+	icon_state = "IACponcho"
+	item_state = "IACponcho"
 
 /obj/item/clothing/accessory/poncho/roles/engineering
 	name = "engineering poncho"
@@ -587,7 +435,7 @@
 /obj/item/clothing/accessory/poncho/shouldercape
 	name = "shoulder cape"
 	desc = "A simple shoulder cape."
-	description_fluff = "In Skrellian tradition, the length of cape typically signifies experience in various fields."
+	desc_fluff = "In Skrellian tradition, the length of cape typically signifies experience in various fields."
 	icon_state = "starcape"
 	item_state = "starcape"
 	flippable = 1
@@ -620,6 +468,13 @@
 	item_state = "galaxycape"
 	overlay_state = "galaxycape"
 
+/obj/item/clothing/accessory/poncho/trinary
+    name = "trinary perfection cape"
+    desc = "A brilliant red and brown cape, commonly worn by those who serve the Trinary Perfection."
+    icon_state = "trinary_cape"
+    item_state = "trinary_cape"
+    overlay_state = "trinary_cape"
+
 //tau ceti legion ribbons
 /obj/item/clothing/accessory/legion
 	name = "seniority ribbons"
@@ -649,12 +504,7 @@
 	desc = "A lightweight polymer frame meant to brace and hold someone's legs upright comfortably."
 	icon_state = "legbrace"
 	item_state = "legbrace"
-
-/obj/item/clothing/accessory/offworlder/bracer/neckbrace
-	name = "neckbrace"
-	desc = "A lightweight polymer frame meant to brace and hold someone's neck upright comfortably."
-	icon_state = "neckbrace"
-	item_state = "neckbrace"
+	drop_sound = 'sound/items/drop/gun.ogg'
 
 /obj/item/clothing/accessory/offworlder/bracer/neckbrace
 	name = "neckbrace"
@@ -669,6 +519,8 @@
 	item_state = "tc-pin"
 	overlay_state = "tc-pin"
 	flippable = 1
+	drop_sound = 'sound/items/drop/ring.ogg'
+	pickup_sound = 'sound/items/pickup/ring.ogg'
 
 /obj/item/clothing/accessory/sol_pin
 	name = "Sol Alliance pin"
@@ -677,18 +529,8 @@
 	item_state = "sol-pin"
 	overlay_state = "sol-pin"
 	flippable = 1
-
-/obj/item/clothing/accessory/hadii_pin
-	name = "hadiist party pin"
-	desc = "A small, red flag pin worn by members of the Hadiist party."
-	icon_state = "hadii-pin"
-	item_state = "hadii-pin"
-	overlay_state = "hadii-pin"
-	description_fluff = "The Party of the Free Tajara under the Leadership of Hadii is the only and ruling party in the PRA, with its leader always being the elected president. \
-	They follow Hadiism as their main ideology, with the objective of securing the tajaran freedom and place in the galactic community. Membership of the Hadiist Party is not open. \
-	For anyone to become a member, they must be approved by a committee that will consider their qualifications and past. Goverment officials can grant honorary memberships, this is \
-	seem as nothing but a honor and does not grant any status or position that a regular Party member would have."
-	flippable = 1
+	drop_sound = 'sound/items/drop/ring.ogg'
+	pickup_sound = 'sound/items/pickup/ring.ogg'
 
 /obj/item/clothing/accessory/dogtags
 	name = "dogtags"
@@ -696,6 +538,26 @@
 	icon_state = "tags"
 	item_state = "tags"
 	overlay_state = "tags"
+	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
+
+/obj/item/clothing/accessory/badge/namepin
+	name = "pin tag"
+	desc = "A small strip of metal to label its wearer."
+	icon_state = "namepintag"
+	overlay_state = null
+	badge_string = null
+	slot_flags = SLOT_TIE
+	w_class = ITEMSIZE_TINY
+
+/obj/item/clothing/accessory/bracelet
+	name = "bracelet"
+	desc = "A simple bracelet with a clasp."
+	icon_state = "bracelet"
+	w_class = ITEMSIZE_TINY
+	drop_sound = 'sound/items/drop/ring.ogg'
+	pickup_sound = 'sound/items/pickup/ring.ogg'
+	flippable = 1
 
 /obj/item/clothing/accessory/sleevepatch
 	name = "sleeve patch"
@@ -703,16 +565,18 @@
 	icon_state = "patch"
 	overlay_state = "patch"
 	flippable = 1
+	drop_sound = 'sound/items/drop/gloves.ogg'
+	pickup_sound = 'sound/items/pickup/gloves.ogg'
 
-/obj/item/clothing/accessory/sleevepatch/necro
-	name = "\improper Necropolis Industries sleeve patch"
-	desc = "An embroidered patch which can be attached to the shoulder sleeve of clothing. This one bears the Necropolis Industries logo."
+/obj/item/clothing/accessory/sleevepatch/zavodskoi
+	name = "\improper Zavodskoi Interstellar sleeve patch"
+	desc = "An embroidered patch which can be attached to the shoulder sleeve of clothing. This one bears the Zavodskoi Interstellar logo."
 	icon_state = "necro_patch"
 	overlay_state = "necro_patch"
 
-/obj/item/clothing/accessory/sleevepatch/necrosec
-	name = "\improper Necropolis Industries Security sleeve patch"
-	desc = "An embroidered patch which can be attached to the shoulder sleeve of clothing. This one bears the Necropolis Industries logo with an insignia."
+/obj/item/clothing/accessory/sleevepatch/zavodskoisec
+	name = "\improper Zavodskoi Interstellar Security sleeve patch"
+	desc = "An embroidered patch which can be attached to the shoulder sleeve of clothing. This one bears the Zavodskoi Interstellar logo with an insignia."
 	icon_state = "necrosec_patch"
 	overlay_state = "necrosec_patch"
 

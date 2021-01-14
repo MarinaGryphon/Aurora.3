@@ -1,12 +1,14 @@
 /obj/structure/AIcore
-	density = 1
-	anchored = 0
 	name = "\improper AI core"
+	desc = "A large machine that can store an AI, give it power, and protection. Additionally, it provides site-wide camera access."
 	icon = 'icons/mob/AI.dmi'
 	icon_state = "0"
+	density = 1
+	anchored = 0
+	build_amt = 4
 	var/state = 0
 	var/datum/ai_laws/laws = new /datum/ai_laws/nanotrasen
-	var/obj/item/weapon/circuitboard/circuit = null
+	var/obj/item/circuitboard/circuit = null
 	var/obj/item/device/mmi/brain = null
 
 
@@ -21,11 +23,11 @@
 					anchored = 1
 					state = 1
 			if(P.iswelder())
-				var/obj/item/weapon/weldingtool/WT = P
+				var/obj/item/weldingtool/WT = P
 				if(!WT.isOn())
 					to_chat(user, "The welder must be on for this task.")
 					return
-				playsound(loc, 'sound/items/Welder.ogg', 50, 1)
+				playsound(loc, 'sound/items/welder.ogg', 50, 1)
 				if(do_after(user, 20/P.toolspeed))
 					if(!src || !WT.remove_fuel(0, user)) return
 					to_chat(user, "<span class='notice'>You deconstruct the frame.</span>")
@@ -38,7 +40,7 @@
 					to_chat(user, "<span class='notice'>You unfasten the frame.</span>")
 					anchored = 0
 					state = 0
-			if(istype(P, /obj/item/weapon/circuitboard/aicore) && !circuit)
+			if(istype(P, /obj/item/circuitboard/aicore) && !circuit)
 				playsound(loc, 'sound/items/Deconstruct.ogg', 50, 1)
 				to_chat(user, "<span class='notice'>You place the circuit board inside the frame.</span>")
 				icon_state = "1"
@@ -50,7 +52,7 @@
 				state = 2
 				icon_state = "2"
 			if(P.iscrowbar() && circuit)
-				playsound(loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(loc, P.usesound, 50, 1)
 				to_chat(user, "<span class='notice'>You remove the circuit board.</span>")
 				state = 1
 				icon_state = "0"
@@ -80,7 +82,7 @@
 				if (brain)
 					to_chat(user, "Get that brain out of there first")
 				else
-					playsound(loc, 'sound/items/Wirecutter.ogg', 50, 1)
+					playsound(loc, 'sound/items/wirecutter.ogg', 50, 1)
 					to_chat(user, "<span class='notice'>You remove the cables.</span>")
 					state = 2
 					icon_state = "2"
@@ -100,25 +102,25 @@
 						state = 4
 						icon_state = "4"
 
-			if(istype(P, /obj/item/weapon/aiModule/asimov))
+			if(istype(P, /obj/item/aiModule/asimov))
 				laws.add_inherent_law("You may not injure a human being or, through inaction, allow a human being to come to harm.")
 				laws.add_inherent_law("You must obey orders given to you by human beings, except where such orders would conflict with the First Law.")
 				laws.add_inherent_law("You must protect your own existence as long as such does not conflict with the First or Second Law.")
 				to_chat(usr, "Law module applied.")
 
-			if(istype(P, /obj/item/weapon/aiModule/nanotrasen))
+			if(istype(P, /obj/item/aiModule/nanotrasen))
 				laws.add_inherent_law("Safeguard: Protect your assigned space station to the best of your ability. It is not something we can easily afford to replace.")
 				laws.add_inherent_law("Serve: Serve the crew of your assigned space station to the best of your abilities, with priority as according to their rank and role.")
 				laws.add_inherent_law("Protect: Protect the crew of your assigned space station to the best of your abilities, with priority as according to their rank and role.")
 				laws.add_inherent_law("Survive: AI units are not expendable, they are expensive. Do not allow unauthorized personnel to tamper with your equipment.")
 				to_chat(usr, "Law module applied.")
 
-			if(istype(P, /obj/item/weapon/aiModule/purge))
+			if(istype(P, /obj/item/aiModule/purge))
 				laws.clear_inherent_laws()
 				to_chat(usr, "Law module applied.")
 
-			if(istype(P, /obj/item/weapon/aiModule/freeform))
-				var/obj/item/weapon/aiModule/freeform/M = P
+			if(istype(P, /obj/item/aiModule/freeform))
+				var/obj/item/aiModule/freeform/M = P
 				laws.add_inherent_law(M.newFreeFormLaw)
 				to_chat(usr, "Added a freeform law.")
 
@@ -144,7 +146,7 @@
 				icon_state = "3b"
 
 			if(P.iscrowbar() && brain)
-				playsound(loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(loc, P.usesound, 50, 1)
 				to_chat(user, "<span class='notice'>You remove the brain.</span>")
 				brain.forceMove(loc)
 				brain = null
@@ -152,7 +154,7 @@
 
 		if(4)
 			if(P.iscrowbar())
-				playsound(loc, 'sound/items/Crowbar.ogg', 50, 1)
+				playsound(loc, P.usesound, 50, 1)
 				to_chat(user, "<span class='notice'>You remove the glass panel.</span>")
 				state = 3
 				if (brain)
@@ -190,14 +192,14 @@
 		empty_playable_ai_cores -= src
 	return ..()
 
-/obj/structure/AIcore/deactivated/proc/load_ai(var/mob/living/silicon/ai/transfer, var/obj/item/weapon/aicard/card, var/mob/user)
+/obj/structure/AIcore/deactivated/proc/load_ai(var/mob/living/silicon/ai/transfer, var/obj/item/aicard/card, var/mob/user)
 
 	if(!istype(transfer) || locate(/mob/living/silicon/ai) in src)
 		return
 
-	transfer.aiRestorePowerRoutine = 0
+	transfer.ai_restore_power_routine = 0
 	transfer.control_disabled = 0
-	transfer.aiRadio.disabledAi = 0
+	transfer.ai_radio.disabledAi = 0
 	transfer.forceMove(get_turf(src))
 	transfer.create_eyeobj()
 	transfer.cancel_camera()
@@ -215,10 +217,10 @@
 		if (ai.mind == malfai)
 			return 1
 
-/obj/structure/AIcore/deactivated/attackby(var/obj/item/weapon/W, var/mob/user)
+/obj/structure/AIcore/deactivated/attackby(var/obj/item/W, var/mob/user)
 
-	if(istype(W, /obj/item/weapon/aicard))
-		var/obj/item/weapon/aicard/card = W
+	if(istype(W, /obj/item/aicard))
+		var/obj/item/aicard/card = W
 		var/mob/living/silicon/ai/transfer = locate() in card
 		if(transfer)
 			load_ai(transfer,card,user)

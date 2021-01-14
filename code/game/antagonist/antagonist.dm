@@ -3,11 +3,12 @@
 	// Text shown when becoming this antagonist.
 	var/list/restricted_jobs =     list()   // Jobs that cannot be this antagonist (depending on config)
 	var/list/protected_jobs =      list()   // As above.
-	var/list/restricted_species =   list()   // species that cannot be this antag - Ryan784
-	var/list/chance_restricted_jobs = list() // chance based restrictions
+	var/list/restricted_species =   list()  // species that cannot be this antag - Ryan784
+	var/required_age = null                 // how old should player clients be before being allowed to play this antag
 
 	// Strings.
 	var/welcome_text = "Cry havoc and let slip the dogs of war!"
+	var/antag_sound = 'sound/effects/antag_notice/general_baddie_alert.ogg' // The sound file to play when someone gets this role. Only they can hear it.
 	var/leader_welcome_text                 // Text shown to the leader, if any.
 	var/victory_text                        // World output at roundend for victory.
 	var/loss_text                           // As above for loss.
@@ -54,7 +55,7 @@
 	var/db_log_id = null                    // ID of the db entry used to track that antagonist
 
 	// Used for setting appearance.
-	var/list/valid_species =       list("Unathi","Tajara","Skrell","Human")
+	var/list/valid_species =       list(SPECIES_UNATHI,SPECIES_TAJARA,SPECIES_SKRELL,SPECIES_HUMAN)
 
 	// Runtime vars.
 	var/datum/mind/leader                   // Current leader, if any.
@@ -70,7 +71,7 @@
 
 	// ID card stuff.
 	var/default_access = list()
-	var/id_type = /obj/item/weapon/card/id
+	var/id_type = /obj/item/card/id
 
 
 /datum/antagonist/New()
@@ -94,7 +95,7 @@
 	return 1
 
 // Get the raw list of potential players.
-/datum/antagonist/proc/build_candidate_list(var/ghosts_only, var/allow_animals = 0, var/chance_per_job = TRUE)
+/datum/antagonist/proc/build_candidate_list(var/ghosts_only, var/allow_animals = 0)
 	candidates = list() // Clear.
 
 	// Prune restricted status. Broke it up for readability.
@@ -106,14 +107,14 @@
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: Simple animals cannot be this role!")
 		else if(player.special_role)
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: They already have a special role ([player.special_role])!")
-		else if (player in pending_antagonists)
+		else if(player in pending_antagonists)
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: They have already been selected for this role!")
 		else if(!can_become_antag(player))
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: They are blacklisted for this role!")
 		else if(player_is_antag(player))
 			log_debug("[key_name(player)] is not eligible to become a [role_text]: They are already an antagonist!")
-		else if(!can_become_antag_chance(player) && chance_per_job)
-			log_debug("[key_name(player)] is not eligible to become a [role_text]: They are unlucky (based on job)!")
+		else if(establish_db_connection(dbcon) && required_age && required_age > player.current.client?.player_age)
+			log_debug("[key_name(player)] is not eligible to become a [role_text]: Their playtime age is too low!")
 		else
 			candidates += player
 
@@ -171,9 +172,9 @@
 	if(!candidates.len)
 		return 0
 
-	//Grab candidates randomly until we have enough.
+	//Grab candidates until we have enough.
 	while(candidates.len && pending_antagonists.len < spawn_target)
-		var/datum/mind/player = pick(candidates)
+		var/datum/mind/player = candidates[1]
 		candidates -= player
 		draft_antagonist(player)
 

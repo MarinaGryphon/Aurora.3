@@ -6,13 +6,13 @@
 	density = 1
 	anchored = 1
 	use_power = 1
-	idle_power_usage = 50
+	idle_power_usage = 75
 	has_special_power_checks = TRUE
 	var/mob/occupant = null
-	var/obj/item/weapon/cell/cell = null
+	var/obj/item/cell/cell = null
 	var/icon_update_tick = 0	// Used to rebuild the overlay only once every 10 ticks
 	var/charging = 0
-	var/charging_efficiency = 0.85//Multiplier applied to all operations of giving power to cells, represents entropy. Efficiency increases with upgrades
+	var/charging_efficiency = 1.3//Multiplier applied to all operations of giving power to cells, represents entropy. Efficiency increases with upgrades
 	var/charging_power			// W. Power rating drawn from internal cell to recharge occupant's cell 60 kW unupgraded
 	var/restore_power_active	// W. Power drawn from APC to recharge internal cell when an occupant is charging. 40 kW if un-upgraded
 	var/restore_power_passive	// W. Power drawn from APC to recharge internal cell when idle. 7 kW if un-upgraded
@@ -23,10 +23,10 @@
 	var/wire_power_use = 500	// power used per point of burn damage repaired.
 
 	component_types = list(
-		/obj/item/weapon/circuitboard/recharge_station,
-		/obj/item/weapon/stock_parts/manipulator = 2,
-		/obj/item/weapon/stock_parts/capacitor = 2,
-		/obj/item/weapon/cell/high,
+		/obj/item/circuitboard/recharge_station,
+		/obj/item/stock_parts/manipulator = 2,
+		/obj/item/stock_parts/capacitor = 2,
+		/obj/item/cell/high,
 		/obj/item/stack/cable_coil{amount = 5}
 	)
 
@@ -76,40 +76,50 @@
 		return ..()
 
 	if(!has_cell_power())
-		return 0
+		return FALSE
 	if(src.use_power == 1)
 		cell.use(idle_power_usage * CELLRATE)
 	else if(src.use_power >= 2)
 		cell.use(active_power_usage * CELLRATE)
-	return 1
+	return TRUE
 
 //Processes the occupant, drawing from the internal power cell if needed.
 /obj/machinery/recharge_station/proc/process_occupant()
+	if(!isrobot(occupant) && !ishuman(occupant))
+		return
+
+	var/obj/item/cell/target
 	if(isrobot(occupant))
 		var/mob/living/silicon/robot/R = occupant
 
 		if(R.module)
 			R.module.respawn_consumable(R, charging_power * CELLRATE / 250) //consumables are magical, apparently
-		if(R.cell && !R.cell.fully_charged())
-			var/diff = min(R.cell.maxcharge - R.cell.charge, charging_power * CELLRATE) // Capped by charging_power / tick
-			var/charge_used = cell.use(diff)
-			R.cell.give(charge_used*charging_efficiency)
+		target = R.cell
 
 		//Lastly, attempt to repair the cyborg if enabled
 		if(weld_rate && R.getBruteLoss() && cell.checked_use(weld_power_use * weld_rate * CELLRATE))
 			R.adjustBruteLoss(-weld_rate)
 		if(wire_rate && R.getFireLoss() && cell.checked_use(wire_power_use * wire_rate * CELLRATE))
 			R.adjustFireLoss(-wire_rate)
-	else if(ishuman(occupant))
-		var/mob/living/carbon/human/H = occupant
-		if(!isnull(H.internal_organs_by_name["cell"]) && H.nutrition < H.max_nutrition)
-			H.adjustNutritionLoss(-10)
-			cell.use(7000/H.max_nutrition*10)
 
+	if(ishuman(occupant))
+		var/mob/living/carbon/human/H = occupant
+		var/obj/item/organ/internal/cell/IC = H.internal_organs_by_name[BP_CELL]
+		if(IC)
+			target = IC.cell
+		if((!target || target.percent() > 95) && istype(H.back, /obj/item/rig))
+			var/obj/item/rig/R = H.back
+			if(R.cell && !R.cell.fully_charged())
+				target = R.cell
+
+	if(target && !target.fully_charged())
+		var/diff = min(target.maxcharge - target.charge, charging_power * CELLRATE) // Capped by charging_power / tick
+		var/charge_used = cell.use(diff)
+		target.give(charge_used*charging_efficiency)
 
 /obj/machinery/recharge_station/examine(mob/user)
 	..(user)
-	to_chat(user, "The charge meter reads: [round(chargepercentage())]%")
+	to_chat(user, "The charge meter reads: [round(chargepercentage())]%.")
 
 /obj/machinery/recharge_station/proc/chargepercentage()
 	if(!cell)
@@ -120,7 +130,6 @@
 	if(user.stat)
 		return
 	go_out()
-	return
 
 /obj/machinery/recharge_station/emp_act(severity)
 	if(occupant)
@@ -146,14 +155,14 @@
 	var/man_rating = 0
 	var/cap_rating = 0
 
-	for(var/obj/item/weapon/stock_parts/P in component_parts)
+	for(var/obj/item/stock_parts/P in component_parts)
 		if(iscapacitor(P))
 			cap_rating += P.rating
 		else if(ismanipulator(P))
 			man_rating += P.rating
-	cell = locate(/obj/item/weapon/cell) in component_parts
+	cell = locate(/obj/item/cell) in component_parts
 
-	charging_efficiency = 0.85 + 0.015 * cap_rating
+	charging_efficiency = 1.3 + 0.030 * cap_rating
 	charging_power = 30000 + 12000 * cap_rating
 	restore_power_active = 10000 + 10000 * cap_rating
 	restore_power_passive = 5000 + 1000 * cap_rating
@@ -220,12 +229,16 @@
 	if(isrobot(M))
 		var/mob/living/silicon/robot/R = M
 		if(R.cell)
-			return 1
+			return TRUE
 	if(ishuman(M))
 		var/mob/living/carbon/human/H = M
-		if(!isnull(H.internal_organs_by_name["cell"]))
-			return 1
-	return 0
+		if(!isnull(H.internal_organs_by_name[BP_CELL]))
+			return TRUE
+		if(istype(H.back, /obj/item/rig))
+			var/obj/item/rig/R = H.back
+			if(R.get_cell())
+				return TRUE
+	return FALSE
 
 /obj/machinery/recharge_station/proc/go_out()
 	if(!occupant)
@@ -262,17 +275,17 @@
 	if (istype(C, /mob/living/silicon/robot))
 		var/mob/living/silicon/robot/R = C
 		if (!user.Adjacent(R) || !Adjacent(user))
-			to_chat(user, span("danger", "You need to get closer if you want to put [C] into that charger!"))
+			to_chat(user, SPAN_DANGER("You need to get closer if you want to put [C] into that charger!"))
 			return
 		user.face_atom(src)
-		user.visible_message(span("danger","[user] starts hauling [C] into the recharging unit!"), span("danger","You start hauling and pushing [C] into the recharger. This might take a while..."), "You hear heaving and straining")
+		user.visible_message(SPAN_DANGER("[user] starts hauling [C] into the recharging unit!"), SPAN_DANGER("You start hauling and pushing [C] into the recharger. This might take a while..."), "You hear heaving and straining")
 		if (do_mob(user, R, R.mob_size*10, needhand = 1))
 			if (go_in(R))
-				user.visible_message(span("notice","After a great effort, [user] manages to get [C] into the recharging unit!"))
+				user.visible_message(SPAN_NOTICE("After a great effort, [user] manages to get [C] into the recharging unit!"))
 				return 1
 			else
-				to_chat(user, span("danger","Failed loading [C] into the charger. Please ensure that [C] has a power cell and is not buckled down, and that the charger is functioning."))
+				to_chat(user, SPAN_DANGER("Failed loading [C] into the charger. Please ensure that [C] has a power cell and is not buckled down, and that the charger is functioning."))
 		else
-			to_chat(user, span("danger","Cancelled loading [C] into the charger. You and [C] must stay still!"))
+			to_chat(user, SPAN_DANGER("Cancelled loading [C] into the charger. You and [C] must stay still!"))
 		return
 	return ..()

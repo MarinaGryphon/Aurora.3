@@ -5,7 +5,7 @@
 	name = "Door"
 	desc = "It opens and closes."
 	icon = 'icons/obj/doors/Doorint.dmi'
-	icon_state = "door1"
+	icon_state = "door_closed"
 	anchored = 1
 	opacity = 1
 	density = 1
@@ -15,18 +15,19 @@
 
 	var/visible = 1
 	var/p_open = 0
-	var/operating = 0
+	var/operating = FALSE
 	var/autoclose = 0
 	var/glass = 0
 	var/normalspeed = 1
 	var/heat_proof = 0 // For glass airlocks/opacity firedoors
 	var/air_properties_vary_with_direction = 0
+	var/unres_dir = null // corresponds to dirs. if opened from this dir, no access is required
 	var/maxhealth = 300
 	var/health
 	var/destroy_hits = 10 //How many strong hits it takes to destroy the door
 	var/min_force = 10 //minimum amount of force needed to damage the door with a melee weapon
 	var/hitsound = 'sound/weapons/smash.ogg' //sound door makes when hit with a weapon
-	var/hitsound_light = 'sound/effects/Glasshit.ogg'//Sound door makes when hit very gently
+	var/hitsound_light = 'sound/effects/glass_hit.ogg'//Sound door makes when hit very gently
 	var/obj/item/stack/material/steel/repairing
 	var/block_air_zones = 1 //If set, air zones cannot merge across the door even when it is opened.
 	var/open_duration = 150//How long it stays open
@@ -71,7 +72,20 @@
 		layer = open_layer
 		explosion_resistance = 0
 
+	SetBounds()
+	health = maxhealth
 
+	update_nearby_tiles(need_rebuild=1)
+	if(hashatch && !(width > 1))
+		setup_hatch()
+
+/obj/machinery/door/Move(new_loc, new_dir)
+	. = ..()
+	SetBounds()
+	update_nearby_tiles()
+	update_icon()
+
+/obj/machinery/door/proc/SetBounds()
 	if(width > 1)
 		if(dir in list(EAST, WEST))
 			bound_width = width * world.icon_size
@@ -79,12 +93,6 @@
 		else
 			bound_width = world.icon_size
 			bound_height = width * world.icon_size
-
-	health = maxhealth
-
-	update_nearby_tiles(need_rebuild=1)
-	if (hashatch)
-		setup_hatch()
 
 /obj/machinery/door/proc/setup_hatch()
 	hatch_image = image('icons/obj/doors/hatches.dmi', src, hatchstyle, closed_layer+0.1)
@@ -144,7 +152,7 @@
 		var/mob/M = AM
 		if(world.time - M.last_bumped <= 10) return	//Can bump-open one airlock per second. This is to prevent shock spam.
 		M.last_bumped = world.time
-		if(!M.restrained() && (!issmall(M) || ishuman(M)))
+		if(!M.restrained() && (!issmall(M) || ishuman(M) || istype(M, /mob/living/silicon/robot/drone/mining)))
 			bumpopen(M)
 		return
 
@@ -162,14 +170,13 @@
 				open()
 		return
 
-	if(istype(AM, /obj/mecha))
-		var/obj/mecha/mecha = AM
-		if(density)
-			if(mecha.occupant && (src.allowed(mecha.occupant) || src.check_access_list(mecha.operation_req_access)))
+	if(istype(AM, /mob/living/simple_animal/spiderbot))
+		var/mob/living/simple_animal/spiderbot/bot = AM
+		if(src.check_access(bot.internal_id))
+			if(density)
 				open()
-			else
-				do_animate("deny")
 		return
+
 	if(istype(AM, /obj/structure/bed/chair/wheelchair))
 		var/obj/structure/bed/chair/wheelchair/wheel = AM
 		if(density)
@@ -186,6 +193,16 @@
 			else
 				do_animate("deny")
 		return
+
+	if(istype(AM, /obj/vehicle))
+		var/obj/vehicle/V = AM
+		if(density)
+			if(V.buckled_mob && (src.allowed(V.buckled_mob)))
+				open()
+			else
+				do_animate("deny")
+		return
+
 	return
 
 
@@ -257,8 +274,10 @@
 		take_damage(tforce)
 		return
 
-/obj/machinery/door/attack_ai(mob/user as mob)
-	return src.attack_hand(user)
+/obj/machinery/door/attack_ai(mob/user)
+	if(!ai_can_interact(user))
+		return
+	return attack_hand(user)
 
 /obj/machinery/door/attack_hand(mob/user as mob)
 	if(src.operating > 0 || isrobot(user))	return //borgs can't attack doors open because it conflicts with their AI-like interaction with them.
@@ -276,13 +295,9 @@
 		do_animate("deny")
 		return
 
-/obj/machinery/door/attack_tk(mob/user as mob)
-	if(requiresID() && !allowed(null))
-		return
-	..()
-
 /obj/machinery/door/attackby(obj/item/I as obj, mob/user as mob)
-	src.add_fingerprint(user)
+	if(!istype(I, /obj/item/forensics))
+		src.add_fingerprint(user)
 
 	if(istype(I, /obj/item/stack/material) && I.get_material_name() == src.get_material_name())
 		if(stat & BROKEN)
@@ -321,10 +336,10 @@
 			to_chat(user, "<span class='warning'>\The [src] must be closed before you can repair it.</span>")
 			return
 
-		var/obj/item/weapon/weldingtool/welder = I
+		var/obj/item/weldingtool/welder = I
 		if(welder.remove_fuel(0,user))
 			to_chat(user, "<span class='notice'>You start to fix dents and weld \the [repairing] into place.</span>")
-			playsound(src, 'sound/items/Welder.ogg', 100, 1)
+			playsound(src, 'sound/items/welder.ogg', 100, 1)
 			if(do_after(user, 5 * repairing.amount) && welder && welder.isOn())
 				to_chat(user, "<span class='notice'>You finish repairing the damage to \the [src].</span>")
 				health = between(health, health + repairing.amount*DOOR_REPAIR_AMOUNT, maxhealth)
@@ -335,14 +350,14 @@
 
 	if(repairing && I.iscrowbar())
 		to_chat(user, "<span class='notice'>You remove \the [repairing].</span>")
-		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
+		playsound(src.loc, I.usesound, 100, 1)
 		repairing.forceMove(user.loc)
 		repairing = null
 		return
 
 	//psa to whoever coded this, there are plenty of objects that need to call attack() on doors without bludgeoning them.
-	if(src.density && istype(I, /obj/item/weapon) && user.a_intent == I_HURT && !istype(I, /obj/item/weapon/card))
-		var/obj/item/weapon/W = I
+	if(src.density && istype(I, /obj/item) && user.a_intent == I_HURT && !istype(I, /obj/item/card))
+		var/obj/item/W = I
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
 		if(W.damtype == BRUTE || W.damtype == BURN)
 			user.do_attack_animation(src)
@@ -350,7 +365,7 @@
 				user.visible_message("<span class='danger'>\The [user] hits \the [src] with \the [W] with no visible effect.</span>")
 			else
 				user.visible_message("<span class='danger'>\The [user] forcefully strikes \the [src] with \the [W]!</span>")
-				playsound(src.loc, hitsound, 100, 1)
+				playsound(src.loc, hitsound, W.get_clamped_volume(), 1)
 				take_damage(W.force)
 		return
 
@@ -372,9 +387,10 @@
 /obj/machinery/door/emag_act(var/remaining_charges)
 	if(density && operable())
 		do_animate("spark")
+		emagged = 1
 		sleep(6)
-		open()
-		operating = -1
+		stat |= BROKEN
+		open(1)
 		return 1
 
 /obj/machinery/door/proc/take_damage(var/damage)
@@ -404,9 +420,7 @@
 
 /obj/machinery/door/proc/set_broken()
 	stat |= BROKEN
-	for (var/mob/O in viewers(src, null))
-		if ((O.client && !( O.blinded )))
-			O.show_message("[src.name] breaks!" )
+	visible_message(SPAN_WARNING("[src] breaks!"))
 	update_icon()
 	return
 
@@ -454,9 +468,9 @@
 
 /obj/machinery/door/update_icon()
 	if(density)
-		icon_state = "door1"
+		icon_state = "door_closed"
 	else
-		icon_state = "door0"
+		icon_state = "door_open"
 	return
 
 
@@ -485,10 +499,10 @@
 /obj/machinery/door/proc/open(var/forced = 0)
 	if(!can_open(forced))
 		return
-	operating = 1
+	operating = TRUE
 
 	do_animate("opening")
-	icon_state = "door0"
+	icon_state = "door_open"
 	set_opacity(0)
 	sleep(3)
 	src.density = 0
@@ -498,7 +512,7 @@
 	explosion_resistance = 0
 	update_icon()
 	set_opacity(0)
-	operating = 0
+	operating = FALSE
 
 	if(autoclose)
 		close_door_in(next_close_time())
@@ -517,8 +531,9 @@
 		if (autoclose)
 			for (var/atom/movable/M in get_turf(src))
 				if (M.density && M != src)
-					addtimer(CALLBACK(src, .proc/autoclose), 60)
-	operating = 1
+					addtimer(CALLBACK(src, .proc/autoclose), 60, TIMER_UNIQUE)
+					break
+	operating = TRUE
 
 	do_animate("closing")
 	sleep(3)
@@ -530,7 +545,7 @@
 	update_icon()
 	if(visible && !glass)
 		set_opacity(1)	//caaaaarn!
-	operating = 0
+	operating = FALSE
 
 	//I shall not add a check every x ticks if a door has closed over some fire.
 	var/obj/fire/fire = locate() in loc
@@ -543,8 +558,15 @@
 
 /obj/machinery/door/allowed(mob/M)
 	if(!requiresID())
-		return 1 // Door doesn't require an ID. So obviously they're allowed.
+		return TRUE // Door doesn't require an ID. So obviously they're allowed.
+	if(unrestricted_side(M))
+		return TRUE
 	return ..(M)
+
+/obj/machinery/door/proc/unrestricted_side(mob/M) //Allows for specific side of airlocks to be unrestrected (IE, can exit maint freely, but need access to enter)
+	if(!unres_dir)
+		return FALSE
+	return get_dir(src, M) & unres_dir
 
 /obj/machinery/door/update_nearby_tiles(need_rebuild)
 	for(var/turf/T in locs)
@@ -567,18 +589,13 @@
 		return src.density
 	return !src.density
 
-/obj/machinery/door/Move(new_loc, new_dir)
-	//update_nearby_tiles()
-	. = ..()
-	if(width > 1)
-		if(dir in list(EAST, WEST))
-			bound_width = width * world.icon_size
-			bound_height = world.icon_size
-		else
-			bound_width = world.icon_size
-			bound_height = width * world.icon_size
-
-	update_nearby_tiles()
-
 /obj/machinery/door/morgue
 	icon = 'icons/obj/doors/doormorgue.dmi'
+
+/obj/machinery/door/do_simple_ranged_interaction(var/mob/user)
+	if(!requiresID() || allowed(null))
+		if(can_open())
+			open() //Whoever didn't write a toggle proc for airlocks, I hope you step on a lego.
+		else if(can_close())
+			close()
+	return TRUE

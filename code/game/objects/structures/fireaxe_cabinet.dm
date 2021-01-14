@@ -9,11 +9,11 @@
 	var/open
 	var/unlocked
 	var/shattered
-	var/obj/item/weapon/material/twohanded/fireaxe/fireaxe
+	var/obj/item/material/twohanded/fireaxe/fireaxe
 
 /obj/structure/fireaxecabinet/attack_generic(var/mob/user, var/damage, var/attack_verb, var/wallbreaker)
 	user.do_attack_animation(src)
-	playsound(user, 'sound/effects/Glasshit.ogg', 50, 1)
+	playsound(user, 'sound/effects/glass_hit.ogg', 50, 1)
 	visible_message("<span class='danger'>[user] [attack_verb] \the [src]!</span>")
 	if(damage_threshold > damage)
 		to_chat(user, "<span class='danger'>Your strike is deflected by the reinforced glass!</span>")
@@ -23,7 +23,7 @@
 	shattered = 1
 	unlocked = 1
 	open = 1
-	playsound(user, 'sound/effects/Glassbr3.ogg', 100, 1)
+	playsound(user, /decl/sound_category/glass_break_sound, 100, 1)
 	update_icon()
 
 /obj/structure/fireaxecabinet/update_icon()
@@ -41,6 +41,8 @@
 	update_icon()
 
 /obj/structure/fireaxecabinet/attack_ai(var/mob/user)
+	if(!ai_can_interact(user))
+		return
 	toggle_lock(user)
 
 /obj/structure/fireaxecabinet/attack_hand(var/mob/user)
@@ -82,7 +84,7 @@
 		toggle_lock(user)
 		return
 
-	if(istype(O, /obj/item/weapon/material/twohanded/fireaxe))
+	if(istype(O, /obj/item/material/twohanded/fireaxe))
 		if(open)
 			if(fireaxe)
 				to_chat(user, "<span class='warning'>There is already \a [fireaxe] inside \the [src].</span>")

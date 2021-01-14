@@ -1,7 +1,7 @@
 /obj/structure/janitorialcart
 	name = "janitorial cart"
 	desc = "The ultimate in janitorial carts! Has space for water, mops, signs, trash bags, and more!"
-	description_info  = "Click and drag a mop bucket onto the cart to mount it\
+	desc_info  = "Click and drag a mop bucket onto the cart to mount it\
 	</br>Alt+Click with a mop to put it away, a normal click will wet it in the bucket.\
 	</br>Alt+Click with a container, such as a bucket, to pour its contents into the mounted bucket. A normal click will toss it into the trash\
 	</br>You can also use a lightreplacer, spraybottle (of spacecleaner) and four wet-floor signs on the cart to store them"
@@ -11,18 +11,33 @@
 	density = 1
 	climbable = 1
 	flags = OPENCONTAINER
+	build_amt = 15
 	//copypaste sorry
 	var/amount_per_transfer_from_this = 5 //shit I dunno, adding this so syringes stop runtime erroring. --NeoFite
-	var/obj/item/weapon/storage/bag/trash/mybag	= null
-	var/obj/item/weapon/mop/mymop = null
-	var/obj/item/weapon/reagent_containers/spray/myspray = null
+	var/obj/item/storage/bag/trash/mybag	= null
+	var/obj/item/mop/mymop = null
+	var/obj/item/reagent_containers/spray/myspray = null
 	var/obj/item/device/lightreplacer/myreplacer = null
 	var/obj/structure/mopbucket/mybucket = null
 	var/signs = 0	//maximum capacity hardcoded below
 	var/has_items = 0//This is set true whenever the cart has anything loaded/mounted on it
-	var/dismantled = 0//This is set true after the object has been dismantled to avoid an infintie loop
 	var/driving
 	var/mob/living/pulling
+
+/obj/structure/janitorialcart/full/Initialize()
+	..()
+	mybag = new /obj/item/storage/bag/trash(src)
+	mymop = new /obj/item/mop(src)
+	myspray = new /obj/item/reagent_containers/spray/cleaner(src)
+	myreplacer = new /obj/item/device/lightreplacer(src)
+
+	mybucket = new /obj/structure/mopbucket(src)
+	mybucket.reagents.add_reagent(/datum/reagent/water, mybucket.bucketsize)
+
+	for(signs, signs < 4, signs++)
+		new /obj/item/clothing/suit/caution(src)
+
+	update_icon()
 
 /obj/structure/janitorialcart/New()
 	..()
@@ -44,9 +59,9 @@
 	if(..(user, 1))
 		if (mybucket)
 			var/contains = mybucket.reagents.total_volume
-			to_chat(user, "\icon[src] The bucket contains [contains] unit\s of liquid!")
+			to_chat(user, "[icon2html(src, user)] The bucket contains [contains] unit\s of liquid!")
 		else
-			to_chat(user, "\icon[src] There is no bucket mounted on it!")
+			to_chat(user, "[icon2html(src, user)] There is no bucket mounted on it!")
 	//everything else is visible, so doesn't need to be mentioned
 
 
@@ -65,7 +80,7 @@
 /obj/structure/janitorialcart/AltClick()
 	if(!usr || usr.stat || usr.lying || usr.restrained() || !Adjacent(usr))	return
 	var/obj/I = usr.get_active_hand()
-	if(istype(I, /obj/item/weapon/mop))
+	if(istype(I, /obj/item/mop))
 		if(!mymop)
 			usr.drop_from_inventory(I,src)
 			mymop = I
@@ -75,8 +90,8 @@
 		else
 			to_chat(usr, "<span class='notice'>The cart already has a mop attached</span>")
 		return
-	else if(istype(I, /obj/item/weapon/reagent_containers) && mybucket)
-		var/obj/item/weapon/reagent_containers/C = I
+	else if(istype(I, /obj/item/reagent_containers) && mybucket)
+		var/obj/item/reagent_containers/C = I
 		C.afterattack(mybucket, usr, 1)
 	else if(istype (I, /obj/item/device/lightreplacer))
 		var/obj/item/device/lightreplacer/LR = I
@@ -85,7 +100,7 @@
 
 
 /obj/structure/janitorialcart/attackby(obj/item/I, mob/user)
-	if(istype(I, /obj/item/weapon/mop) || istype(I, /obj/item/weapon/reagent_containers/glass/rag) || istype(I, /obj/item/weapon/soap))
+	if(istype(I, /obj/item/mop) || istype(I, /obj/item/reagent_containers/glass/rag) || istype(I, /obj/item/soap))
 		if (mybucket)
 			if(I.reagents.total_volume < I.reagents.maximum_volume)
 				if(mybucket.reagents.total_volume < 1)
@@ -102,7 +117,7 @@
 			to_chat(user, "<span class='notice'>There is no bucket mounted here to dip [I] into!</span>")
 		return 1
 
-	else if(istype(I, /obj/item/weapon/reagent_containers/spray) && !myspray)
+	else if(istype(I, /obj/item/reagent_containers/spray) && !myspray)
 		user.drop_from_inventory(I,src)
 		myspray = I
 		update_icon()
@@ -118,7 +133,7 @@
 		to_chat(user, "<span class='notice'>You put [I] into [src].</span>")
 		return 1
 
-	else if(istype(I, /obj/item/weapon/storage/bag/trash) && !mybag)
+	else if(istype(I, /obj/item/storage/bag/trash) && !mybag)
 		user.drop_from_inventory(I,src)
 		mybag = I
 		I.forceMove(src)
@@ -127,7 +142,7 @@
 		to_chat(user, "<span class='notice'>You put [I] into [src].</span>")
 		return 1
 
-	else if(istype(I, /obj/item/weapon/caution))
+	else if(istype(I, /obj/item/clothing/suit/caution))
 		if(signs < 4)
 			user.drop_from_inventory(I,src)
 			signs++
@@ -143,25 +158,22 @@
 		//This return will prevent afterattack from executing if the object goes into the trashbag,
 		//This prevents dumb stuff like splashing the cart with the contents of a container, after putting said container into trash
 
-	else if (!has_items && (I.iswrench() || I.iswelder() || istype(I, /obj/item/weapon/gun/energy/plasmacutter)))
-		dismantle(user)
+	else if (!has_items && (I.iswrench() || I.iswelder() || istype(I, /obj/item/gun/energy/plasmacutter)))
+		take_apart(user, I)
 		return
 	..()
 
-/obj/structure/janitorialcart/proc/dismantle(var/mob/user = null)
-	if (!dismantled)
-		if (has_items)
-			spill()
+/obj/structure/janitorialcart/proc/take_apart(var/mob/user = null, var/obj/I)
+	if(has_items)
+		spill()
 
-		if (user)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
-			user.visible_message("[user] starts taking apart the [src]", "You start disasembling the [src]")
-			if (!do_after(user, 30, needhand = 0))
-				return
+	if(user)
+		playsound(src.loc, I.usesound, 50, 1)
+		user.visible_message("<b>[user]</b> starts taking apart the [src]...", SPAN_NOTICE("You start disassembling the [src]..."))
+		if (!do_after(user, 30, needhand = 0))
+			return
 
-		new /obj/item/stack/material/steel(src.loc, 15)
-		dismantled = 1
-		qdel(src)
+	dismantle()
 
 /obj/structure/janitorialcart/ex_act(severity)
 	spill(100 / severity)
@@ -191,7 +203,7 @@
 		mybucket = null
 
 	if (signs)
-		for (var/obj/item/weapon/caution/Sign in src)
+		for (var/obj/item/clothing/suit/caution/Sign in src)
 			if (prob(min((chance*2),100)))
 				signs--
 				Sign.forceMove(dropspot)
@@ -261,7 +273,7 @@
 					myreplacer = null
 			if("sign")
 				if(signs)
-					var/obj/item/weapon/caution/Sign = locate() in src
+					var/obj/item/clothing/suit/caution/Sign = locate() in src
 					if(Sign)
 						user.put_in_hands(Sign)
 						to_chat(user, "<span class='notice'>You take \a [Sign] from [src].</span>")

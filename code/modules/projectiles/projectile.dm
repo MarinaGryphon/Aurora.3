@@ -13,6 +13,7 @@
 	var/projectile_type = /obj/item/projectile
 
 	var/def_zone = ""	//Aiming at
+	var/hit_zone		// The place that actually got hit
 	var/mob/firer = null//Who shot it
 	var/silenced = FALSE	//Attack message
 
@@ -28,9 +29,11 @@
 
 	//Effects
 	var/damage = 10
-	var/damage_type = BRUTE		//BRUTE, BURN, TOX, OXY, CLONE, HALLOSS are the only things that should be in here
+	var/damage_type = BRUTE		//BRUTE, BURN, TOX, OXY, CLONE, PAIN are the only things that should be in here
+	var/damage_flags = DAM_BULLET
 	var/nodamage = FALSE		//Determines if the projectile will skip any damage inflictions
-	var/check_armour = "bullet" //Defines what armor to use when it hits things.  Must be set to bullet, laser, energy,or bomb	//Cael - bio and rad are also valid
+	var/check_armor = "bullet" //Defines what armor to use when it hits things.  Must be set to bullet, laser, energy,or bomb	//Cael - bio and rad are also valid
+	var/list/impact_sounds	//for different categories, IMPACT_MEAT etc
 
 	var/stun = 0
 	var/weaken = 0
@@ -43,6 +46,7 @@
 
 	var/incinerate = 0
 	var/embed = 0 // whether or not the projectile can embed itself in the mob
+	var/embed_chance = 0 // a flat bonus to the % chance to embed
 	var/shrapnel_type //type of shrapnel the projectile leaves in its target.
 
 	var/p_x = 16
@@ -60,7 +64,7 @@
 	*/
 
 	//Movement parameters
-	var/speed = 0.4			//Amount of deciseconds it takes for projectile to travel
+	var/speed = 0.2			//Amount of deciseconds it takes for projectile to travel
 	var/pixel_speed = 33	//pixels per move - DO NOT FUCK WITH THIS UNLESS YOU ABSOLUTELY KNOW WHAT YOU ARE DOING OR UNEXPECTED THINGS /WILL/ HAPPEN!
 	var/Angle = 0
 	var/original_angle = 0		//Angle at firing
@@ -107,23 +111,22 @@
 	if(isanimal(target))
 		return FALSE
 	var/mob/living/L = target
-	if (damage_type == BRUTE)
+	if(damage_type == BRUTE && damage > 5) //weak hits shouldn't make you gush blood
 		var/splatter_color = "#A10808"
 		var/mob/living/carbon/human/H = target
-		if (istype(H)&& H.species && H.species.blood_color)
+		if (istype(H) && H.species && H.species.blood_color)
 			splatter_color = H.species.blood_color
 		var/splatter_dir = starting ? get_dir(starting, target.loc) : dir
 		new /obj/effect/temp_visual/dir_setting/bloodsplatter(target.loc, splatter_dir, splatter_color)
-
 	if(hit_effect)
 		new hit_effect(target.loc)
 
 	L.apply_effects(stun, weaken, paralyze, 0, stutter, eyeblur, drowsy, agony, incinerate, blocked)
-	L.apply_effect(irradiate, IRRADIATE, L.getarmor(null, "rad")) //radiation protection is handled separately from other armour types.
+	L.apply_effect(irradiate, IRRADIATE, L.getarmor(null, "rad")) //radiation protection is handled separately from other armor types.
 	return 1
 
 //called when the projectile stops flying because it collided with something
-/obj/item/projectile/proc/on_impact(var/atom/A)
+/obj/item/projectile/proc/on_impact(var/atom/A, var/affected_limb)
 	return
 
 //Checks if the projectile is eligible for embedding. Not that it necessarily will.
@@ -132,6 +135,16 @@
 	if(!embed || damage_type != BRUTE)
 		return FALSE
 	return TRUE
+
+/obj/item/projectile/proc/do_embed(var/obj/item/organ/external/organ)
+	var/obj/item/SP = new shrapnel_type(organ)
+	SP.edge = TRUE
+	SP.sharp = TRUE
+	SP.name = (name != "shrapnel") ? "[initial(name)] shrapnel" : "shrapnel"
+	SP.desc += " It looks like it was fired from [shot_from]."
+	SP.forceMove(organ)
+	organ.embed(SP)
+	return SP
 
 /obj/item/projectile/proc/get_structure_damage()
 	if(damage_type == BRUTE || damage_type == BURN)
@@ -154,7 +167,7 @@
 	return fire(angle_override, direct_target)
 
 //called to launch a projectile from a gun
-/obj/item/projectile/proc/launch_from_gun(atom/target, target_zone, mob/user, params, angle_override, forced_spread, obj/item/weapon/gun/launcher)
+/obj/item/projectile/proc/launch_from_gun(atom/target, target_zone, mob/user, params, angle_override, forced_spread, obj/item/gun/launcher)
 
 	shot_from = launcher.name
 	silenced = launcher.silenced
@@ -168,27 +181,49 @@
 
 	//roll to-hit
 	miss_modifier = max(15*(distance-1) - round(25*accuracy) + miss_modifier, 0)
-	var/hit_zone = get_zone_with_miss_chance(def_zone, target_mob, miss_modifier, ranged_attack=(distance > 1 || original != target_mob)) //if the projectile hits a target we weren't originally aiming at then retain the chance to miss
+	hit_zone = get_zone_with_miss_chance(def_zone, target_mob, miss_modifier, ranged_attack=(distance > 1 || original != target_mob)) //if the projectile hits a target we weren't originally aiming at then retain the chance to miss
 
 	var/result = PROJECTILE_FORCE_MISS
 	if(hit_zone)
 		def_zone = hit_zone //set def_zone, so if the projectile ends up hitting someone else later (to be implemented), it is more likely to hit the same part
+		if(!target_mob.aura_check(AURA_TYPE_BULLET, src, def_zone))
+			return TRUE
 		result = target_mob.bullet_act(src, def_zone)
 
 	if(result == PROJECTILE_FORCE_MISS && (can_miss == 0)) //if you're shooting at point blank you can't miss.
 		if(!silenced)
 			target_mob.visible_message("<span class='notice'>\The [src] misses [target_mob] narrowly!</span>")
+			playsound(target_mob, /decl/sound_category/bulletflyby_sound, 50, 1)
 		return FALSE
 
+	if(result == PROJECTILE_DODGED)
+		return FALSE
+
+	var/impacted_organ = parse_zone(def_zone)
+	if(istype(target_mob, /mob/living/simple_animal))
+		var/mob/living/simple_animal/SA = target_mob
+		impacted_organ = pick(SA.organ_names)
 	//hit messages
 	if(silenced)
-		to_chat(target_mob, "<span class='danger'>You've been hit in the [parse_zone(def_zone)] by \the [src]!</span>")
+		to_chat(target_mob, "<span class='danger'>You've been hit in the [impacted_organ] by \a [src]!</span>")
 	else
-		target_mob.visible_message("<span class='danger'>\The [target_mob] is hit by \the [src] in the [parse_zone(def_zone)]!</span>", "<span class='danger'><font size='2'>You're hit by \the [src] in the [parse_zone(def_zone)]!</font></span>")//X has fired Y is now given by the guns so you cant tell who shot you if you could not see the shooter
+		target_mob.visible_message("<span class='danger'>\The [target_mob] is hit by \a [src] in the [impacted_organ]!</span>", "<span class='danger'><font size=2>You are hit by \a [src] in the [impacted_organ]!</font></span>")//X has fired Y is now given by the guns so you cant tell who shot you if you could not see the shooter
 
+	var/no_clients = FALSE
 	//admin logs
+	if((!ismob(firer) || !firer.client) && !target_mob.client)
+		no_clients = TRUE
+		if(istype(target_mob, /mob/living/heavy_vehicle))
+			var/mob/living/heavy_vehicle/HV = target_mob
+			for(var/pilot in HV.pilots)
+				var/mob/M = pilot
+				if(M.client)
+					no_clients = FALSE
+					break
+	if(no_clients)
+		no_attack_log = TRUE
 	if(!no_attack_log)
-		if(istype(firer, /mob))
+		if(ismob(firer))
 
 			var/attacker_message = "shot with \a [src.type]"
 			var/victim_message = "shot with \a [src.type]"
@@ -214,7 +249,7 @@
 		return FALSE
 
 	if(firer && !ignore_source_check)
-		if(A == firer || (A == firer.loc && istype(A, /obj/mecha))) //cannot shoot yourself or your mech
+		if(A == firer || (A == firer.loc)) //cannot shoot yourself or your mech
 			trajectory_ignore_forcemove = TRUE
 			forceMove(get_turf(A))
 			trajectory_ignore_forcemove = FALSE
@@ -226,7 +261,7 @@
 		var/mob/M = A
 		if(istype(A, /mob/living))
 			//if they have a neck grab on someone, that person gets hit instead
-			var/obj/item/weapon/grab/G = locate() in M
+			var/obj/item/grab/G = locate() in M
 			if(G && G.state >= GRAB_NECK)
 				visible_message("<span class='danger'>\The [M] uses [G.affecting] as a shield!</span>")
 				if(Collide(G.affecting))
@@ -263,7 +298,7 @@
 		return FALSE
 
 	//stop flying
-	on_impact(A)
+	on_impact(A, hit_zone)
 
 	qdel(src)
 	return TRUE
@@ -281,7 +316,7 @@
 	//If no angle needs to resolve it from xo/yo!
 	if(direct_target)
 		direct_target.bullet_act(src, def_zone)
-		on_impact(direct_target)
+		on_impact(direct_target, def_zone)
 		qdel(src)
 		return
 	if(isnum(angle))
@@ -361,6 +396,10 @@
 				on_impact(loc)
 			qdel(src)
 		return
+
+	if (QDELETED(src))
+		return
+
 	last_projectile_move = world.time
 	if(!nondirectional_sprite && !hitscanning)
 		var/matrix/M = new
@@ -368,6 +407,11 @@
 		transform = M
 	trajectory.increment(trajectory_multiplier)
 	var/turf/T = trajectory.return_turf()
+
+	if (!T) // Nowhere to go. Just die.
+		qdel(src)
+		return
+
 	if(T.z != loc.z)
 		before_move()
 		before_z_change(loc, T)
@@ -419,6 +463,9 @@
 		var/y = text2num(screen_loc_Y[1]) * 32 + text2num(screen_loc_Y[2]) - 32
 
 		//Calculate the "resolution" of screen based on client's view and world's icon size. This will work if the user can view more tiles than average.
+		if(istype(user, /mob/living/heavy_vehicle))
+			var/mob/living/heavy_vehicle/H = user
+			user = pick(H.pilots) //since i assume this is a list, we want only 1 person
 		var/list/screenview = getviewsize(user.client.view)
 		var/screenviewX = screenview[1] * world.icon_size
 		var/screenviewY = screenview[2] * world.icon_size
@@ -459,7 +506,8 @@
 
 /obj/item/projectile/proc/process_hitscan()
 	var/safety = range * 3
-	record_hitscan_start(RETURN_POINT_VECTOR_INCREMENT(src, Angle, MUZZLE_EFFECT_PIXEL_INCREMENT, 1))
+	var/return_vector = RETURN_POINT_VECTOR_INCREMENT(src, Angle, MUZZLE_EFFECT_PIXEL_INCREMENT, 1)
+	record_hitscan_start(return_vector)
 	while(loc && !QDELETED(src))
 		if(paused)
 			stoplag(1)
@@ -508,7 +556,8 @@
 		required_moves = SSprojectiles.global_max_tick_moves
 	if(!required_moves)
 		return
-	for(var/i in 1 to required_moves)
+
+	for(var/i = 1; i <= required_moves && !QDELETED(src); i++)
 		pixel_move(required_moves)
 
 /obj/item/projectile/proc/setAngle(new_angle)	//wrapper for overrides.

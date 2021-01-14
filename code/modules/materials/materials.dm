@@ -6,7 +6,7 @@
 
 	PATHS THAT USE DATUMS
 		turf/simulated/wall
-		obj/item/weapon/material
+		obj/item/material
 		obj/structure/barricade
 		obj/item/stack/material
 		obj/structure/table
@@ -24,47 +24,21 @@
 			wood
 */
 
-// Assoc list containing all material datums indexed by name.
-var/list/name_to_material
-
 //Returns the material the object is made of, if applicable.
 //Will we ever need to return more than one value here? Or should we just return the "dominant" material.
 /obj/proc/get_material()
-	return null
+	return
 
-//mostly for convenience
 /obj/proc/get_material_name()
 	var/material/material = get_material()
 	if(material)
 		return material.name
 
-// Builds the datum list above.
-/proc/populate_material_list(force_remake=0)
-	if(name_to_material && !force_remake) return // Already set up!
-	name_to_material = list()
-	for(var/type in typesof(/material) - /material)
-		var/material/new_mineral = new type
-		if(!new_mineral.name)
-			continue
-		name_to_material[lowertext(new_mineral.name)] = new_mineral
-	return 1
-
-// Safety proc to make sure the material list exists before trying to grab from it.
-/proc/get_material_by_name(name)
-	if(!name_to_material)
-		populate_material_list()
-	return name_to_material[name]
-
-/proc/material_display_name(name)
-	var/material/material = get_material_by_name(name)
-	if(material)
-		return material.display_name
-	return null
-
 // Material definition and procs follow.
 /material
 	var/name	                          // Unique name for use in indexing the list.
 	var/display_name                      // Prettier name for display.
+	var/adjective_name					  // To override the name for subtypes and stuff.
 	var/use_name
 	var/flags = 0                         // Various status modifiers.
 	var/sheet_singular_name = "sheet"
@@ -124,6 +98,17 @@ var/list/name_to_material
 	//What golem species is created with this material
 	var/golem = null
 
+	//automatic-ness for giving drop n' pickup sounds on init.
+	var/drop_sound = 'sound/items/drop/axe.ogg'
+	var/pickup_sound = 'sound/items/pickup/axe.ogg'
+
+	//for use in material weapons. because tiles and stacks sound different. since cardboard baseball bats sound different from wooden ones and et cetera.
+	var/weapon_drop_sound = 'sound/items/drop/metalweapon.ogg'
+	var/weapon_pickup_sound = 'sound/items/pickup/metalweapon.ogg'
+	var/weapon_hitsound = /decl/sound_category/swing_hit_sound
+
+	var/shatter_sound = /decl/sound_category/glass_break_sound //sound it makes when it breaks.
+
 /material/proc/build_rod_product(var/mob/user, var/obj/item/stack/used_stack, var/obj/item/stack/target_stack)
 	if(!rod_product)
 		to_chat(user, "<span class='warning'>You cannot make anything out of \the [target_stack]</span>")
@@ -160,6 +145,8 @@ var/list/name_to_material
 		display_name = name
 	if(!use_name)
 		use_name = display_name
+	if(!adjective_name)
+		adjective_name = display_name
 	if(!shard_icon)
 		shard_icon = shard_type
 
@@ -183,6 +170,10 @@ var/list/name_to_material
 			skip_blend = TRUE
 		if ("vaurca")
 			wall_icon = 'icons/turf/smooth/vaurca_wall.dmi'
+			skip_blend = TRUE
+		if ("shuttle")
+			skip_blend = TRUE
+		if ("skrell")
 			skip_blend = TRUE
 		else
 			world.log <<  "materials: [src] has unknown icon_base [icon_base]."
@@ -208,7 +199,7 @@ var/list/name_to_material
 	if(islist(composite_material))
 		for(var/material_string in composite_material)
 			temp_matter[material_string] = composite_material[material_string]
-	else if(SHEET_MATERIAL_AMOUNT)
+	else
 		temp_matter[name] = SHEET_MATERIAL_AMOUNT
 	return temp_matter
 
@@ -244,12 +235,17 @@ var/list/name_to_material
 // Debris product. Used ALL THE TIME.
 /material/proc/place_sheet(var/turf/target)
 	if(stack_type)
+		for(var/obj/item/stack/S in target)
+			if(S.type == stack_type && S.amount < S.max_amount)
+				S.amount++
+				S.update_icon()
+				return S
 		return new stack_type(target)
 
 // As above.
 /material/proc/place_shard(var/turf/target)
 	if(shard_type)
-		return new /obj/item/weapon/material/shard(target, src.name)
+		return new /obj/item/material/shard(target, src.name)
 
 // Used by walls and weapons to determine if they break or not.
 /material/proc/is_brittle()
@@ -260,7 +256,7 @@ var/list/name_to_material
 
 // Datum definitions follow.
 /material/uranium
-	name = "uranium"
+	name = MATERIAL_URANIUM
 	stack_type = /obj/item/stack/material/uranium
 	radioactivity = 12
 	icon_base = "stone"
@@ -270,10 +266,10 @@ var/list/name_to_material
 	hardness = 20
 	stack_origin_tech = list(TECH_MATERIAL = 5)
 	door_icon_base = "stone"
-	golem = "Uranium Golem"
+	golem = SPECIES_GOLEM_URANIUM
 
 /material/diamond
-	name = "diamond"
+	name = MATERIAL_DIAMOND
 	stack_type = /obj/item/stack/material/diamond
 	flags = MATERIAL_UNMELTABLE
 	cut_delay = 60
@@ -282,36 +278,47 @@ var/list/name_to_material
 	reflectivity = 0.6
 	conductivity = 1
 	shard_type = SHARD_SHARD
-	tableslam_noise = 'sound/effects/Glasshit.ogg'
-	hitsound = 'sound/effects/Glasshit.ogg'
+	tableslam_noise = 'sound/effects/glass_hit.ogg'
+	hitsound = 'sound/effects/glass_hit.ogg'
 	hardness = 100
 	stack_origin_tech = list(TECH_MATERIAL = 6)
-	golem = "Diamond Golem"
+	golem = SPECIES_GOLEM_DIAMOND
+	drop_sound = 'sound/items/drop/glass.ogg'
+	pickup_sound = 'sound/items/pickup/glass.ogg'
 
 /material/gold
-	name = "gold"
+	name = MATERIAL_GOLD
 	stack_type = /obj/item/stack/material/gold
 	icon_colour = "#EDD12F"
 	weight = 30
-	hardness = 15 
+	hardness = 15
 	conductivity = 41
 	stack_origin_tech = list(TECH_MATERIAL = 4)
 	sheet_singular_name = "ingot"
 	sheet_plural_name = "ingots"
-	golem = "Gold Golem"
+	golem = SPECIES_GOLEM_GOLD
 
 /material/bronze
-	name = "bronze"
+	name = MATERIAL_BRONZE
 	stack_type = /obj/item/stack/material/bronze
 	weight = 30
 	hardness = 50
 	conductivity = 11
 	icon_colour = "#EDD12F"
 	stack_origin_tech = list(TECH_MATERIAL = 2)
-	golem = "Bronze Golem"
+	golem = SPECIES_GOLEM_BRONZE
+
+/material/osmium
+	name = MATERIAL_OSMIUM
+	stack_type = /obj/item/stack/material/osmium
+	icon_colour = "#9999ff"
+	stack_origin_tech = list(TECH_MATERIAL = 5)
+	sheet_singular_name = "ingot"
+	sheet_plural_name = "ingots"
+	value = 30
 
 /material/silver
-	name = "silver"
+	name = MATERIAL_SILVER
 	stack_type = /obj/item/stack/material/silver
 	icon_colour = "#D1E6E3"
 	weight = 22
@@ -320,10 +327,10 @@ var/list/name_to_material
 	stack_origin_tech = list(TECH_MATERIAL = 3)
 	sheet_singular_name = "ingot"
 	sheet_plural_name = "ingots"
-	golem = "Bronze Golem"
+	golem = SPECIES_GOLEM_SILVER
 
 /material/phoron
-	name = "phoron"
+	name = MATERIAL_PHORON
 	stack_type = /obj/item/stack/material/phoron
 	ignition_point = PHORON_MINIMUM_BURN_TEMPERATURE
 	icon_base = "stone"
@@ -334,27 +341,12 @@ var/list/name_to_material
 	door_icon_base = "stone"
 	sheet_singular_name = "crystal"
 	sheet_plural_name = "crystals"
-	golem = "Phoron Golem"
-
-/*
-// Commenting this out while fires are so spectacularly lethal, as I can't seem to get this balanced appropriately.
-/material/phoron/combustion_effect(var/turf/T, var/temperature, var/effect_multiplier)
-	if(isnull(ignition_point))
-		return 0
-	if(temperature < ignition_point)
-		return 0
-	var/totalPhoron = 0
-	for(var/turf/simulated/floor/target_tile in range(2,T))
-		var/phoronToDeduce = (temperature/30) * effect_multiplier
-		totalPhoron += phoronToDeduce
-		target_tile.assume_gas("phoron", phoronToDeduce, 200+T0C)
-		spawn (0)
-			target_tile.hotspot_expose(temperature, 400)
-	return round(totalPhoron/100)
-*/
+	golem = SPECIES_GOLEM_PHORON
+	drop_sound = 'sound/items/drop/glass.ogg'
+	pickup_sound = 'sound/items/pickup/glass.ogg'
 
 /material/stone
-	name = "sandstone"
+	name = MATERIAL_SANDSTONE
 	stack_type = /obj/item/stack/material/sandstone
 	icon_base = "stone"
 	icon_reinf = "reinf_stone"
@@ -367,16 +359,20 @@ var/list/name_to_material
 	door_icon_base = "stone"
 	sheet_singular_name = "brick"
 	sheet_plural_name = "bricks"
-	golem = "Sand Golem"
+	golem = SPECIES_GOLEM_SAND
+	drop_sound = 'sound/items/drop/boots.ogg'
+	pickup_sound = 'sound/items/pickup/boots.ogg'
 
 /material/stone/marble
-	name = "marble"
+	name = MATERIAL_MARBLE
 	icon_colour = "#AAAAAA"
 	weight = 26
 	hardness = 70
 	integrity = 201 //hack to stop kitchen benches being flippable, todo: refactor into weight system
 	stack_type = /obj/item/stack/material/marble
-	golem = "Marble Golem"
+	golem = SPECIES_GOLEM_MARBLE
+	drop_sound = 'sound/items/drop/boots.ogg'
+	pickup_sound = 'sound/items/pickup/boots.ogg'
 
 /material/steel
 	name = DEFAULT_WALL_MATERIAL
@@ -387,21 +383,27 @@ var/list/name_to_material
 	icon_base = "solid"
 	icon_reinf = "reinf_over"
 	icon_colour = "#666666"
-	golem = "Steel Golem"
+	golem = SPECIES_GOLEM_STEEL
 	hitsound = 'sound/weapons/smash.ogg'
+	weapon_hitsound = 'sound/weapons/metalhit.ogg'
 
 /material/diona
-	name = "biomass"
+	name = MATERIAL_DIONA
 	icon_colour = null
 	stack_type = null
 	icon_base = "biomass"
-	integrity = 600
+	integrity = 100
+	// below is same as wood
+	melting_point = T0C + 300
+	ignition_point = T0C + 288
+	golem = SPECIES_GOLEM_WOOD
+	hitsound = 'sound/effects/woodhit.ogg'
 
 /material/diona/place_dismantled_product()
 	return
 
 /material/diona/place_dismantled_girder(var/turf/target)
-	spawn_diona_nymph(target)
+	new /obj/structure/diona/vines(target)
 
 /material/steel/holographic
 	name = "holo" + DEFAULT_WALL_MATERIAL
@@ -410,7 +412,7 @@ var/list/name_to_material
 	shard_type = SHARD_NONE
 
 /material/plasteel
-	name = "plasteel"
+	name = MATERIAL_PLASTEEL
 	stack_type = /obj/item/stack/material/plasteel
 	integrity = 400
 	melting_point = 6000
@@ -424,11 +426,12 @@ var/list/name_to_material
 	conductivity = 10
 	stack_origin_tech = list(TECH_MATERIAL = 2)
 	composite_material = list(DEFAULT_WALL_MATERIAL = 3750, "platinum" = 3750) //todo
-	golem = "Plasteel Golem"
+	golem = SPECIES_GOLEM_PLASTEEL
 	hitsound = 'sound/weapons/smash.ogg'
+	weapon_hitsound = 'sound/weapons/metalhit.ogg'
 
 /material/plasteel/titanium
-	name = "titanium"
+	name = MATERIAL_TITANIUM
 	stack_type = /obj/item/stack/material/titanium
 	integrity = 600
 	conductivity = 2.38
@@ -439,17 +442,17 @@ var/list/name_to_material
 	door_icon_base = "metal"
 	icon_colour = "#D1E6E3"
 	icon_reinf = "reinf_metal"
-	golem = "Titanium Golem"
+	golem = SPECIES_GOLEM_TITANIUM
 
 /material/glass
-	name = "glass"
+	name = MATERIAL_GLASS
 	stack_type = /obj/item/stack/material/glass
 	flags = MATERIAL_BRITTLE
 	icon_colour = "#00E1FF"
 	opacity = 0.3
 	integrity = 100
 	shard_type = SHARD_SHARD
-	tableslam_noise = 'sound/effects/Glasshit.ogg'
+	tableslam_noise = 'sound/effects/glass_hit.ogg'
 	hardness = 30
 	weight = 15
 	protectiveness = 0 // 0%
@@ -460,7 +463,9 @@ var/list/name_to_material
 	created_window = /obj/structure/window/basic
 	wire_product = /obj/item/stack/material/glass/wired
 	rod_product = /obj/item/stack/material/glass/reinforced
-	golem = "Glass Golem"
+	golem = SPECIES_GOLEM_GLASS
+	drop_sound = 'sound/items/drop/glass.ogg'
+	pickup_sound = 'sound/items/pickup/glass.ogg'
 
 /material/glass/build_windows(var/mob/living/user, var/obj/item/stack/used_stack)
 
@@ -535,7 +540,7 @@ var/list/name_to_material
 	return (hardness > 35) //todo
 
 /material/glass/wired
-	name = "wired glass"
+	name = MATERIAL_GLASS_WIRED
 	display_name = "wired glass"
 	stack_type = /obj/item/stack/material/glass/wired
 	flags = MATERIAL_BRITTLE
@@ -543,18 +548,18 @@ var/list/name_to_material
 	opacity = 0.3
 	integrity = 100
 	shard_type = SHARD_SHARD
-	tableslam_noise = 'sound/effects/Glasshit.ogg'
+	tableslam_noise = 'sound/effects/glass_hit.ogg'
 	hardness = 40
 	weight = 30
 	stack_origin_tech = list(TECH_MATERIAL = 2)
-	composite_material = list(DEFAULT_WALL_MATERIAL = 1875,"glass" = 3750)
+	composite_material = list(DEFAULT_WALL_MATERIAL = 1875, MATERIAL_GLASS = 3750)
 	window_options = list()
 	created_window = null
 	wire_product = null
 	rod_product = null
 
 /material/glass/reinforced
-	name = "rglass"
+	name = MATERIAL_GLASS_REINFORCED
 	display_name = "reinforced glass"
 	stack_type = /obj/item/stack/material/glass/reinforced
 	flags = MATERIAL_BRITTLE
@@ -562,18 +567,18 @@ var/list/name_to_material
 	opacity = 0.3
 	integrity = 100
 	shard_type = SHARD_SHARD
-	tableslam_noise = 'sound/effects/Glasshit.ogg'
+	tableslam_noise = 'sound/effects/glass_hit.ogg'
 	hardness = 40
 	weight = 30
 	stack_origin_tech = list(TECH_MATERIAL = 2)
-	composite_material = list(DEFAULT_WALL_MATERIAL = 1875,"glass" = 3750)
+	composite_material = list(DEFAULT_WALL_MATERIAL = 1875, MATERIAL_GLASS = 3750)
 	window_options = list("One Direction" = 1, "Full Window" = 4, "Windoor" = 5)
 	created_window = /obj/structure/window/reinforced
 	wire_product = null
 	rod_product = null
 
 /material/glass/phoron
-	name = "borosilicate glass"
+	name = MATERIAL_GLASS_PHORON
 	display_name = "borosilicate glass"
 	stack_type = /obj/item/stack/material/glass/phoronglass
 	flags = MATERIAL_BRITTLE
@@ -583,10 +588,10 @@ var/list/name_to_material
 	created_window = /obj/structure/window/phoronbasic
 	wire_product = null
 	rod_product = /obj/item/stack/material/glass/phoronrglass
-	golem = "Phoron Golem"
+	golem = SPECIES_GOLEM_PHORON
 
 /material/glass/phoron/reinforced
-	name = "reinforced borosilicate glass"
+	name = MATERIAL_GLASS_REINFORCED_PHORON
 	display_name = "reinforced borosilicate glass"
 	stack_type = /obj/item/stack/material/glass/phoronrglass
 	stack_origin_tech = list(TECH_MATERIAL = 5)
@@ -599,7 +604,7 @@ var/list/name_to_material
 	rod_product = null
 
 /material/plastic
-	name = "plastic"
+	name = MATERIAL_PLASTIC
 	stack_type = /obj/item/stack/material/plastic
 	flags = MATERIAL_BRITTLE
 	icon_base = "solid"
@@ -610,16 +615,18 @@ var/list/name_to_material
 	protectiveness = 5 // 20%
 	melting_point = T0C+371 //assuming heat resistant plastic
 	stack_origin_tech = list(TECH_MATERIAL = 3)
-	golem = "Plastic Golem"
+	golem = SPECIES_GOLEM_PLASTIC
+	drop_sound = 'sound/items/drop/card.ogg'
+	pickup_sound = 'sound/items/pickup/card.ogg'
 
 /material/plastic/holographic
-	name = "holoplastic"
+	name = MATERIAL_PLASTIC_HOLO
 	display_name = "plastic"
 	stack_type = null
 	shard_type = SHARD_NONE
 
 /material/osmium
-	name = "osmium"
+	name = MATERIAL_OSMIUM
 	stack_type = /obj/item/stack/material/osmium
 	icon_colour = "#9999FF"
 	stack_origin_tech = list(TECH_MATERIAL = 5)
@@ -627,7 +634,7 @@ var/list/name_to_material
 	sheet_plural_name = "ingots"
 
 /material/tritium
-	name = "tritium"
+	name = MATERIAL_TRITIUM
 	stack_type = /obj/item/stack/material/tritium
 	icon_colour = "#777777"
 	stack_origin_tech = list(TECH_MATERIAL = 5)
@@ -635,16 +642,16 @@ var/list/name_to_material
 	sheet_plural_name = "ingots"
 
 /material/mhydrogen
-	name = "mhydrogen"
+	name = MATERIAL_HYDROGEN_METALLIC
 	display_name = "metallic hydrogen"
 	stack_type = /obj/item/stack/material/mhydrogen
 	icon_colour = "#E6C5DE"
 	stack_origin_tech = list(TECH_MATERIAL = 6, TECH_POWER = 6, TECH_MAGNET = 5)
 	conductivity = 100
-	golem = "Metallic Hydrogen Golem"
+	golem = SPECIES_GOLEM_HYDROGEN
 
 /material/platinum
-	name = "platinum"
+	name =  MATERIAL_PLATINUM
 	stack_type = /obj/item/stack/material/platinum
 	icon_colour = "#9999FF"
 	weight = 27
@@ -654,40 +661,36 @@ var/list/name_to_material
 	sheet_plural_name = "ingots"
 
 /material/iron
-	name = "iron"
+	name = MATERIAL_IRON
 	stack_type = /obj/item/stack/material/iron
 	icon_colour = "#5C5454"
 	weight = 22
 	conductivity = 10
 	sheet_singular_name = "ingot"
 	sheet_plural_name = "ingots"
-	golem = "Iron Golem"
+	golem = SPECIES_GOLEM_IRON
 	hitsound = 'sound/weapons/smash.ogg'
+	weapon_hitsound = 'sound/weapons/metalhit.ogg'
 
 // Adminspawn only, do not let anyone get this.
-/material/voxalloy
-	name = "voxalloy"
-	display_name = "durable alloy"
+/material/elevatorium
+	name = MATERIAL_ELEVATOR
+	display_name = "elevator panelling"
 	stack_type = null
-	icon_colour = "#6C7364"
+	icon_colour = "#666666"
 	integrity = 1200
-	melting_point = 6000       // Hull plating.
-	explosion_resistance = 200 // Hull plating.
+	melting_point = 6000
+	explosion_resistance = 200
 	hardness = 500
 	weight = 500
-	protectiveness = 80 // 80%
-
-/material/voxalloy/elevatorium
-	name = "elevatorium"
-	display_name = "elevator panelling"
-	icon_colour = "#666666"
+	protectiveness = 80
 
 /material/wood
-	name = "wood"
+	name = MATERIAL_WOOD
 	stack_type = /obj/item/stack/material/wood // why wouldn't it have a stacktype seriously guys why
 	icon_colour = "#824B28"
 	integrity = 50
-	icon_base = "solid"
+	icon_base = "metal"
 	explosion_resistance = 2
 	shard_type = SHARD_SPLINTER
 	shard_can_repair = 0 // you can't weld splinters back into planks
@@ -701,14 +704,21 @@ var/list/name_to_material
 	dooropen_noise = 'sound/effects/doorcreaky.ogg'
 	door_icon_base = "wood"
 	destruction_desc = "splinters"
+	shatter_sound = /decl/sound_category/wood_break_sound
 	sheet_singular_name = "plank"
 	sheet_plural_name = "planks"
-	golem = "Wood Golem"
+	golem = SPECIES_GOLEM_WOOD
 	hitsound = 'sound/effects/woodhit.ogg'
+	drop_sound = 'sound/items/drop/wooden.ogg'
+	pickup_sound = 'sound/items/pickup/wooden.ogg'
+	weapon_drop_sound = 'sound/items/drop/woodweapon.ogg'
+	weapon_pickup_sound = 'sound/items/pickup/woodweapon.ogg'
+	weapon_hitsound = 'sound/weapons/woodenhit.ogg'
+	shatter_sound = /decl/sound_category/wood_break_sound
 
 /material/wood/log //This is gonna replace wood planks in a  way for NBT, leaving it here for now
-	name = "log"
-	stack_type = /obj/item/stack/material/woodlog 
+	name = MATERIAL_WOOD_LOG
+	stack_type = /obj/item/stack/material/woodlog
 	icon_colour = "#824B28"
 	integrity = 50
 	icon_base = "solid"
@@ -723,7 +733,7 @@ var/list/name_to_material
 	sheet_plural_name = "logs"
 
 /material/wood/branch
-	name = "branch"
+	name = MATERIAL_WOOD_BRANCH
 	stack_type = /obj/item/stack/material/woodbranch
 	icon_colour = "#824B28"
 	integrity = 50
@@ -731,14 +741,13 @@ var/list/name_to_material
 	explosion_resistance = 0
 	hardness = 0.1
 	weight = 7
-	melting_point = T0C+220 
+	melting_point = T0C+220
 	ignition_point = T0C+218
 	sheet_singular_name = "branch"
 	sheet_plural_name = "branch"
 
-
 /material/rust
-	name = "rust"
+	name = MATERIAL_RUST
 	display_name = "rusty steel"
 	stack_type = null
 	icon_colour = "#B7410E"
@@ -750,13 +759,13 @@ var/list/name_to_material
 	weight = 18
 
 /material/wood/holographic
-	name = "holowood"
+	name = MATERIAL_WOOD_HOLO
 	display_name = "wood"
 	stack_type = null
 	shard_type = SHARD_NONE
 
 /material/cardboard
-	name = "cardboard"
+	name = MATERIAL_CARDBOARD
 	stack_type = /obj/item/stack/material/cardboard
 	flags = MATERIAL_BRITTLE
 	integrity = 10
@@ -771,25 +780,20 @@ var/list/name_to_material
 	stack_origin_tech = list(TECH_MATERIAL = 1)
 	door_icon_base = "wood"
 	destruction_desc = "crumples"
-	golem = "Cardboard Golem"
-
-/material/cloth //todo
-	name = "cloth"
-	stack_origin_tech = list(TECH_MATERIAL = 2)
-	door_icon_base = "wood"
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	flags = MATERIAL_PADDING
-	hardness = 1
-	golem = "Cloth Golem"
+	shatter_sound = /decl/sound_category/cardboard_break_sound
+	golem = SPECIES_GOLEM_CARDBOARD
+	drop_sound = 'sound/items/drop/cardboardbox.ogg'
+	pickup_sound = 'sound/items/pickup/cardboardbox.ogg'
+	weapon_hitsound = 'sound/weapons/cardboardhit.ogg'
 
 /material/cult
-	name = "cult"
-	display_name = "disturbing stone"
+	name = MATERIAL_CULT
+	display_name = "daemon stone"
 	icon_base = "cult"
-	icon_colour = "#402821"
+	icon_colour = COLOR_CULT
 	icon_reinf = "reinf_cult"
+	dooropen_noise = 'sound/effects/doorcreaky.ogg'
+	door_icon_base = "resin"
 	shard_type = SHARD_STONE_PIECE
 	sheet_singular_name = "brick"
 	sheet_plural_name = "bricks"
@@ -801,14 +805,15 @@ var/list/name_to_material
 	new /obj/effect/decal/cleanable/blood(target)
 
 /material/cult/reinf
-	name = "cult2"
+	name = MATERIAL_CULT_REINFORCED
+	icon_colour = COLOR_CULT_REINFORCED
 	display_name = "human remains"
 
 /material/cult/reinf/place_dismantled_product(var/turf/target)
 	new /obj/effect/decal/remains/human(target)
 
 /material/resin
-	name = "resin"
+	name = MATERIAL_RESIN
 	icon_colour = "#E85DD8"
 	dooropen_noise = 'sound/effects/attackblob.ogg'
 	door_icon_base = "resin"
@@ -816,21 +821,43 @@ var/list/name_to_material
 	sheet_singular_name = "blob"
 	sheet_plural_name = "blobs"
 
-//TODO PLACEHOLDERS:
 /material/leather
-	name = "leather"
+	name = MATERIAL_LEATHER
 	icon_colour = "#5C4831"
+	stack_type = /obj/item/stack/material/leather
 	stack_origin_tech = list(TECH_MATERIAL = 2)
 	flags = MATERIAL_PADDING
+	hardness = 1
+	weight = 1
 	ignition_point = T0C+300
 	melting_point = T0C+300
 	protectiveness = 3 // 13%
-	golem = "Homunculus"
+	golem = SPECIES_GOLEM_MEAT
+	drop_sound = 'sound/items/drop/leather.ogg'
+	pickup_sound = 'sound/items/pickup/leather.ogg'
+
+/material/cotton
+	name = MATERIAL_COTTON
+	display_name ="cotton"
+	icon_colour = "#FFFFFF"
+	flags = MATERIAL_PADDING
+	ignition_point = T0C+232
+	melting_point = T0C+300
+	protectiveness = 1 // 4%
+	hardness = 1
+	weight = 1
+	golem = SPECIES_GOLEM_CLOTH
+	drop_sound = 'sound/items/drop/cloth.ogg'
+	pickup_sound = 'sound/items/pickup/cloth.ogg'
+	weapon_hitsound = 'sound/weapons/towelwhip.ogg'
 
 /material/carpet
-	name = "carpet"
+	name = MATERIAL_CARPET
 	display_name = "comfy"
 	use_name = "red upholstery"
+	stack_type = /obj/item/stack/tile/carpet
+	hardness = 1
+	weight = 1
 	icon_colour = "#DA020A"
 	flags = MATERIAL_PADDING
 	ignition_point = T0C+232
@@ -838,97 +865,70 @@ var/list/name_to_material
 	sheet_singular_name = "tile"
 	sheet_plural_name = "tiles"
 	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
+	golem = SPECIES_GOLEM_CLOTH
+	drop_sound = 'sound/items/drop/cloth.ogg'
+	pickup_sound = 'sound/items/pickup/cloth.ogg'
+	weapon_hitsound = 'sound/weapons/towelwhip.ogg'
 
-/material/cotton
-	name = "cotton"
-	display_name ="cotton"
-	icon_colour = "#FFFFFF"
-	flags = MATERIAL_PADDING
+/material/cloth
+	name = MATERIAL_CLOTH
+	stack_origin_tech = list(TECH_MATERIAL = 2)
+	door_icon_base = "wood"
 	ignition_point = T0C+232
 	melting_point = T0C+300
 	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
+	flags = MATERIAL_PADDING
+	hardness = 1
+	weight = 1
+	golem = SPECIES_GOLEM_CLOTH
+	drop_sound = 'sound/items/drop/cloth.ogg'
+	pickup_sound = 'sound/items/pickup/cloth.ogg'
+	weapon_hitsound = 'sound/weapons/towelwhip.ogg'
 
-/material/cloth_teal
-	name = "teal"
+/material/cloth/teal
+	name = MATERIAL_CLOTH_TEAL
 	display_name ="teal"
 	use_name = "teal cloth"
 	icon_colour = "#00EAFA"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_black
-	name = "black"
+/material/cloth/black
+	name = MATERIAL_CLOTH_BLACK
 	display_name = "black"
 	use_name = "black cloth"
 	icon_colour = "#505050"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_green
-	name = "green"
+/material/cloth/green
+	name = MATERIAL_CLOTH_GREEN
 	display_name = "green"
 	use_name = "green cloth"
 	icon_colour = "#01C608"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_puple
-	name = "purple"
+/material/cloth/purple
+	name = MATERIAL_CLOTH_PURPLE
 	display_name = "purple"
 	use_name = "purple cloth"
 	icon_colour = "#9C56C4"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_blue
-	name = "blue"
+/material/cloth/blue
+	name = MATERIAL_CLOTH_BLUE
 	display_name = "blue"
 	use_name = "blue cloth"
 	icon_colour = "#6B6FE3"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_beige
-	name = "beige"
+/material/cloth/beige
+	name = MATERIAL_CLOTH_BEIGE
 	display_name = "beige"
 	use_name = "beige cloth"
 	icon_colour = "#E8E7C8"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
-/material/cloth_lime
-	name = "lime"
+/material/cloth/lime
+	name = MATERIAL_CLOTH_LIME
 	display_name = "lime"
 	use_name = "lime cloth"
 	icon_colour = "#62E36C"
-	flags = MATERIAL_PADDING
-	ignition_point = T0C+232
-	melting_point = T0C+300
-	protectiveness = 1 // 4%
-	golem = "Cloth Golem"
 
 /material/hide //TODO make different hides somewhat different among them
-	name = "hide"
+	name = MATERIAL_HIDE
 	stack_origin_tech = list(TECH_MATERIAL = 2)
 	stack_type = /obj/item/stack/material/animalhide
 	door_icon_base = "wood"
@@ -939,41 +939,43 @@ var/list/name_to_material
 	hardness = 1
 	weight = 1
 	protectiveness = 3 // 13%
-	golem = "Homunculus"
+	golem = SPECIES_GOLEM_MEAT
+	drop_sound = 'sound/items/drop/leather.ogg'
+	pickup_sound = 'sound/items/pickup/leather.ogg'
 
 /material/hide/corgi
-	name = "corgi hide"
+	name = MATERIAL_HIDE_CORGI
 	stack_type = /obj/item/stack/material/animalhide/corgi
 	icon_colour = "#F9A635"
 
 /material/hide/cat
-	name = "cat hide"
+	name = MATERIAL_HIDE_CAT
 	stack_type = /obj/item/stack/material/animalhide/cat
 	icon_colour = "#444444"
 
 /material/hide/monkey
-	name = "monkey hide"
+	name = MATERIAL_HIDE_MONKEY
 	stack_type = /obj/item/stack/material/animalhide/monkey
 	icon_colour = "#914800"
 
 /material/hide/lizard
-	name = "lizard hide"
+	name = MATERIAL_HIDE_LIZARD
 	stack_type = /obj/item/stack/material/animalhide/lizard
 	icon_colour = "#34AF10"
 
 /material/hide/xeno
-	name = "alien hide"
+	name = MATERIAL_HIDE_ALIEN
 	stack_type = /obj/item/stack/material/animalhide/xeno
 	icon_colour = "#525288"
 	protectiveness = 10 // 33%
 
 /material/hide/human
-	name = "human hide"
+	name = MATERIAL_HIDE_HUMAN
 	stack_type = /obj/item/stack/material/animalhide/human
 	icon_colour = "#833C00"
 
 /material/bone
-	name = "bone"
+	name = MATERIAL_BONE
 	icon_colour = "#e3dac9"
 	icon_base = "stone"
 	icon_reinf = "reinf_stone"
@@ -985,17 +987,17 @@ var/list/name_to_material
 	stack_origin_tech = list(TECH_MATERIAL = 2)
 	door_icon_base = "stone"
 	protectiveness = 10 // 33%
-	golem = "Homunculus"
+	golem = SPECIES_GOLEM_MEAT
 
 /material/bone/necromancer
-	name = "cursed bone"
+	name = MATERIAL_BONE_CURSED
 	weight = 20
 	integrity = 150
 	hardness = 60
 	protectiveness = 20 // 50%
 
 /material/vaurca
-	name = "alien biomass"
+	name = MATERIAL_VAURCA
 	display_name = "alien biomass"
 	stack_type = null
 	icon_colour = "#1C7400"
@@ -1007,3 +1009,22 @@ var/list/name_to_material
 	weight = 23
 	protectiveness = 20 // 50%
 	conductivity = 10
+
+/material/shuttle
+	name = MATERIAL_SHUTTLE
+	display_name = "spaceship alloy"
+	stack_type = null
+	icon_colour = "#6C7364"
+	icon_base = "shuttle"
+	integrity = 1200
+	melting_point = 6000       // Hull plating.
+	explosion_resistance = 200 // Hull plating.
+	hardness = 500
+	weight = 500
+	protectiveness = 80 // 80%
+
+/material/shuttle/skrell
+	name = MATERIAL_SHUTTLE_SKRELL
+	display_name = "superadvanced alloy"
+	icon_colour = null
+	icon_base = "skrell"

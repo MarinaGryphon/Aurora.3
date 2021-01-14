@@ -8,6 +8,8 @@
 			return !density
 		else
 			return 1
+	if(istype(mover, /obj/structure/closet/crate))
+		return TRUE
 	if(istype(mover) && mover.checkpass(PASSTABLE))
 		return 1
 	if(locate(/obj/structure/table) in get_turf(mover))
@@ -61,9 +63,9 @@
 	..()
 	if(ishuman(am))
 		var/mob/living/carbon/human/H = am
-		if(H.a_intent != I_HELP || H.m_intent == "run")
+		if(H.a_intent != I_HELP || H.m_intent == M_RUN)
 			throw_things(H)
-		else if(H.is_diona() || H.species.get_bodytype() == "Heavy Machine")
+		else if(H.is_diona() || H.species.get_bodytype() == BODYTYPE_IPC_INDUSTRIAL)
 			throw_things(H)
 	else if((isliving(am) && !issmall(am)) || isslime(am))
 		throw_things(am)
@@ -117,9 +119,9 @@
 		)
 		if(ishuman(user))
 			var/mob/living/carbon/human/H = user
-			if(H.a_intent != I_HELP || H.m_intent == "run")
+			if(H.a_intent != I_HELP || H.m_intent == M_RUN)
 				throw_things(H)
-			else if(H.is_diona() || H.species.get_bodytype() == "Heavy Machine")
+			else if(H.is_diona() || H.species.get_bodytype() == BODYTYPE_IPC_INDUSTRIAL)
 				throw_things(H)
 		else if(!issmall(user) || isslime(user))
 			throw_things(user)
@@ -127,7 +129,7 @@
 
 /obj/structure/table/MouseDrop_T(obj/O as obj, mob/user as mob)
 
-	if ((!( istype(O, /obj/item/weapon) ) || user.get_active_hand() != O))
+	if ((!( istype(O, /obj/item) ) || user.get_active_hand() != O))
 		return ..()
 	if(isrobot(user))
 		return
@@ -136,13 +138,14 @@
 		step(O, get_dir(O, src))
 	return
 
-/obj/structure/table/attackby(obj/item/W as obj, mob/user as mob, var/click_parameters)
-	if (!W) return
+/obj/structure/table/attackby(obj/item/W, mob/user, var/click_parameters)
+	if (!W)
+		return
 
 	// Handle harm intent grabbing/tabling.
-	if(istype(W, /obj/item/weapon/grab) && get_dist(src,user)<2)
-		var/obj/item/weapon/grab/G = W
-		if (istype(G.affecting, /mob/living))
+	if(istype(W, /obj/item/grab) && get_dist(src,user)<2)
+		var/obj/item/grab/G = W
+		if(istype(G.affecting, /mob/living))
 			var/mob/living/M = G.affecting
 			var/obj/occupied = turf_is_crowded()
 			if(occupied)
@@ -150,42 +153,46 @@
 				return
 			if(!user.Adjacent(M))
 				return
-			if (G.state < GRAB_AGGRESSIVE)
+			if(G.state > GRAB_AGGRESSIVE && world.time >= G.last_action + UPGRADE_COOLDOWN)
 				if(user.a_intent == I_HURT)
-					var/blocked = M.run_armor_check("head", "melee")
+					var/blocked = M.run_armor_check(BP_HEAD, "melee")
 					if (prob(30 * BLOCKED_MULT(blocked)))
 						M.Weaken(5)
-					M.apply_damage(8, BRUTE, "head", blocked)
+					M.apply_damage(8, BRUTE, BP_HEAD, blocked)
 					visible_message("<span class='danger'>[G.assailant] slams [G.affecting]'s face against \the [src]!</span>")
 					if(material)
 						playsound(loc, material.tableslam_noise, 50, 1)
 					else
 						playsound(loc, 'sound/weapons/tablehit1.ogg', 50, 1)
-					var/list/L = take_damage(rand(1,5))
 					// Shards. Extra damage, plus potentially the fact YOU LITERALLY HAVE A PIECE OF GLASS/METAL/WHATEVER IN YOUR FACE
-					for(var/obj/item/weapon/material/shard/S in L)
+					var/sanity_counter = 0
+					for(var/obj/item/material/shard/S in get_turf(src))
 						if(prob(50))
 							M.visible_message("<span class='danger'>\The [S] slices [M]'s face messily!</span>",
-							                   "<span class='danger'>\The [S] slices your face messily!</span>")
-							M.apply_damage(10, BRUTE, "head", blocked)
-							M.standard_weapon_hit_effects(S, G.assailant, 10, blocked, "head")
+												"<span class='danger'>\The [S] slices your face messily!</span>")
+							M.apply_damage(10, BRUTE, BP_HEAD, blocked)
+							sanity_counter++
+						if(sanity_counter >= 3)
+							break
+					G.last_action = world.time
 				else
-					to_chat(user, "<span class='danger'>You need a better grip to do that!</span>")
-					return
+					G.affecting.forceMove(src.loc)
+					G.affecting.Weaken(rand(2,4))
+					visible_message("<span class='danger'>[G.assailant] puts [G.affecting] on \the [src].</span>")
+					qdel(W)
+				return
 			else
-				G.affecting.forceMove(src.loc)
-				G.affecting.Weaken(rand(2,4))
-				visible_message("<span class='danger'>[G.assailant] puts [G.affecting] on \the [src].</span>")
-			qdel(W)
-			return
+				to_chat(user, "<span class='warning'>You need a better grip to do that!</span>")
+				return
 
-	if(!dropsafety(W))
+	if(!W.dropsafety())
 		return
 
-	if(istype(W, /obj/item/weapon/melee/energy/blade))
-		W:spark_system.queue()
+	if(istype(W, /obj/item/melee/energy/blade))
+		var/obj/item/melee/energy/blade/blade = W
+		blade.spark_system.queue()
 		playsound(src.loc, 'sound/weapons/blade.ogg', 50, 1)
-		playsound(src.loc, "sparks", 50, 1)
+		playsound(src.loc, /decl/sound_category/spark_sound, 50, 1)
 		user.visible_message("<span class='danger'>\The [src] was sliced apart by [user]!</span>")
 		break_to_parts()
 		return
@@ -195,10 +202,10 @@
 		return
 
 	// Placing stuff on tables
-	if(user.unEquip(W, 0, src.loc))
+	if(user.unEquip(W, 0, loc)) //Loc is intentional here so we don't forceMove() items into oblivion
 		user.make_item_drop_sound(W)
 		auto_align(W, click_parameters)
-		return 1
+		return
 
 #define CELLS 8								//Amount of cells per row/column in grid
 #define CELLSIZE (world.icon_size/CELLS)	//Size of a cell in pixels
@@ -217,6 +224,7 @@ Note: This proc can be overwritten to allow for different types of auto-alignmen
 /obj/structure/table/proc/auto_align(obj/item/W, click_parameters)
 	if(!W.center_of_mass)
 		W.randpixel_xy()
+		W.layer = initial(W.layer) + ((32 - W.pixel_y) / 1000)
 		return
 
 	if(!click_parameters)
@@ -232,10 +240,10 @@ Note: This proc can be overwritten to allow for different types of auto-alignmen
 
 		W.pixel_x = (CELLSIZE * (0.5 + cell_x)) - W.center_of_mass["x"]
 		W.pixel_y = (CELLSIZE * (0.5 + cell_y)) - W.center_of_mass["y"]
+		W.layer = initial(W.layer) + ((32 - W.pixel_y) / 1000)
 
 #undef CELLS
 #undef CELLSIZE
 
-/obj/structure/table/attack_tk() // no telehulk sorry
+/obj/structure/table/do_simple_ranged_interaction(var/mob/user)
 	return
-

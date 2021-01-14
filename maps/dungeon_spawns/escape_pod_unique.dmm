@@ -6,38 +6,43 @@
 /turf/simulated/mineral/random,
 /area/mine/unexplored)
 "c" = (
-/turf/simulated/shuttle/wall,
+/obj/structure/shuttle_part/escape_pod{
+	icon_state = "0,3"
+	},
+/turf/unsimulated/floor/asteroid/ash/rocky,
 /area/mine/unexplored)
 "d" = (
-/obj/structure/window/shuttle,
+/obj/structure/window/shuttle/unique/escape_pod{
+	icon_state = "1,3"
+	},
 /obj/structure/grille,
-/turf/simulated/shuttle/plating,
+/turf/simulated/floor/plating,
 /area/mine/unexplored)
 "e" = (
-/obj/structure/bed/chair{
+/obj/structure/bed/chair/shuttle{
 	dir = 1
 	},
+/turf/simulated/floor/shuttle/dark_blue,
+/area/mine/unexplored)
+"f" = (
 /obj/effect/decal/remains/human,
 /obj/random/voidsuit,
 /obj/random/energy_antag,
 /obj/random/smalltank,
 /obj/item/device/gps,
-/turf/simulated/shuttle/floor,
-/area/mine/unexplored)
-"f" = (
-/obj/item/weapon/archaeological_find,
-/turf/simulated/shuttle/floor,
+/obj/item/archaeological_find,
+/turf/simulated/floor/shuttle/dark_blue,
 /area/mine/unexplored)
 "g" = (
-/obj/structure/shuttle/engine/propulsion/burst,
-/turf/simulated/shuttle/wall{
-	icon_state = "swall";
-	dir = 1
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "0,0"
 	},
 /area/mine/unexplored)
 "h" = (
-/obj/machinery/door/airlock/external,
-/turf/simulated/shuttle/floor,
+/obj/structure/door_assembly/door_assembly_ext{
+	anchored = 1
+	},
+/turf/simulated/floor/shuttle/dark_blue,
 /area/mine/unexplored)
 "i" = (
 /turf/unsimulated/floor/asteroid/ash/rocky,
@@ -52,6 +57,37 @@
 "l" = (
 /obj/structure/closet/crate/secure/loot,
 /turf/unsimulated/floor/asteroid/ash/rocky,
+/area/mine/unexplored)
+"r" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "0,1"
+	},
+/area/mine/unexplored)
+"x" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "2,0"
+	},
+/area/mine/unexplored)
+"G" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "2,1"
+	},
+/area/mine/unexplored)
+"H" = (
+/obj/structure/shuttle_part/escape_pod{
+	icon_state = "2,3"
+	},
+/turf/unsimulated/floor/asteroid/ash/rocky,
+/area/mine/unexplored)
+"K" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "2,2"
+	},
+/area/mine/unexplored)
+"Q" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "0,2"
+	},
 /area/mine/unexplored)
 
 (1,1,1) = {"
@@ -579,8 +615,8 @@ b
 b
 i
 c
-c
-c
+Q
+r
 g
 i
 i
@@ -646,10 +682,10 @@ k
 k
 b
 i
-c
-c
-c
-g
+H
+K
+G
+x
 i
 i
 i

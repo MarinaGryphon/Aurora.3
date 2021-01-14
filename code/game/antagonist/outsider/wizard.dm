@@ -7,8 +7,9 @@ var/datum/antagonist/wizard/wizards
 	bantype = "wizard"
 	landmark_id = "wizard"
 	welcome_text = "You will find a list of available spells in your spell book. Choose your magic arsenal carefully.<br>In your pockets you will find a teleport scroll. Use it as needed."
-	flags = ANTAG_OVERRIDE_JOB | ANTAG_CLEAR_EQUIPMENT | ANTAG_CHOOSE_NAME | ANTAG_VOTABLE | ANTAG_SET_APPEARANCE
+	flags = ANTAG_OVERRIDE_JOB | ANTAG_CLEAR_EQUIPMENT | ANTAG_CHOOSE_NAME | ANTAG_VOTABLE | ANTAG_SET_APPEARANCE | ANTAG_NO_FLAVORTEXT
 	antaghud_indicator = "hudwizard"
+	required_age = 10
 
 	hard_cap = 1
 	hard_cap_round = 3
@@ -67,30 +68,37 @@ var/datum/antagonist/wizard/wizards
 /datum/antagonist/wizard/update_antag_mob(var/datum/mind/wizard)
 	..()
 	wizard.store_memory("<B>Remember:</B> do not forget to prepare your spells.")
-	wizard.current.real_name = "[pick(wizard_first)] [pick(wizard_second)]"
-	wizard.current.name = wizard.current.real_name
 
-/datum/antagonist/wizard/equip(var/mob/living/carbon/human/wizard_mob)
+/datum/antagonist/wizard/set_antag_name(mob/living/player)
+	player.real_name = "[pick(wizard_first)] [pick(wizard_second)]"
+	player.name = player.real_name
+	var/newname = sanitize(input(player, "You are a [role_text]. Would you like to change your name to something else?", "Name change") as null|text, MAX_NAME_LEN)
+	if(newname)
+		player.real_name = newname
+		player.name = player.real_name
+		player.dna.real_name = newname
+	if(player.mind)
+		player.mind.name = player.name
+	// Update any ID cards.
+	update_access(player)
+
+/datum/antagonist/wizard/equip(var/mob/living/carbon/human/player)
 
 	if(!..())
-		return 0
+		return FALSE
 
-	wizard_mob.equip_to_slot_or_del(new /obj/item/device/radio/headset(wizard_mob), slot_l_ear)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/clothing/under/lightpurple(wizard_mob), slot_w_uniform)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/clothing/shoes/sandal(wizard_mob), slot_shoes)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/clothing/suit/wizrobe(wizard_mob), slot_wear_suit)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/clothing/head/wizard(wizard_mob), slot_head)
-	if(wizard_mob.backbag == 2) wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/wizard(wizard_mob), slot_back)
-	if(wizard_mob.backbag == 3) wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/satchel_wizard(wizard_mob), slot_back)
-	if(wizard_mob.backbag == 4) wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/satchel(wizard_mob), slot_back)
-	if(wizard_mob.backbag == 5) wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/duffel/wizard(wizard_mob), slot_back)
-	if(wizard_mob.backbag == 6) wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/backpack/messenger/wizard(wizard_mob), slot_back)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/storage/box(wizard_mob), slot_in_backpack)
-	wizard_mob.equip_to_slot_or_del(new /obj/item/weapon/teleportation_scroll(wizard_mob), slot_r_store)
-	var/obj/item/I = new /obj/item/weapon/spellbook(get_turf(wizard_mob))
-	wizard_mob.put_in_hands(I)
-	wizard_mob.update_icons()
-	return 1
+	for (var/obj/item/I in player)
+		if (istype(I, /obj/item/implant))
+			continue
+		player.drop_from_inventory(I)
+		if(I.loc != player)
+			qdel(I)
+
+	player.preEquipOutfit(/datum/outfit/admin/wizard, FALSE)
+	player.equipOutfit(/datum/outfit/admin/wizard, FALSE)
+	player.force_update_limbs()
+	player.update_eyes()
+	player.regenerate_icons()
 
 /datum/antagonist/wizard/check_victory()
 	var/survivor
@@ -102,24 +110,6 @@ var/datum/antagonist/wizard/wizards
 	if(!survivor)
 		feedback_set_details("round_end_result","loss - wizard killed")
 		to_world("<span class='danger'><font size = 3>The [(current_antagonists.len>1)?"[role_text_plural] have":"[role_text] has"] been killed by the crew! The Space Wizards Federation has been taught a lesson they will not soon forget!</font></span>")
-
-/datum/antagonist/wizard/print_player_summary()
-	..()
-	for(var/p in current_antagonists)
-		var/datum/mind/player = p
-		var/text = "<b>[player.name]'s spells were:</b>"
-		if(!player.learned_spells || !player.learned_spells.len)
-			text += "<br>None!"
-		else
-			for(var/s in player.learned_spells)
-				var/spell/spell = s
-				text += "<br><b>[spell.name]</b> - "
-				text += "Speed: [spell.spell_levels["speed"]] Power: [spell.spell_levels["power"]]"
-		if(player.ambitions)
-			text += "<br><font color='purple'><b>Their goals for today were:</b></font>"
-			text += "<br>  '[player.ambitions]'"
-		text += "<br>"
-		to_world(text)
 
 
 //To batch-remove wizard spells. Linked to mind.dm.

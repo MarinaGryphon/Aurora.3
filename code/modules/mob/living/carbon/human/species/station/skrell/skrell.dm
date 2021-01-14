@@ -1,15 +1,18 @@
 /datum/species/skrell
-	name = "Skrell"
+	name = SPECIES_SKRELL
 	short_name = "skr"
 	name_plural = "Skrell"
-	bodytype = "Skrell"
+	category_name = "Skrell"
+	bodytype = BODYTYPE_SKRELL
 	age_max = 500
+	default_genders = list(PLURAL)
 	economic_modifier = 12
 	icobase = 'icons/mob/human_races/skrell/r_skrell.dmi'
 	deform = 'icons/mob/human_races/skrell/r_def_skrell.dmi'
 	preview_icon = 'icons/mob/human_races/skrell/skrell_preview.dmi'
+	bandages_icon = 'icons/mob/bandage.dmi'
 	eyes = "skrell_eyes_s"
-	primitive_form = "Neaera"
+	primitive_form = SPECIES_MONKEY_SKRELL
 	unarmed_types = list(/datum/unarmed_attack/punch, /datum/unarmed_attack/stomp, /datum/unarmed_attack/kick)
 
 	blurb = "An amphibious species, Skrell come from the star system known as Nralakk, coined 'Jargon' by \
@@ -24,24 +27,40 @@
 	name_language = LANGUAGE_SKRELLIAN
 	rarity_value = 3
 
-	grab_mod = 1.25
+	grab_mod = 2
+	resist_mod = 0.5 // LIKE BABBY
 
 	spawn_flags = CAN_JOIN | IS_WHITELISTED
 	appearance_flags = HAS_HAIR_COLOR | HAS_LIPS | HAS_UNDERWEAR | HAS_SKIN_COLOR | HAS_SOCKS
 	flags = NO_SLIP
 
+	has_limbs = list(
+		BP_CHEST =  list("path" = /obj/item/organ/external/chest),
+		BP_GROIN =  list("path" = /obj/item/organ/external/groin),
+		BP_HEAD =   list("path" = /obj/item/organ/external/head/skrell),
+		BP_L_ARM =  list("path" = /obj/item/organ/external/arm),
+		BP_R_ARM =  list("path" = /obj/item/organ/external/arm/right),
+		BP_L_LEG =  list("path" = /obj/item/organ/external/leg),
+		BP_R_LEG =  list("path" = /obj/item/organ/external/leg/right),
+		BP_L_HAND = list("path" = /obj/item/organ/external/hand),
+		BP_R_HAND = list("path" = /obj/item/organ/external/hand/right),
+		BP_L_FOOT = list("path" = /obj/item/organ/external/foot),
+		BP_R_FOOT = list("path" = /obj/item/organ/external/foot/right)
+		)
+
 	has_organ = list(
-		"heart" =    /obj/item/organ/heart/skrell,
-		"lungs" =    /obj/item/organ/lungs/skrell,
-		"liver" =    /obj/item/organ/liver/skrell,
-		"kidneys" =  /obj/item/organ/kidneys/skrell,
-		"brain" =    /obj/item/organ/brain/skrell,
-		"appendix" = /obj/item/organ/appendix,
-		"eyes" =     /obj/item/organ/eyes/skrell
+		BP_HEART =    /obj/item/organ/internal/heart/skrell,
+		BP_LUNGS =    /obj/item/organ/internal/lungs/skrell,
+		BP_LIVER =    /obj/item/organ/internal/liver/skrell,
+		BP_KIDNEYS =  /obj/item/organ/internal/kidneys/skrell,
+		BP_BRAIN =    /obj/item/organ/internal/brain/skrell,
+		BP_STOMACH =  /obj/item/organ/internal/stomach,
+		BP_APPENDIX = /obj/item/organ/internal/appendix,
+		BP_EYES =     /obj/item/organ/internal/eyes/skrell
 		)
 
 	flesh_color = "#8CD7A3"
-	blood_color = "#1D2CBF"
+	blood_color = COLOR_SKRELL_BLOOD
 	base_color = "#006666"
 
 	reagent_tag = IS_SKRELL
@@ -51,17 +70,42 @@
 	stamina = 90
 	sprint_speed_factor = 1.25 //Evolved for rapid escapes from predators
 
-	inherent_verbs = list(
-	/mob/living/carbon/human/proc/commune,
-	/mob/living/carbon/human/proc/sonar_ping,
-	)
-
 	default_h_style = "Skrell Short Tentacles"
 
-	allowed_citizenships = list(CITIZENSHIP_JARGON, CITIZENSHIP_BIESEL, CITIZENSHIP_SOL, CITIZENSHIP_FRONTIER, CITIZENSHIP_ELYRA, CITIZENSHIP_ERIDANI, CITIZENSHIP_DOMINIA)
+	allowed_citizenships = list(CITIZENSHIP_JARGON, CITIZENSHIP_BIESEL, CITIZENSHIP_SOL, CITIZENSHIP_COALITION, CITIZENSHIP_ELYRA, CITIZENSHIP_ERIDANI, CITIZENSHIP_DOMINIA)
 	allowed_religions = list(RELIGION_QEBLAK, RELIGION_WEISHII, RELIGION_NONE, RELIGION_OTHER, RELIGION_CHRISTIANITY, RELIGION_ISLAM, RELIGION_MOROZ)
+	default_citizenship = CITIZENSHIP_JARGON
 
-	zombie_type = "Skrell Zombie"
+	default_accent = ACCENT_SKRELL
+	allowed_accents = list(ACCENT_SKRELL, ACCENT_CETI, ACCENT_GIBSON, ACCENT_COC, ACCENT_ERIDANI, ACCENT_ERIDANIDREG, ACCENT_VENUS, ACCENT_JUPITER, ACCENT_MARTIAN, ACCENT_ELYRA,
+							ACCENT_SILVERSUN, ACCENT_KONYAN, ACCENT_EUROPA)
+
+	zombie_type = SPECIES_ZOMBIE_SKRELL
+
+/datum/species/skrell/handle_post_spawn(mob/living/carbon/human/H)
+	H.set_psi_rank(PSI_COERCION, PSI_RANK_OPERANT)
+
+/datum/species/skrell/handle_strip(var/mob/user, var/mob/living/carbon/human/H, var/action)
+	switch(action)
+		if("headtail")
+			if(!H.head)
+				to_chat(user, SPAN_WARNING("\The [H] doesn't have a head!"))
+				return
+			user.visible_message(SPAN_WARNING("\The [user] is trying to remove something from \the [H]'s headtails!"))
+			if(do_after(usr, HUMAN_STRIP_DELAY, act_target = H))
+				var/obj/item/storage/internal/skrell/S = locate() in H.head
+				var/obj/item/I = locate() in S
+				if(!I)
+					to_chat(usr, SPAN_WARNING("\The [H] had nothing in their headtail storage."))
+					return
+				S.remove_from_storage(I, get_turf(H))
+				return
+
+/datum/species/skrell/get_strip_info(var/reference)
+	return "<BR><A href='?src=[reference];species=headtail'>Empty Headtail Storage</A>"
 
 /datum/species/skrell/can_breathe_water()
+	return TRUE
+
+/datum/species/skrell/can_commune()
 	return TRUE

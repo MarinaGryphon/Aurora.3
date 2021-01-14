@@ -56,14 +56,14 @@
 
 	if(multitool_mode && isobj(A))
 		var/obj/O = A
-		var/datum/expansion/multitool/MT = LAZYACCESS(O.expansions, /datum/expansion/multitool)
+		var/datum/component/multitool/MT = O.GetComponent(/datum/component/multitool)
 		if(MT)
-			MT.interact(aiMulti, src)
+			MT.interact(ai_multi, src)
 			return
 
-	if(aiCamera.in_camera_mode)
-		aiCamera.camera_mode_off()
-		aiCamera.captureimage(A, usr)
+	if(ai_camera.in_camera_mode)
+		ai_camera.camera_mode_off()
+		ai_camera.captureimage(A, usr)
 		return
 
 	/*
@@ -108,7 +108,6 @@
 /mob/living/silicon/ai/AltClickOn(var/atom/A)
 	if(!control_disabled && A.AIAltClick(src))
 		return
-	..()
 
 /mob/living/silicon/ai/MiddleClickOn(var/atom/A)
 	if(!control_disabled && A.AIMiddleClick(src))
@@ -136,11 +135,12 @@
 /atom/proc/AICtrlClick(mob/user)
 	return
 
-/obj/machinery/door/airlock/AICtrlClick() // Bolts doors
+/obj/machinery/door/airlock/AICtrlClick(mob/user) // Bolts doors
+	var/command = player_is_antag(user.mind) ? "bolts_override" : "bolts"
 	if(locked)
-		Topic(src, list("command"="bolts", "activate" = "0"))
+		Topic(src, list("command"=command, "activate" = "0"))
 	else
-		Topic(src, list("command"="bolts", "activate" = "1"))
+		Topic(src, list("command"=command, "activate" = "1"))
 	return 1
 
 /obj/machinery/power/apc/AICtrlClick() // turns off/on APCs.
@@ -171,7 +171,6 @@
 	return 0
 
 /obj/machinery/door/airlock/AIMiddleClick() // Toggles door bolt lights.
-
 	if(..())
 		return
 
@@ -186,4 +185,4 @@
 //
 
 /mob/living/silicon/ai/TurfAdjacent(var/turf/T)
-	return (cameranet && cameranet.checkTurfVis(T))
+	return (cameranet && cameranet.is_turf_visible(T))

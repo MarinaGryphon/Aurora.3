@@ -8,6 +8,7 @@
 	var/send_emergency_team = FALSE
 	var/can_call_ert = TRUE
 
+	var/list/datum/responseteam/all_ert_teams = list()
 	var/list/datum/responseteam/available_teams = list()
 	var/datum/responseteam/picked_team
 	var/list/datum/ghostspawner/human/ert/sent_teams = list()
@@ -25,28 +26,20 @@
 	for(var/team in all_teams)
 		CHECK_TICK
 		var/datum/responseteam/ert = new team
-		available_teams += ert
+		if(!ert.admin)
+			available_teams += ert
+		all_ert_teams += ert
 
 /datum/controller/subsystem/responseteam/stat_entry()
 	var/out = "CC:[can_call_ert]"
 	..(out)
 
 /datum/controller/subsystem/responseteam/proc/pick_random_team()
-	var/datum/responseteam/result
-	var/probability = rand(1, 100)
-	var/tally = 0
-	for(var/datum/responseteam/ert in available_teams) //We need a loop to keep going through each candidate to be sure we find a good result.
-		if((ert.chance + tally) <= probability) //Check every available ERT's chance. Keep going until we add enough to the tally so that we have a certain result.
-			tally += ert.chance
-			continue
-		result = ert
-		break
+	var/list/datum/responseteam/possible_teams = list()
+	for(var/datum/responseteam/ert in available_teams)
+		possible_teams[ert] = ert.chance
 
-	if(!result)
-		log_debug("SSresponseteam: We didn't find an ERT pick result!")
-		return pick(available_teams)
-	else
-		return result
+	return pickweight(possible_teams)
 
 
 /datum/controller/subsystem/responseteam/proc/trigger_armed_response_team(var/forced_choice = null)
@@ -54,7 +47,7 @@
 		return
 	if(send_emergency_team)
 		return
-	
+
 	ert_count++
 	feedback_inc("responseteam_count")
 
@@ -92,6 +85,13 @@
 				var/datum/ghostspawner/human/ert/good_spawner = SSghostroles.spawners[role_spawner]
 				sent_teams += good_spawner //Enable that spawner.
 				good_spawner.enable()
+	if(picked_team.equipment_map)
+		var/landmark_position
+		for(var/obj/effect/landmark/distress_team_equipment/L in landmarks_list)
+			landmark_position = L.loc
+		if(landmark_position)
+			var/datum/map_template/distress_map = new picked_team.equipment_map
+			distress_map.load(landmark_position)
 
 /datum/controller/subsystem/responseteam/proc/close_ert_blastdoors()
 	var/datum/wifi/sender/door/wifi_sender = new("ert_shuttle_lockdown", src)
@@ -101,13 +101,16 @@
 	var/datum/wifi/sender/door/wifi_sender = new("tcfl_shuttle_lockdown", src)
 	wifi_sender.activate("close")
 
+	var/datum/wifi/sender/door/wifi_sender_blast = new("tcfl_shuttle_release", src)
+	wifi_sender_blast.activate("open")
+
 /client/proc/response_team()
 	set name = "Dispatch Emergency Response Team"
 	set category = "Special Verbs"
 	set desc = "Send an emergency response team to the station"
 
 	if(!holder)
-		to_chat(usr, "<span class='danger'>Only administrators may use this command.</span>") 
+		to_chat(usr, "<span class='danger'>Only administrators may use this command.</span>")
 		return
 	if(!ROUND_IS_STARTED)
 		to_chat(usr, "<span class='danger'>The round hasn't started yet!</span>")
@@ -123,7 +126,7 @@
 				return
 
 	var/list/plaintext_teams = list("Random")
-	for(var/datum/responseteam/A in SSresponseteam.available_teams)
+	for(var/datum/responseteam/A in SSresponseteam.all_ert_teams)
 		plaintext_teams += A.name
 
 	var/choice = input("Select the response team type","Response team selection") as null|anything in plaintext_teams
@@ -137,12 +140,12 @@
 	SSresponseteam.trigger_armed_response_team(choice)
 
 
-/hook/shuttle_moved/proc/close_response_blastdoors(var/area/departing, var/area/destination)
+/hook/shuttle_moved/proc/close_response_blastdoors(var/obj/effect/shuttle_landmark/start_location, var/obj/effect/shuttle_landmark/destination)
 	//Check if we are departing from the Odin
-	if(istype(departing,/area/shuttle/specops/centcom))
+	if(start_location.landmark_tag == "nav_ert_start")
 		SSresponseteam.close_ert_blastdoors()
 
 	//Check if we are departing from the TCFL base
-	else if(istype(departing,/area/shuttle/legion/centcom))
+	else if(start_location.landmark_tag == "nav_legion_start")
 		SSresponseteam.close_tcfl_blastdoors()
 	return TRUE

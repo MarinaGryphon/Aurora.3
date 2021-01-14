@@ -9,17 +9,17 @@ emp_act
 */
 
 /mob/living/carbon/human/bullet_act(var/obj/item/projectile/P, var/def_zone)
-
 	var/species_check = src.species.bullet_act(P, def_zone, src)
 
 	if(species_check)
 		return species_check
 
 	if(!is_physically_disabled())
-		if(martial_art && martial_art.deflection_chance)
-			if(prob(martial_art.deflection_chance))
-				src.visible_message("<span class='danger'>\The [src] deflects \the [P]!</span>")
-				return 0
+		var/deflection_chance = check_martial_deflection_chance()
+		if(prob(deflection_chance))
+			visible_message(SPAN_WARNING("\The [src] deftly dodges \the [P]!"), SPAN_NOTICE("You deftly dodge \the [P]!"))
+			playsound(src, /decl/sound_category/bulletflyby_sound, 75, TRUE)
+			return PROJECTILE_DODGED
 
 	def_zone = check_zone(def_zone)
 	if(!has_organ(def_zone))
@@ -44,12 +44,8 @@ emp_act
 	//Shrapnel
 	if(!(species.flags & NO_EMBED) && P.can_embed())
 		var/armor = getarmor_organ(organ, "bullet")
-		if(prob(20 + max(P.damage - armor, -10)))
-			var/obj/item/weapon/SP = new P.shrapnel_type()
-			SP.name = (P.name != "shrapnel")? "[P.name] shrapnel" : "shrapnel"
-			SP.desc = "[SP.desc] It looks like it was fired from [P.shot_from]."
-			SP.forceMove(organ)
-			organ.embed(SP)
+		if(prob(20 + max(P.damage + P.embed_chance - armor, -10)))
+			P.do_embed(organ)
 
 	return (..(P , def_zone))
 
@@ -60,12 +56,12 @@ emp_act
 	agony_amount *= siemens_coeff
 
 	switch (def_zone)
-		if("head")
+		if(BP_HEAD)
 			eye_blurry += min((rand(1,3) * (agony_amount/40)), 12)
 			confused = min(max(confused, 2 * (agony_amount/40)), 8)
-		if("l_hand", "r_hand")
+		if(BP_L_HAND, BP_R_HAND)
 			var/c_hand
-			if (def_zone == "l_hand")
+			if (def_zone == BP_L_HAND)
 				c_hand = l_hand
 			else
 				c_hand = r_hand
@@ -75,10 +71,10 @@ emp_act
 
 				drop_from_inventory(c_hand)
 				if (affected.status & ORGAN_ROBOT)
-					emote("me", 1, "drops what they were holding, their [affected.name] malfunctioning!")
+					visible_message("<b>[src]</b> drops what they were holding, their [affected.name] malfunctioning!")
 				else
 					var/emote_scream = pick("screams in pain and ", "lets out a sharp cry and ", "cries out and ")
-					emote("me", 1, "[(!can_feel_pain()) ? "" : emote_scream ]drops what they were holding in their [affected.name]!")
+					visible_message("<b>[src]</b> [(!can_feel_pain()) ? "" : emote_scream ]drops what they were holding in their [affected.name]!")
 
 	..(stun_amount, agony_amount, def_zone)
 
@@ -127,16 +123,18 @@ emp_act
 			results.Add(C)
 	return results
 
-//this proc returns the armour value for a particular external organ.
+//this proc returns the armor value for a particular external organ.
 /mob/living/carbon/human/proc/getarmor_organ(var/obj/item/organ/external/def_zone, var/type)
 	if(!type || !def_zone) return 0
 	var/protection = 0
 	var/list/protective_gear = list(head, wear_mask, wear_suit, w_uniform, gloves, shoes)
-	for(var/gear in protective_gear)
-		if(gear && istype(gear ,/obj/item/clothing))
-			var/obj/item/clothing/C = gear
-			if(istype(C) && C.body_parts_covered & def_zone.body_part && C.armor)
-				protection = add_armor(protection, C.armor[type])
+	for(var/obj/item/clothing/gear in protective_gear)
+		if(!isnull(gear.armor) && gear.body_parts_covered & def_zone.body_part)
+			protection = add_armor(protection, gear.armor[type])
+		for(var/obj/item/clothing/accessory/A in gear.accessories)
+			if(!isnull(A.armor) && A.body_parts_covered & def_zone.body_part)
+				protection = add_armor(protection, A.armor[type])
+
 	return protection
 
 /mob/living/carbon/human/proc/check_head_coverage()
@@ -150,6 +148,13 @@ emp_act
 				return 1
 	return 0
 
+/mob/living/carbon/human/proc/check_head_airtight_coverage()
+	var/list/clothing = list(head, wear_mask, wear_suit)
+	for(var/obj/item/clothing/C in clothing)
+		if((C.body_parts_covered & HEAD) && (C.item_flags & (AIRTIGHT|STOPPRESSUREDAMAGE)))
+			return TRUE
+	return FALSE
+
 //Used to check if they can be fed food/drinks/pills
 /mob/living/carbon/human/proc/check_mouth_coverage()
 	var/list/protective_gear = list(head, wear_mask, wear_suit, w_uniform)
@@ -159,15 +164,22 @@ emp_act
 	return null
 
 /mob/living/carbon/human/proc/check_shields(var/damage = 0, var/atom/damage_source = null, var/mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
-	for(var/obj/item/shield in list(l_hand, r_hand, wear_suit))
-		if(!shield) continue
-		. = shield.handle_shield(src, damage, damage_source, attacker, def_zone, attack_text)
-		if(.) return
+	for(var/obj/item/shield in list(l_hand, r_hand, wear_suit, back))
+		if(!shield)
+			continue
+		if(!shield.can_shield_back())
+			continue
+		var/is_on_back = FALSE
+		if(back && back == shield)
+			is_on_back = TRUE
+		. = shield.handle_shield(src, is_on_back, damage, damage_source, attacker, def_zone, attack_text)
+		if(.)
+			return
 	return 0
 
 /mob/living/carbon/human/emp_act(severity)
 	if(isipc(src))
-		var/obj/item/organ/surge/s = src.internal_organs_by_name["surge"]
+		var/obj/item/organ/internal/surge/s = src.internal_organs_by_name["surge"]
 		if(!isnull(s))
 			if(s.surge_left >= 1)
 				playsound(src.loc, 'sound/magic/LightningShock.ogg', 25, 1)
@@ -175,31 +187,28 @@ emp_act
 				if(s.surge_left)
 					visible_message("<span class='warning'>[src] was not affected by EMP pulse.</span>", "<span class='warning'>Warning: EMP detected, integrated surge prevention module activated. There are [s.surge_left] preventions left.</span>")
 				else
-					s.broken = 1
+					s.broken = TRUE
 					s.icon_state = "surge_ipc_broken"
 					visible_message("<span class='warning'>[src] was not affected by EMP pulse.</span>", "<span class='warning'>Warning: EMP detected, integrated surge prevention module activated. The surge prevention module is fried, replacement recommended.</span>")
-				return 1
+				return TRUE
 			else if(s.surge_left == 0.5)
 				to_chat(src, "<span class='danger'>Warning: EMP detected, integrated surge prevention module is damaged and was unable to fully protect from EMP. Half of the damage taken. Replacement recommended.</span>")
 				for(var/obj/O in src)
-					if(!O)	continue
+					if(!O)
+						continue
 					O.emp_act(severity * 2) // EMP act takes reverse numbers
 				for(var/obj/item/organ/external/O  in organs)
 					O.emp_act(severity)
 					for(var/obj/item/organ/I  in O.internal_organs)
-						if(I.robotic == 0)	continue
+						if(I.robotic == ROBOTIC_NONE)
+							continue
 						I.emp_act(severity * 2) // EMP act takes reverse numbers
-				return 1
+				return TRUE
 			else
 				to_chat(src, "<span class='danger'>Warning: EMP detected, integrated surge prevention module is fried and unable to protect from EMP. Replacement recommended.</span>")
+
 	for(var/obj/O in src)
-		if(!O)	continue
 		O.emp_act(severity)
-	for(var/obj/item/organ/external/O  in organs)
-		O.emp_act(severity)
-		for(var/obj/item/organ/I  in O.internal_organs)
-			if(I.robotic == 0)	continue
-			I.emp_act(severity)
 	..()
 
 /mob/living/carbon/human/resolve_item_attack(obj/item/I, mob/living/user, var/target_zone)
@@ -255,7 +264,7 @@ emp_act
 	// Handle striking to cripple.
 	if(user.a_intent == I_DISARM)
 		effective_force /= 2 //half the effective force
-		if(!..(I, effective_force, blocked, hit_zone))
+		if(!..(I, user, effective_force, blocked, hit_zone))
 			return 0
 
 		attack_joint(affecting, I, blocked) //but can dislocate joints
@@ -272,24 +281,19 @@ emp_act
 	if(effective_force > 10 || effective_force >= 5 && prob(33))
 		forcesay(hit_appends)	//forcesay checks stat already
 
-	if((I.damtype == BRUTE || I.damtype == HALLOSS) && prob(25 + (effective_force * 2)))
+	if((I.damtype == BRUTE || I.damtype == PAIN) && prob(25 + (effective_force * 2)))
 		if(!stat)
 			if(headcheck(hit_zone))
 				//Harder to score a stun but if you do it lasts a bit longer
-				if(prob(effective_force))
+				if(prob(effective_force) && head && !istype(head, /obj/item/clothing/head/helmet))
 					visible_message("<span class='danger'>[src] [species.knockout_message]</span>")
 					apply_effect(20, PARALYZE, blocked)
-			else
-				//Easier to score a stun but lasts less time
-				if(prob(effective_force + 10))
-					visible_message("<span class='danger'>[src] has been knocked down!</span>")
-					apply_effect(6, WEAKEN, blocked)
 
 		//Apply blood
 		if(!(I.flags & NOBLOODY))
 			I.add_blood(src)
 
-		if(prob(33))
+		if(prob(effective_force * 2))
 			var/turf/location = loc
 			if(istype(location, /turf/simulated))
 				location.add_blood(src)
@@ -300,7 +304,7 @@ emp_act
 					H.bloody_hands(src)
 
 			switch(hit_zone)
-				if("head")
+				if(BP_HEAD)
 					if(wear_mask)
 						wear_mask.add_blood(src)
 						update_inv_wear_mask(0)
@@ -310,7 +314,7 @@ emp_act
 					if(glasses && prob(33))
 						glasses.add_blood(src)
 						update_inv_glasses(0)
-				if("chest")
+				if(BP_CHEST)
 					bloody_body(src)
 
 	return 1
@@ -357,7 +361,7 @@ emp_act
 			var/mob/living/L = O.thrower
 			zone = check_zone(L.zone_sel.selecting)
 		else
-			zone = ran_zone("chest",75)	//Hits a random part of the body, geared towards the chest
+			zone = ran_zone(BP_CHEST,75)	//Hits a random part of the body, geared towards the chest
 
 		//check if we hit
 		var/miss_chance = 15
@@ -375,6 +379,7 @@ emp_act
 
 		if(!zone)
 			visible_message("<span class='notice'>\The [O] misses [src] narrowly!</span>")
+			playsound(src, 'sound/effects/throw_miss.ogg', rand(10, 50), 1)
 			return
 
 		O.throwing = 0		//it hit, so stop moving
@@ -386,14 +391,15 @@ emp_act
 		var/armor = run_armor_check(affecting, "melee", O.armor_penetration, "Your armor has protected your [hit_area].", "Your armor has softened the hit to your [hit_area].") //I guess "melee" is the best fit here
 
 		if(armor < 100)
-			apply_damage(throw_damage, dtype, zone, armor, is_sharp(O), has_edge(O), O)
+			var/damage_flags = O.damage_flags()
+			apply_damage(throw_damage, dtype, zone, armor, O, damage_flags = damage_flags)
 
 		if(ismob(O.thrower))
 			var/mob/M = O.thrower
 			var/client/assailant = M.client
 			if(assailant)
 				src.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been hit with a [O], thrown by [M.name] ([assailant.ckey])</font>")
-				M.attack_log += text("\[[time_stamp()]\] <font color='red'>Hit [src.name] ([src.ckey]) with a thrown [O]</font>")
+				M.attack_log += text("\[[time_stamp()]\] <span class='warning'>Hit [src.name] ([src.ckey]) with a thrown [O]</span>")
 				if(!istype(src,/mob/living/simple_animal/rat))
 					msg_admin_attack("[src.name] ([src.ckey]) was hit by a [O], thrown by [M.name] ([assailant.ckey]) (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[src.x];Y=[src.y];Z=[src.z]'>JMP</a>)",ckey=key_name(M),ckey_target=key_name(src))
 
@@ -438,6 +444,11 @@ emp_act
 					visible_message("<span class='warning'>[src] is pinned to the wall by [O]!</span>","<span class='warning'>You are pinned to the wall by [O]!</span>")
 					src.anchored = 1
 					src.pinned += O
+	else if(ishuman(AM))
+		var/mob/living/carbon/human/H = AM
+		H.Weaken(3)
+		Weaken(3)
+		visible_message(SPAN_WARNING("[src] get knocked over by [H]!"), SPAN_WARNING("You get knocked over by [H]!"))
 
 /mob/living/carbon/human/embed(var/obj/O, var/def_zone=null)
 	if(!def_zone) ..()
@@ -448,14 +459,15 @@ emp_act
 
 
 /mob/living/carbon/human/proc/bloody_hands(var/mob/living/source, var/amount = 2)
-	if (gloves)
-		gloves.add_blood(source)
-		gloves:transfer_blood = amount
-		gloves:bloody_hands_mob = source
+	if(istype(gloves, /obj/item/clothing/gloves))
+		var/obj/item/clothing/gloves/G = gloves
+		G.add_blood(source)
+		G.transfer_blood = amount
+		G.bloody_hands_mob = WEAKREF(source)
 	else
 		add_blood(source)
 		bloody_hands = amount
-		bloody_hands_mob = source
+		bloody_hands_mob = WEAKREF(source)
 	update_inv_gloves()		//updates on-mob overlays for bloody hands and/or bloody gloves
 
 /mob/living/carbon/human/proc/bloody_body(var/mob/living/source)
@@ -472,8 +484,8 @@ emp_act
 	if(damtype != BURN && damtype != BRUTE) return
 
 	// The rig might soak this hit, if we're wearing one.
-	if(back && istype(back,/obj/item/weapon/rig))
-		var/obj/item/weapon/rig/rig = back
+	if(back && istype(back,/obj/item/rig))
+		var/obj/item/rig/rig = back
 		rig.take_hit(damage)
 
 	// We may also be taking a suit breach.
@@ -487,7 +499,7 @@ emp_act
 	var/perm = 0
 
 	var/list/perm_by_part = list(
-		"head" = THERMAL_PROTECTION_HEAD,
+		BP_HEAD = THERMAL_PROTECTION_HEAD,
 		"upper_torso" = THERMAL_PROTECTION_UPPER_TORSO,
 		"lower_torso" = THERMAL_PROTECTION_LOWER_TORSO,
 		"legs" = THERMAL_PROTECTION_LEG_LEFT + THERMAL_PROTECTION_LEG_RIGHT,
@@ -500,7 +512,7 @@ emp_act
 		if(C.permeability_coefficient == 1 || !C.body_parts_covered)
 			continue
 		if(C.body_parts_covered & HEAD)
-			perm_by_part["head"] *= C.permeability_coefficient
+			perm_by_part[BP_HEAD] *= C.permeability_coefficient
 		if(C.body_parts_covered & UPPER_TORSO)
 			perm_by_part["upper_torso"] *= C.permeability_coefficient
 		if(C.body_parts_covered & LOWER_TORSO)
@@ -526,7 +538,7 @@ emp_act
 		to_chat(user, "<span class='notice'>You don't want to risk hurting [src]!</span>")
 		return 0
 
-	for(var/obj/item/weapon/grab/G in user.grabbed_by)
+	for(var/obj/item/grab/G in user.grabbed_by)
 		if(G.assailant == user)
 			to_chat(user, "<span class='notice'>You already grabbed [src].</span>")
 			return
@@ -537,14 +549,14 @@ emp_act
 	if(src.w_uniform)
 		src.w_uniform.add_fingerprint(src)
 
-	var/obj/item/weapon/grab/G = new /obj/item/weapon/grab(user, src)
+	var/obj/item/grab/G = new /obj/item/grab(user, src)
 	if(buckled)
-		to_chat(user, "<span class='notice'>You cannot grab [src], \he is buckled in!</span>")
+		to_chat(user, "<span class='notice'>You cannot grab [src], [get_pronoun("he")] [get_pronoun("is")] buckled in!</span>")
 	if(!G)	//the grab will delete itself in New if affecting is anchored
 		return
 	user.put_in_active_hand(G)
 	G.synch()
-	LAssailant = user
+	LAssailant = WEAKREF(user)
 
 	user.do_attack_animation(src)
 	playsound(loc, 'sound/weapons/thudswoosh.ogg', 50, 1, -1)
@@ -557,3 +569,13 @@ emp_act
 		return 1
 	visible_message("<span class='warning'>[user] has grabbed [src] passively!</span>")
 	return 1
+
+/mob/living/carbon/human/set_on_fire()
+	..()
+	for(var/obj/item/I in contents)
+		I.catch_fire()
+
+/mob/living/carbon/human/extinguish_fire()
+	..()
+	for(var/obj/item/I in contents)
+		I.extinguish_fire()

@@ -1,12 +1,14 @@
 /mob/living/simple_animal/hostile/syndicate
 	name = "\improper Syndicate operative"
 	desc = "Death to the Company."
+	icon = 'icons/mob/npc/human.dmi'
 	icon_state = "syndicate"
 	icon_living = "syndicate"
 	icon_dead = "syndicate_dead"
 	icon_gib = "syndicate_gib"
 	speak_chance = 0
 	turns_per_move = 5
+	organ_names = list("chest", "lower body", "left arm", "right arm", "left leg", "right leg", "head")
 	response_help = "pokes"
 	response_disarm = "shoves"
 	response_harm = "hits"
@@ -55,8 +57,8 @@
 	melee_damage_upper = 25
 	icon_state = "syndicatemelee"
 	icon_living = "syndicatemelee"
-	weapon1 = /obj/item/weapon/melee/energy/sword/red
-	weapon2 = /obj/item/weapon/shield/energy
+	weapon1 = /obj/item/melee/energy/sword/red
+	weapon2 = /obj/item/shield/energy
 	attacktext = "slashed"
 	status_flags = 0
 
@@ -64,7 +66,7 @@
 	if(O.force)
 		if(prob(80))
 			var/damage = O.force
-			if (O.damtype == HALLOSS)
+			if (O.damtype == PAIN)
 				damage = 0
 			health -= damage
 			visible_message("<span class='danger'>[src] has been attacked with the [O] by [user].</span>")
@@ -114,7 +116,7 @@
 	projectilesound = 'sound/weapons/gunshot/gunshot_light.ogg'
 	projectiletype = /obj/item/projectile/bullet/pistol/medium
 
-	weapon1 = /obj/item/weapon/gun/projectile/automatic/c20r
+	weapon1 = /obj/item/gun/projectile/automatic/c20r
 
 /mob/living/simple_animal/hostile/syndicate/ranged/space
 	icon_state = "syndicaterangedpsace"
@@ -134,52 +136,3 @@
 
 /mob/living/simple_animal/hostile/syndicate/ranged/space/Allow_Spacemove(var/check_drift = 0)
 	return
-
-
-
-/mob/living/simple_animal/hostile/viscerator
-	name = "viscerator"
-	desc = "A small, twin-bladed machine capable of inflicting very deadly lacerations."
-	icon = 'icons/mob/npc/critter.dmi'
-	icon_state = "viscerator_attack"
-	icon_living = "viscerator_attack"
-	pass_flags = PASSTABLE
-	health = 15
-	maxHealth = 15
-	melee_damage_lower = 10
-	melee_damage_upper = 15
-	density = 0
-	attacktext = "cut"
-	attack_sound = 'sound/weapons/bladeslice.ogg'
-	faction = "syndicate"
-	min_oxy = 0
-	max_oxy = 0
-	min_tox = 0
-	max_tox = 0
-	min_co2 = 0
-	max_co2 = 0
-	min_n2 = 0
-	max_n2 = 0
-	minbodytemp = 0
-
-	tameable = FALSE
-
-	flying = TRUE
-	attack_emote = "buzzes at"
-
-/mob/living/simple_animal/hostile/viscerator/death()
-	..(null,"is smashed into pieces!")
-	var/T = get_turf(src)
-	new /obj/effect/gibspawner/robot(T)
-	spark(T, 3, alldirs)
-	qdel(src)
-
-/mob/living/simple_animal/hostile/viscerator/proc/wakeup()
-	stance = HOSTILE_STANCE_IDLE
-
-/mob/living/simple_animal/hostile/viscerator/emp_act(severity)
-	LoseTarget()
-	stance = HOSTILE_STANCE_TIRED
-	addtimer(CALLBACK(src, .proc/wakeup), 150)
-	if(severity == 1.0)
-		apply_damage(5)

@@ -98,13 +98,13 @@ var/datum/controller/subsystem/vote/SSvote
 					else
 						factor = 1.4
 				choices["Initiate Crew Transfer"]["votes"] = round(choices["Initiate Crew Transfer"]["votes"] * factor)
-				to_world("<font color='purple'>Crew Transfer Factor: [factor]</font>")
+				to_world("<span class='vote'>Crew Transfer Factor: [factor]</span>")
 				greatest_votes = max(choices["Initiate Crew Transfer"]["votes"], choices["Continue The Round"]["votes"])
 
 	if(mode == "crew_transfer")
 		if(round(get_round_duration() / 36000)+12 <= 14)
 			// Credit to Scopes @ oldcode.
-			to_world("<font color='purple'><b>Majority voting rule in effect. 2/3rds majority needed to initiate transfer.</b></font>")
+			to_world("<span class='vote'><b>Majority voting rule in effect. 2/3rds majority needed to initiate transfer.</b></span>")
 			choices["Initiate Crew Transfer"]["votes"] = round(choices["Initiate Crew Transfer"]["votes"] - round(total_votes / 3))
 			greatest_votes = max(choices["Initiate Crew Transfer"]["votes"], choices["Continue The Round"]["votes"])
 
@@ -127,8 +127,9 @@ var/datum/controller/subsystem/vote/SSvote
 		. = pick(winners)
 
 		for(var/key in current_votes)
-			if(choices[current_votes[key]]["votes"] == .)
+			if(current_votes[key] == .)
 				round_voters += key // Keep track of who voted for the winning round.
+
 		if((mode == "gamemode" && . == "Extended") || SSticker.hide_mode == 0) // Announce Extended gamemode, but not other gamemodes
 			text += "<b>Vote Result: [.]</b>"
 		else
@@ -142,7 +143,7 @@ var/datum/controller/subsystem/vote/SSvote
 		if(mode == "add_antagonist")
 			antag_add_failed = 1
 	log_vote(text)
-	to_world("<font color='purple'>[text]</font>")
+	to_world("<span class='vote'>[text]</span>")
 
 /datum/controller/subsystem/vote/proc/result()
 	. = announce_result()
@@ -172,7 +173,7 @@ var/datum/controller/subsystem/vote/SSvote
 	if(mode == "gamemode") //fire this even if the vote fails.
 		if(!round_progressing)
 			round_progressing = 1
-			to_world("<font color='red'><b>The round will start soon.</b></font>")
+			to_world("<span class='warning'><b>The round will start soon.</b></span>")
 
 	if(restart)
 		to_world("World restarting due to vote...")
@@ -256,8 +257,8 @@ var/datum/controller/subsystem/vote/SSvote
 						to_chat(initiator_key, "The current alert status is too high to call for a crew transfer!")
 						return 0
 					if(SSticker.current_state <= 2)
-						return 0
 						to_chat(initiator_key, "The crew transfer button has been disabled!")
+						return 0
 					question = "End the shift?"
 					AddChoice("Initiate Crew Transfer")
 					AddChoice("Continue The Round")
@@ -286,20 +287,20 @@ var/datum/controller/subsystem/vote/SSvote
 			text += "\n[sanitizeSafe(question)]"
 
 		log_vote(text)
-		to_world("<font color='purple'><b>[text]</b>\nType <b>vote</b> or click <a href='?src=\ref[src];open=1'>here</a> to place your votes.\nYou have [config.vote_period/10] seconds to vote.</font>")
+		to_world("<span class='vote'><b>[text]</b>\nType <b>vote</b> or click <a href='?src=\ref[src];open=1'>here</a> to place your votes.\nYou have [config.vote_period/10] seconds to vote.</span>")
 		for(var/cc in clients)
 			var/client/C = cc
 			if(C.prefs.asfx_togs & ASFX_VOTE) //Personal mute
 				switch(vote_type)
 					if("crew_transfer")
-						C << sound('sound/effects/vote.ogg', repeat = 0, wait = 0, volume = 50, channel = 3)
+						sound_to(C, sound('sound/effects/vote.ogg', repeat = 0, wait = 0, volume = 50, channel = 3))
 					if("gamemode")
-						C << sound('sound/ambience/alarm4.ogg', repeat = 0, wait = 0, volume = 50, channel = 3)
+						sound_to(C, sound('sound/ambience/vote_alarm.ogg', repeat = 0, wait = 0, volume = 50, channel = 3))
 					if("custom")
-						C << sound('sound/ambience/alarm4.ogg', repeat = 0, wait = 0, volume = 50, channel = 3)
+						sound_to(C, sound('sound/ambience/vote_alarm.ogg', repeat = 0, wait = 0, volume = 50, channel = 3))
 		if(mode == "gamemode" && round_progressing)
 			round_progressing = 0
-			to_world("<font color='red'><b>Round start has been delayed.</b></font>")
+			to_world("<span class='warning'><b>Round start has been delayed.</b></span>")
 		SSvueui.check_uis_for_change(src)
 		return 1
 	return 0
@@ -315,7 +316,7 @@ var/datum/controller/subsystem/vote/SSvote
 	if(href_list["open"])
 		OpenVotingUI(usr)
 	var/isstaff = usr.client.holder && (usr.client.holder.rights & (R_ADMIN|R_MOD))
-	
+
 	switch(href_list["action"])
 		if("cancel")
 			if(isstaff)
@@ -371,19 +372,19 @@ var/datum/controller/subsystem/vote/SSvote
 	if(!data)
 		. = list("choices" = list(), "mode" = 0, "voted" = 0)
 	data = . || data
-	if(choices.len != data["choices"].len)
+	if(choices.len != LAZYLEN(data["choices"]))
 		data["choices"] = list()
 	for(var/choice in choices)
 		VUEUI_SET_IFNOTSET(data["choices"][choice], deepCopyList(choices[choice]), ., data)
 		VUEUI_SET_CHECK(data["choices"][choice]["votes"], choices[choice]["votes"], ., data) // Only votes trigger data update
-	
+
 	VUEUI_SET_CHECK(data["mode"], mode, ., data)
 	VUEUI_SET_CHECK(data["voted"], current_votes[user.ckey], ., data)
 	VUEUI_SET_CHECK(data["endtime"], started_time + config.vote_period, ., data)
 	VUEUI_SET_CHECK(data["allow_vote_restart"], config.allow_vote_restart, ., data)
 	VUEUI_SET_CHECK(data["allow_vote_mode"], config.allow_vote_mode, ., data)
 	VUEUI_SET_CHECK(data["allow_extra_antags"], (!antag_add_failed && config.allow_extra_antags), ., data)
-	
+
 	if(!question)
 		VUEUI_SET_CHECK(data["question"], capitalize(mode), ., data)
 	else
@@ -391,13 +392,13 @@ var/datum/controller/subsystem/vote/SSvote
 	VUEUI_SET_CHECK(data["isstaff"], (user.client.holder && (user.client.holder.rights & (R_ADMIN|R_MOD))), ., data)
 	var/slevel = get_security_level()
 	VUEUI_SET_CHECK(data["is_code_red"], (slevel == "red" || slevel == "delta"), ., data)
-	
+
 
 
 /datum/controller/subsystem/vote/proc/OpenVotingUI(var/mob/user)
 	var/datum/vueui/ui = SSvueui.get_open_ui(user, src)
 	if (!ui)
-		ui = new(user, SSvote, "misc-voting", 400, 500, "Voting panel", nstate = interactive_state)
+		ui = new(user, SSvote, "misc-voting", 400, 500, "Voting panel", state = interactive_state)
 		ui.header = "minimal"
 	ui.open()
 

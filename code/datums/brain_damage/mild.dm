@@ -1,5 +1,5 @@
 //Mild traumas are the most common; they are generally minor annoyances.
-//They can be suppressed with escitalopram, but not chemically cured, although brain surgery still works.
+//They can be suppressed with minaphobin, but not chemically cured, although brain surgery still works.
 //Most of the old brain damage effects have been transferred to the dumbness trauma.
 
 /datum/brain_trauma/mild
@@ -120,8 +120,10 @@
 	if(prob(25))
 		switch(rand(1,9))
 			if(1)
-				to_chat(owner, "<span class='notice'>Your stomach writhes with pain.</span>")
-				owner.vomit()
+				if(ishuman(owner))
+					var/mob/living/carbon/human/H = owner
+					to_chat(owner, "<span class='notice'>Your stomach writhes with pain.</span>")
+					H.vomit()
 			if(2,3)
 				to_chat(owner, "<span class='notice'>You feel light-headed.</span>")
 				owner.dizziness = max(owner.slurring, 10)
@@ -151,7 +153,7 @@
 
 /datum/brain_trauma/mild/muscle_weakness/on_life()
 	var/fall_chance = 5
-	if(owner.m_intent == "run")
+	if(owner.m_intent == M_RUN)
 		fall_chance += 15
 	if(prob(fall_chance) && !owner.lying && !owner.buckled)
 		to_chat(owner, "<span class='warning'>Your leg gives out!</span>")
@@ -193,11 +195,11 @@
 					I.attack_self(owner)
 			if(3)
 				var/prev_intent = owner.a_intent
-				owner.a_intent = I_HURT
+				owner.set_intent(I_HURT)
 
 				var/list/mob/living/targets = list()
 				var/range = 1
-				if(istype(owner.get_active_hand(), /obj/item/weapon/gun)) //get targets to shoot at
+				if(istype(owner.get_active_hand(), /obj/item/gun)) //get targets to shoot at
 					range = 7
 					for(var/turf/T in oview(owner, range))
 						targets += T
@@ -209,13 +211,13 @@
 				if(LAZYLEN(targets))
 					to_chat(owner, "<span class='warning'>Your arm spasms!</span>")
 					owner.ClickOn(pick(targets))
-				owner.a_intent = prev_intent
+				owner.set_intent(prev_intent)
 			if(4)
 				var/prev_intent = owner.a_intent
-				owner.a_intent = I_HURT
+				owner.set_intent(I_HURT)
 				to_chat(owner, "<span class='warning'>Your arm spasms!</span>")
 				owner.ClickOn(owner)
-				owner.a_intent = prev_intent
+				owner.set_intent(prev_intent)
 			if(5)
 				if(owner.incapacitated())
 					return

@@ -18,19 +18,23 @@
 	active_power_usage = 4
 
 /obj/machinery/button/remote/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	if(wires & 2)
 		return src.attack_hand(user)
 	else
 		to_chat(user, "Error, no route to host.")
 
-/obj/machinery/button/remote/attackby(obj/item/weapon/W, mob/user as mob)
+/obj/machinery/button/remote/attackby(obj/item/W, mob/user as mob)
+	if(istype(W, /obj/item/forensics))
+		return
 	return src.attack_hand(user)
 
 /obj/machinery/button/remote/emag_act(var/remaining_charges, var/mob/user)
 	if(req_access.len || req_one_access.len)
 		req_access = list()
 		req_one_access = list()
-		playsound(src.loc, "sparks", 100, 1)
+		playsound(src.loc, /decl/sound_category/spark_sound, 100, 1)
 		return 1
 
 /obj/machinery/button/remote/attack_hand(mob/user as mob)
@@ -146,6 +150,14 @@
 					M.close()
 					return
 
+/obj/machinery/button/remote/blast_door/open_only/trigger()
+	for(var/obj/machinery/door/blast/M in SSmachinery.all_machines)
+		if(M.id == src.id)
+			if(M.density)
+				spawn(0)
+					M.open()
+					return
+
 /*
 	Emitter remote control
 */
@@ -178,7 +190,7 @@
 	for(var/obj/machinery/door/blast/M in SSmachinery.all_machines)
 		if (M.id == src.id)
 			same_id += M
-			INVOKE_ASYNC(M, /obj/machinery/door/blast/open)
+			INVOKE_ASYNC(M, /obj/machinery/door/blast/.proc/open)
 
 	sleep(20)
 
@@ -189,7 +201,7 @@
 	sleep(50)
 
 	for(var/mm in same_id)
-		INVOKE_ASYNC(mm, /obj/machinery/door/blast/close)
+		INVOKE_ASYNC(mm, /obj/machinery/door/blast/.proc/close)
 
 	icon_state = "launcherbtt"
 	active = 0

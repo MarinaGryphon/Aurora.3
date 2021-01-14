@@ -5,7 +5,7 @@
 */
 
 /obj/item/clothing/accessory/badge
-	name = "detective's badge"
+	name = "badge"
 	desc = "A corporate security badge, made from gold and set on false leather."
 	icon_state = "badge"
 	item_state = "marshalbadge"
@@ -17,6 +17,7 @@
 	var/v_flippable = 1
 
 	drop_sound = 'sound/items/drop/ring.ogg'
+	pickup_sound = 'sound/items/pickup/ring.ogg'
 
 /obj/item/clothing/accessory/badge/press
 	name = "corporate press pass"
@@ -25,9 +26,10 @@
 	item_state = "pbadge"
 	overlay_state = "pbadge"
 	badge_string = "Corporate Reporter"
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 
 	drop_sound = 'sound/items/drop/rubber.ogg'
+	pickup_sound = 'sound/items/pickup/rubber.ogg'
 
 /obj/item/clothing/accessory/badge/press/independent
 	name = "press pass"
@@ -40,7 +42,7 @@
 	desc = "A journalist's 'pass' shaped, for whatever reason, like a security badge. It is made of plastic."
 	icon_state = "pbadge"
 	badge_string = "Sicurity Journelist"
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 
 /obj/item/clothing/accessory/badge/old
 	name = "faded badge"
@@ -111,14 +113,13 @@
 	overlay_state = "holobadge"
 	var/emagged //Emagging removes Sec check.
 
-	drop_sound = 'sound/items/drop/rubber.ogg'
-
 /obj/item/clothing/accessory/badge/holo/cord
 	icon_state = "holobadge-cord"
 	overlay_state = null
 	slot_flags = SLOT_MASK | SLOT_TIE
 
 	drop_sound = 'sound/items/drop/ring.ogg'
+	pickup_sound = 'sound/items/pickup/ring.ogg'
 
 /obj/item/clothing/accessory/badge/holo/attack_self(mob/user as mob)
 	if(!stored_name)
@@ -136,15 +137,12 @@
 		return 1
 
 /obj/item/clothing/accessory/badge/holo/attackby(var/obj/item/O as obj, var/mob/user as mob)
-	if(istype(O, /obj/item/weapon/card/id) || istype(O, /obj/item/device/pda))
+	if(O.GetID())
 
-		var/obj/item/weapon/card/id/id_card = null
+		var/obj/item/card/id/id_card = O.GetID()
 
-		if(istype(O, /obj/item/weapon/card/id))
-			id_card = O
-		else
-			var/obj/item/device/pda/pda = O
-			id_card = pda.id
+		if(!istype(id_card))
+			return
 
 		if(access_security in id_card.access || emagged)
 			to_chat(user, "You imprint your ID details onto the badge.")
@@ -154,13 +152,19 @@
 		return
 	..()
 
+/obj/item/clothing/accessory/badge/officer
+	name = "officer's badge"
+	desc = "A bronze corporate security badge. Stamped with the words 'Security Officer.'"
+	icon_state = "bronzebadge"
+	overlay_state = "bronzebadge"
+	slot_flags = SLOT_TIE
+
 /obj/item/clothing/accessory/badge/warden
 	name = "warden's badge"
 	desc = "A silver corporate security badge. Stamped with the words 'Brig Officer.'"
 	icon_state = "silverbadge"
 	overlay_state = "silverbadge"
 	slot_flags = SLOT_TIE
-
 
 /obj/item/clothing/accessory/badge/hos
 	name = "commander's badge"
@@ -178,6 +182,7 @@
 	badge_string = "Priority ASSN Visa Applicant"
 
 	drop_sound = 'sound/items/drop/card.ogg'
+	pickup_sound = 'sound/items/pickup/card.ogg'
 
 /obj/item/clothing/accessory/badge/tcfl_papers
 	name = "\improper TCFL enlistment"
@@ -188,21 +193,7 @@
 	badge_string = "Tau Ceti Foreign Legion Recruit"
 
 	drop_sound = 'sound/items/drop/card.ogg'
-
-/obj/item/clothing/accessory/badge/hadii_card
-	name = "honorary party member card"
-	desc = "A card denoting a honorary member of the Hadiist party."
-	icon_state = "hadii-id"
-	overlay_state = "hadii-id"
-	slot_flags = SLOT_TIE
-	badge_string = "Honorary Member of Party of the Free Tajara under the Leadership of Hadii"
-	description_fluff = "The Party of the Free Tajara under the Leadership of Hadii is the only and ruling party in the PRA, with its leader always being the elected president. \
-	They follow Hadiism as their main ideology, with the objective of securing the tajaran freedom and place in the galactic community. Membership of the Hadiist Party is not open. \
-	For anyone to become a member, they must be approved by a committee that will consider their qualifications and past. Goverment officials can grant honorary memberships, this is \
-	seem as nothing but a honor and does not grant any status or position that a regular Party member would have."
-	w_class = 1
-
-	drop_sound = 'sound/items/drop/card.ogg'
+	pickup_sound = 'sound/items/pickup/card.ogg'
 
 /obj/item/clothing/accessory/badge/sheriff
 	name = "sheriff badge"
@@ -219,7 +210,7 @@
 
 /obj/item/clothing/accessory/badge/dia
 	name = "\improper DIA badge"
-	desc = "This badge marks the holder of an investigative agent."
+	desc = "This badge marks the holder as an investigative agent."
 	icon_state = "diabadge"
 	overlay_state = "diabadge"
 	badge_string = "Corporate Investigator"
@@ -230,7 +221,7 @@
 	icon_state = "solbadge"
 	overlay_state = "solbadge"
 	badge_string = null
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 
 /obj/item/clothing/accessory/badge/idbadge/nt
 	name = "\improper NT ID badge"
@@ -245,3 +236,10 @@
 	icon_state = "intelbadge"
 	overlay_state = "intelbadge"
 	badge_string = null
+
+/obj/item/clothing/accessory/badge/trinary
+    name = "trinary perfection brooch"
+    desc = "A metal brooch worn by those who serve or follow the beliefs of the Trinary Perfection. It resembles a gear with a triangle inside."
+    icon_state = "trinary_badge"
+    overlay_state = "trinary_badge"
+    badge_string = null

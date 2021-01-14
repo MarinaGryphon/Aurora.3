@@ -27,7 +27,7 @@ datum/unit_test/apc_area_test/start_test()
 	var/list/exempt_from_apc = typecacheof(current_map.ut_apc_exempt_areas)
 
 	for(var/area/A in typecache_filter_list_reverse(all_areas, exempt_areas))
-		if(A.z in current_map.station_levels)
+		if(isStationLevel(A.z))
 			area_test_count++
 			var/area_good = 1
 			var/bad_msg = "[ascii_red]--------------- [A.name]([A.type])"
@@ -70,7 +70,7 @@ datum/unit_test/wire_test/start_test()
 
 	for(C in world)
 		T = get_turf(C)
-		if(T && T.z in current_map.station_levels)
+		if(T && isStationLevel(T.z))
 			cable_turfs |= get_turf(C)
 
 	for(T in cable_turfs)
@@ -132,7 +132,7 @@ datum/unit_test/wire_test/start_test()
 	var/ladders_blocked = 0
 
 	for (var/obj/structure/ladder/ladder in world)
-		if (ladder.z in current_map.admin_levels)
+		if (isAdminLevel(ladder.z))
 			continue
 
 		ladders_total++
@@ -219,7 +219,7 @@ datum/unit_test/wire_test/start_test()
 
 	//all plumbing - yes, some things might get stated twice, doesn't matter.
 	for (var/obj/machinery/atmospherics/plumbing in world)
-		if(!(plumbing.z in current_map.station_levels))
+		if(isNotStationLevel(plumbing.z))
 			continue
 		checks++
 		if (plumbing.nodealert)
@@ -228,7 +228,7 @@ datum/unit_test/wire_test/start_test()
 
 	//Manifolds
 	for (var/obj/machinery/atmospherics/pipe/manifold/pipe in world)
-		if(!(pipe.z in current_map.station_levels))
+		if(isNotStationLevel(pipe.z))
 			continue
 		checks++
 		if (!pipe.node1 || !pipe.node2 || !pipe.node3)
@@ -237,7 +237,7 @@ datum/unit_test/wire_test/start_test()
 
 	//Pipes
 	for (var/obj/machinery/atmospherics/pipe/simple/pipe in world)
-		if(!(pipe.z in current_map.station_levels))
+		if(isNotStationLevel(pipe.z))
 			continue
 		checks++
 		if (!pipe.node1 || !pipe.node2)
@@ -260,6 +260,31 @@ datum/unit_test/wire_test/start_test()
 		fail("\[[failed_checks] / [checks]\] Some pipes are not properly connected or doubled up.")
 	else
 		pass("All \[[checks]\] pipes are properly connected and not doubled up.")
+
+	return 1
+
+/datum/unit_test/mapped_products
+	name = "MAP: Check for mapped vending products"
+
+/datum/unit_test/mapped_products/start_test()
+	var/checks = 0
+	var/failed_checks = 0
+	var/list/obj/machinery/vending/V_to_test = list()
+
+	for(var/obj/machinery/vending/T in world)
+		checks++
+		V_to_test += T
+	for(var/obj/machinery/vending/V in V_to_test)
+		var/obj/machinery/vending/temp_V = new V.type
+		if(length(difflist(V.products, temp_V.products)) || length(difflist(V.contraband, temp_V.contraband)) || length(difflist(V.premium, temp_V.premium)))
+			failed_checks++
+
+			log_unit_test("Vending machine [V] at ([V.x],[V.y],[V.z] on [V.loc] has mapped-in products, contraband, or premium items.")
+
+	if(failed_checks)
+		fail("\[[failed_checks] / [checks]\] Some vending machines have mapped-in product lists.")
+	else
+		pass("All \[[checks]\] vending machines have valid product lists.")
 
 	return 1
 

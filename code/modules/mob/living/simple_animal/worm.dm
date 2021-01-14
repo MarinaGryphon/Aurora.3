@@ -2,14 +2,15 @@
 	name = "space worm segment"
 	desc = "A part of a space worm."
 	icon = 'icons/mob/npc/animal.dmi'
-	icon_state = "spaceworm"
-	icon_living = "spaceworm"
-	icon_dead = "spacewormdead"
+	icon_state = null
+	icon_living = null
+	icon_dead = null
 	status_flags = 0
 
 	speak_emote = list("transmits") //not supposed to be used under AI control
 	emote_hear = list("transmits")  //I'm just adding it so it doesn't runtime if controlled by player who speaks
 
+	organ_names = list("side")
 	response_help  = "touches"
 	response_disarm = "flails at"
 	response_harm   = "punches the"
@@ -48,9 +49,9 @@
 
 	head
 		name = "space worm head"
-		icon_state = "spacewormhead"
-		icon_living = "spacewormhead"
-		icon_dead = "spacewormdead"
+		icon_state = "spacewormhead0"
+		icon_living = "spacewormhead0"
+		icon_dead = "spacewormheaddead"
 
 		maxHealth = 20
 		health = 20
@@ -123,7 +124,7 @@
 			eatingDuration = 0
 
 	update_icon() //only for the sake of consistency with the other update icon procs
-		if(stat == CONSCIOUS || stat == UNCONSCIOUS)
+		if(stat != DEAD)
 			if(previous) //midsection
 				icon_state = "spaceworm[get_dir(src,previous) | get_dir(src,next)]" //see 3 lines below
 			else //tail

@@ -3,7 +3,7 @@
 	if(!C || !user)
 		return 0
 
-	if(flooring)
+	if(flooring && user.a_intent != I_HURT)
 		if(C.iscrowbar())
 			if(broken || burnt)
 				to_chat(user, "<span class='notice'>You remove the broken [flooring.descriptor].</span>")
@@ -16,21 +16,21 @@
 				make_plating(1)
 			else
 				return
-			playsound(src, 'sound/items/Crowbar.ogg', 80, 1)
+			playsound(src, 'sound/items/crowbar_tile.ogg', 80, 1)
 			return
 		else if(C.isscrewdriver() && (flooring.flags & TURF_REMOVE_SCREWDRIVER))
 			if(broken || burnt)
 				return
 			to_chat(user, "<span class='notice'>You unscrew and remove the [flooring.descriptor].</span>")
 			make_plating(1)
-			playsound(src, 'sound/items/Screwdriver.ogg', 80, 1)
+			playsound(src, 'sound/items/screwdriver.ogg', 80, 1)
 			return
 		else if(C.iswrench() && (flooring.flags & TURF_REMOVE_WRENCH))
 			to_chat(user, "<span class='notice'>You unwrench and remove the [flooring.descriptor].</span>")
 			make_plating(1)
 			playsound(src, C.usesound, 80, 1)
 			return
-		else if(istype(C, /obj/item/weapon/shovel) && (flooring.flags & TURF_REMOVE_SHOVEL))
+		else if(istype(C, /obj/item/shovel) && (flooring.flags & TURF_REMOVE_SHOVEL))
 			to_chat(user, "<span class='notice'>You shovel off the [flooring.descriptor].</span>")
 			make_plating(1)
 			playsound(src, 'sound/items/Deconstruct.ogg', 80, 1)
@@ -53,8 +53,9 @@
 				return
 			var/obj/item/stack/S = C
 			var/decl/flooring/use_flooring
-			for(var/flooring_type in flooring_types)
-				var/decl/flooring/F = flooring_types[flooring_type]
+			var/list/decls = decls_repository.get_decls_of_subtype(/decl/flooring)
+			for(var/flooring_type in decls)
+				var/decl/flooring/F = decls[flooring_type]
 				if(!F.build_type)
 					continue
 				if(ispath(S.type, F.build_type) || ispath(S.build_type, F.build_type))
@@ -77,12 +78,12 @@
 				return
 		// Repairs.
 		else if(C.iswelder())
-			var/obj/item/weapon/weldingtool/welder = C
+			var/obj/item/weldingtool/welder = C
 			if(welder.isOn() && (is_plating()))
 				if(broken || burnt)
 					if(welder.remove_fuel(0,user))
 						to_chat(user, "<span class='notice'>You fix some dents on the broken plating.</span>")
-						playsound(src, 'sound/items/Welder.ogg', 80, 1)
+						playsound(src, 'sound/items/welder.ogg', 80, 1)
 						icon_state = "plating"
 						burnt = null
 						broken = null

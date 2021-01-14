@@ -45,7 +45,7 @@
 	icon_state = "boulder[rand(1,4)]"
 	excavation_level = rand(5,50)
 
-/obj/structure/boulder/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/structure/boulder/attackby(obj/item/W as obj, mob/user as mob)
 	if (istype(W, /obj/item/device/core_sampler))
 		src.geological_data.artifact_distance = rand(-100,100) / 100
 		src.geological_data.artifact_id = artifact_find.artifact_id
@@ -63,11 +63,11 @@
 		var/obj/item/device/measuring_tape/P = W
 		user.visible_message("<span class='notice'>[user] extends [P] towards [src].</span>","<span class='notice'>You extend [P] towards [src].</span>")
 		if(do_after(user,40))
-			to_chat(user, "<span class='notice'>\icon[P] [src] has been excavated to a depth of [2*src.excavation_level]cm.</span>")
+			to_chat(user, "<span class='notice'>[icon2html(P, user)] [src] has been excavated to a depth of [2*src.excavation_level]cm.</span>")
 		return
 
-	if (istype(W, /obj/item/weapon/pickaxe))
-		var/obj/item/weapon/pickaxe/P = W
+	if (istype(W, /obj/item/pickaxe))
+		var/obj/item/pickaxe/P = W
 
 		if(last_act + P.digspeed > world.time)//prevents message spam
 			return
@@ -85,7 +85,7 @@
 
 		if(excavation_level > 100)
 			//failure
-			user.visible_message("<font color='red'><b>[src] suddenly crumbles away.</b></font>",\
+			user.visible_message("<span class='warning'><b>[src] suddenly crumbles away.</b></span>",\
 			"<span class='warning'>[src] has disintegrated under your onslaught, any secrets it was holding are long gone.</span>")
 			qdel(src)
 			return
@@ -99,9 +99,9 @@
 					var/obj/machinery/artifact/X = O
 					if(X.my_effect)
 						X.my_effect.artifact_id = artifact_find.artifact_id
-				src.visible_message("<font color='red'><b>[src] suddenly crumbles away.</b></font>")
+				src.visible_message("<span class='warning'><b>[src] suddenly crumbles away.</b></span>")
 			else
-				user.visible_message("<font color='red'><b>[src] suddenly crumbles away.</b></font>",\
+				user.visible_message("<span class='warning'><b>[src] suddenly crumbles away.</b></span>",\
 				"<span class='notice'>[src] has been whittled away under your careful excavation, but there was nothing of interest inside.</span>")
 			qdel(src)
 
@@ -109,21 +109,16 @@
 	. = ..()
 	if(istype(AM,/mob/living/carbon/human))
 		var/mob/living/carbon/human/H = AM
-		if((istype(H.l_hand,/obj/item/weapon/pickaxe)) && (!H.hand))
-			var/obj/item/weapon/pickaxe/P = H.l_hand
+		if((istype(H.l_hand,/obj/item/pickaxe)) && (!H.hand))
+			var/obj/item/pickaxe/P = H.l_hand
 			if(P.autodrill)
 				attackby(H.l_hand,H)
-		else if((istype(H.r_hand,/obj/item/weapon/pickaxe)) && H.hand)
-			var/obj/item/weapon/pickaxe/P = H.r_hand
+		else if((istype(H.r_hand,/obj/item/pickaxe)) && H.hand)
+			var/obj/item/pickaxe/P = H.r_hand
 			if(P.autodrill)
 				attackby(H.r_hand,H)
 
 	else if(istype(AM,/mob/living/silicon/robot))
 		var/mob/living/silicon/robot/R = AM
-		if(istype(R.module_active,/obj/item/weapon/pickaxe))
+		if(istype(R.module_active,/obj/item/pickaxe))
 			attackby(R.module_active,R)
-
-	else if(istype(AM,/obj/mecha))
-		var/obj/mecha/M = AM
-		if(istype(M.selected,/obj/item/mecha_parts/mecha_equipment/tool/drill))
-			M.selected.action(src)

@@ -9,6 +9,14 @@
 #define DOOR_CRUSH_DAMAGE 20
 #define ALIEN_SELECT_AFK_BUFFER  1    // How many minutes that a person can be AFK before not being allowed to be an alien.
 
+// Airlock defines for setting up the AI's ability to bolt them
+#define AIRLOCK_AI_BOLTING_AUTO    0 // automatic setup depending on whether the airlock starts locked
+#define AIRLOCK_AI_BOLTING_TRUE    1 // AI can bolt the airlock, but this can be toggled by pulsing the AI control wire
+#define AIRLOCK_AI_BOLTING_FALSE   2 // AI can NOT bolt the airlock, but this can be toggled by pulsing the AI control wire
+#define AIRLOCK_AI_BOLTING_ALLOW   3 // AI can always operate the airlock, pulsing the AI control wire does nothing
+#define AIRLOCK_AI_BOLTING_DENY    4 // AI can never operate the airlock, pulsing the AI control wire does nothing
+#define AIRLOCK_AI_BOLTING_NEVER   5 // AI can never operate the airlock, even if they are antag
+
 // Channel numbers for power.
 #define EQUIP   1
 #define LIGHT   2
@@ -28,6 +36,11 @@
 
 #define AI_CAMERA_LUMINOSITY 6
 
+//Vending machines.
+#define CAT_NORMAL 1
+#define CAT_HIDDEN 2  // also used in corresponding wires/vending.dm
+#define CAT_COIN   4
+
 // Camera networks
 #define NETWORK_CRESCENT "Crescent"
 #define NETWORK_CIVILIAN_EAST "Civilian East"
@@ -40,8 +53,10 @@
 #define NETWORK_ENGINEERING_OUTPOST "Engineering Outpost"
 #define NETWORK_ERT "ZeEmergencyResponseTeam"
 #define NETWORK_STATION "Station"
+#define NETWORK_MECHS "Mechs"
 #define NETWORK_MEDICAL "Medical"
 #define NETWORK_MERCENARY "MercurialNet"
+#define NETWORK_TCFL "TCFL"
 #define NETWORK_MINE "MINE"
 #define NETWORK_RESEARCH "Research"
 #define NETWORK_RESEARCH_OUTPOST "Research Outpost"
@@ -71,7 +86,7 @@ var/list/restricted_camera_networks = list(NETWORK_ERT,NETWORK_MERCENARY,"Secret
 #define STAGE_FIVE	9
 #define STAGE_SUPER	11
 
-// Interaction flags 
+// Interaction flags
 #define STATUS_INTERACTIVE 2 // GREEN Visability
 #define STATUS_UPDATE 1 // ORANGE Visability
 #define STATUS_DISABLED 0 // RED Visability
@@ -105,11 +120,9 @@ var/list/restricted_camera_networks = list(NETWORK_ERT,NETWORK_MERCENARY,"Secret
 #define M_PROCESSES 0x1
 #define M_USES_POWER 0x2
 
-// If this is returned from a machine's process() proc, the machine will stop processing but 
+// If this is returned from a machine's process() proc, the machine will stop processing but
 // will continue to have power calculations done.
 #define M_NO_PROCESS 27
 
 // This controls how much power the AME generates per unit of fuel.
-// Assuming 100% efficency, use this equation to figure out power output.
-//      power_generated = (fuel**2) * AM_POWER_FACTOR
-#define AM_POWER_FACTOR 50000
+#define AM_POWER_FACTOR 1000000

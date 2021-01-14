@@ -10,15 +10,17 @@
 		parent = parent_mob
 
 /datum/reagents/metabolism/proc/metabolize()
-
-	var/metabolism_type = 0 //non-human mobs
-	if(ishuman(parent))
-		var/mob/living/carbon/human/H = parent
-		metabolism_type = H.species.reagent_tag
-	else if (istype(parent, /mob/living/carbon/alien/diona))
-		metabolism_type = IS_DIONA
-
-	for(var/datum/reagent/current in reagent_list)
-		current.on_mob_life(parent, metabolism_type, metabolism_class)
-
-	update_total()
+	if(parent)
+		var/metabolism_type = 0 //non-human mobs
+		if(ishuman(parent))
+			var/mob/living/carbon/human/H = parent
+			metabolism_type = H.species.reagent_tag
+		// run this first to get all the chem effects sorted
+		for(var/thing in reagent_list)
+			var/datum/reagent/R = thing
+			R.affect_chem_effect(parent, metabolism_type, metabolism_class)
+		// then run this to actually do what the chems do
+		for(var/thing in reagent_list)
+			var/datum/reagent/R = thing
+			R.on_mob_life(parent, metabolism_type, metabolism_class)
+		update_total()

@@ -23,7 +23,7 @@
 	print_reference()
 
 	//create a short manual as well
-	var/obj/item/weapon/paper/R = new(src.loc)
+	var/obj/item/paper/R = new(src.loc)
 	R.name = "Quik And Easy: How to make a transaction"
 
 	R.info += "<b>Quik-Pay setup:</b><br>"
@@ -45,20 +45,20 @@
 	R.offset_x += 0
 	R.offset_y += 0
 	R.ico += "paper_stamp-cent"
-	R.stamped += /obj/item/weapon/stamp
+	R.stamped += /obj/item/stamp
 	R.add_overlay(stampoverlay)
 	R.stamps += "<HR><i>This paper has been stamped by the Head of Personnel's desk.</i>"
 
 /obj/item/device/nanoquikpay/AltClick(var/mob/user)
-	var/obj/item/weapon/card/id/I = user.GetIdCard()
+	var/obj/item/card/id/I = user.GetIdCard()
 	if(istype(I) && (access_heads in I.access))
 		editmode = 1
-		to_chat(user, span("notice", "Command access granted."))
+		to_chat(user, SPAN_NOTICE("Command access granted."))
 		SSvueui.check_uis_for_change(src)
 
 
 /obj/item/device/nanoquikpay/proc/print_reference()
-	var/obj/item/weapon/paper/R = new(src.loc)
+	var/obj/item/paper/R = new(src.loc)
 	var/pname = "Reference: [machine_id]"
 	var/info = "<b>[machine_id] reference</b><br><br>"
 	info += "Access code: [access_code]<br><br>"
@@ -70,7 +70,7 @@
 	stampoverlay.icon_state = "paper_stamp-cent"
 	if(!R.stamped)
 		R.stamped = new
-	R.stamped += /obj/item/weapon/stamp
+	R.stamped += /obj/item/stamp
 	R.add_overlay(stampoverlay)
 	R.stamps += "<HR><i>This paper has been stamped by the Head of Personnel's desk.</i>"
 	var/obj/item/smallDelivery/D = new(R.loc)
@@ -80,7 +80,7 @@
 
 
 /obj/item/device/nanoquikpay/proc/print_receipt()
-	var/obj/item/weapon/paper/R = new(usr.loc)
+	var/obj/item/paper/R = new(usr.loc)
 	var/receiptname = "Receipt: [machine_id]"
 	R.set_content_unsafe(receiptname, receipt, sum)
 
@@ -89,14 +89,14 @@
 	stampoverlay.icon_state = "paper_stamp-cent"
 	if(!R.stamped)
 		R.stamped = new
-	R.stamped += /obj/item/weapon/stamp
+	R.stamped += /obj/item/stamp
 	R.add_overlay(stampoverlay)
 	R.stamps += "<HR><i>This paper has been stamped by the Quik-Pay device.</i>"
 
 
 
 /obj/item/device/nanoquikpay/attackby(obj/O, mob/user)
-	var/obj/item/weapon/card/id/I = O.GetID()
+	var/obj/item/card/id/I = O.GetID()
 	if (!I) 
 		return
 	if (!istype(O))
@@ -109,17 +109,17 @@
 		var/transaction_purpose = "[destinationact] Payment"
 		var/transaction_terminal = machine_id
 
-		var/transaction = SSeconomy.transfer_money(I.associated_account_number, SSeconomy.get_department_account(destinationact).account_number,transaction_purpose,transaction_terminal,transaction_amount,null,usr)
+		var/transaction = SSeconomy.transfer_money(I.associated_account_number, SSeconomy.get_department_account(destinationact)?.account_number,transaction_purpose,transaction_terminal,transaction_amount,null,usr)
 
 		if(transaction)
-			to_chat(usr,"\icon[src]<span class='warning'>[transaction].</span>")
+			to_chat(user,"[icon2html(src, user)]<span class='warning'>[transaction].</span>")
 		else
 			playsound(src, 'sound/machines/chime.ogg', 50, 1)
-			src.visible_message("\icon[src] \The [src] chimes.")
+			src.visible_message("[icon2html(src, viewers(get_turf(src)))] \The [src] chimes.")
 			print_receipt()
 			sum = 0
 			receipt = ""
-			to_chat(src.loc, span("notice", "Transaction completed, please return to the home screen."))
+			to_chat(src.loc, SPAN_NOTICE("Transaction completed, please return to the home screen."))
 
 // VUEUI Below <3
 
@@ -127,7 +127,7 @@
 /obj/item/device/nanoquikpay/attack_self(mob/user as mob)
 	var/datum/vueui/ui = SSvueui.get_open_ui(usr, src)
 	if (!ui)
-		ui = new(usr, src, "quikpay-main", 400, 400, "NT Quik-Pay")
+		ui = new(usr, src, "devices-quikpay-main", 400, 400, "NT Quik-Pay")
 	ui.open()
 
 /obj/item/device/nanoquikpay/vueui_data_change(var/list/data, var/mob/user, var/datum/vueui/ui)
@@ -153,7 +153,7 @@
 	if(href_list["add"])
 
 		if(editmode == 0)
-			to_chat(src, span("notice", "You don't have access to use this option."))
+			to_chat(src, SPAN_NOTICE("You don't have access to use this option."))
 			return 0
 
 		items[href_list["add"]["name"]] = href_list["add"]["price"]
@@ -162,7 +162,7 @@
 	if(href_list["remove"])
 
 		if(editmode == 0)
-			to_chat(src, span("notice", "You don't have access to use this option."))
+			to_chat(src, SPAN_NOTICE("You don't have access to use this option."))
 			return 0
 		items -= href_list["remove"]
 		ui.data["items"] -= href_list["remove"]
@@ -174,33 +174,33 @@
 			if(items[name] && selection[name])
 				sum += items[name] * selection[name]
 				receipt += "<b>[name]</b> : [items[name]]x[selection[name]]:  [items[name] * selection[name]]<br>"
-		ui.activeui = "quikpay-confirmation"	
+		ui.activeui = "devices-quikpay-confirmation"	
 		. = TRUE
 	if(href_list["return"])
 		sum = 0
 		receipt = ""
-		ui.activeui = "quikpay-main"	
+		ui.activeui = "devices-quikpay-main"	
 		. = TRUE
 
 
 	if(href_list["locking"])
 		if(editmode == 1)
 			editmode = 0
-			to_chat(src, span("notice", "Device Locked."))
+			to_chat(src, SPAN_NOTICE("Device Locked."))
 			SSvueui.check_uis_for_change(src)
 			return 0
 		if(editmode == 0)
 			var/attempt_code = input("Enter the edit code", "Confirm edit access code") as num //Copied the eftpos method, dont judge
 			if(attempt_code == access_code)
 				editmode = 1
-				to_chat(src, span("notice", "Device Unlocked."))
+				to_chat(src, SPAN_NOTICE("Device Unlocked."))
 				SSvueui.check_uis_for_change(src)
 		. = TRUE
 
 	if(href_list["accountselect"])
 
 		if(editmode == 0)
-			to_chat(usr, span("notice", "You don't have access to use this option."))
+			to_chat(usr, SPAN_NOTICE("You don't have access to use this option."))
 			return 0
 		switch(input("What account would you like to select?", "Destination Account") as null|anything in list("Civilian", "Cargo", "Command", "Medical", "Security", "Engineering", "Science"))
 		

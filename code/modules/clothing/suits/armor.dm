@@ -1,5 +1,5 @@
 /obj/item/clothing/suit/armor
-	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/weapon/gun/projectile,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight)
+	allowed = list(/obj/item/gun/energy,/obj/item/reagent_containers/spray/pepper,/obj/item/gun/projectile,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/melee/baton,/obj/item/handcuffs,/obj/item/device/flashlight)
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO
 	item_flags = THICKMATERIAL
 
@@ -8,14 +8,14 @@
 	heat_protection = UPPER_TORSO|LOWER_TORSO
 	max_heat_protection_temperature = ARMOR_MAX_HEAT_PROTECTION_TEMPERATURE
 	siemens_coefficient = 0.5
-	var/obj/item/weapon/storage/internal/pockets
+	var/obj/item/storage/internal/pockets
 	var/pocket_slots = 2
 	var/pocket_size = 2
 	var/pocket_total = null//This will be calculated, unless specifically overidden
 
 /obj/item/clothing/suit/armor/Initialize()
 	. = ..()
-	pockets = new /obj/item/weapon/storage/internal(src)
+	pockets = new /obj/item/storage/internal(src)
 	pockets.storage_slots = pocket_slots	//two slots
 	pockets.max_w_class = pocket_size		//fit only pocket sized items
 	if (pocket_total)
@@ -58,12 +58,12 @@
 	..()
 
 /obj/item/clothing/suit/armor/vest
-	name = "armor"
+	name = "armored vest"
 	desc = "An armored vest that protects against some damage."
 	icon_state = "armor"
 	item_state = "armor"
 	blood_overlay_type = "armor"
-	armor = list(melee = 50, bullet = 15, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
+	armor = list(melee = 50, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
 
 /obj/item/clothing/suit/armor/vest/security
 	name = "security armor"
@@ -73,7 +73,7 @@
 
 /obj/item/clothing/suit/armor/vest/warden
 	name = "warden's jacket"
-	desc = "An armoured jacket with silver rank pips and livery."
+	desc = "An armored jacket with silver rank pips and livery."
 	icon_state = "warden_jacket"
 	item_state = "warden_jacket"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS
@@ -85,31 +85,35 @@
 	icon_state = "commissar_warden"
 	item_state = "commissar_warden"
 
+/obj/item/clothing/suit/armor/vest/fib
+	name = "\improper FIB armored vest"
+	desc = "An armored vest used by Federal Investigations Bureau agents during operations."
+	icon_state = "fib_armor"
+	item_state = "fib_armor"
+
 /obj/item/clothing/suit/armor/hos
 	name = "head of security's jacket"
-	desc = "An armoured jacket with golden rank pips and livery."
+	desc = "An armored jacket with golden rank pips and livery."
 	icon_state = "hos"
 	item_state = "hos"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|LEGS
-	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
+	armor = list(melee = 65, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
 	pocket_slots = 4//More slots because coat
 
-/obj/item/clothing/suit/storage/toggle/armor/hos/jensen
+/obj/item/clothing/suit/storage/toggle/armor/hos
 	name = "armored trenchcoat"
-	desc = "A trenchcoat augmented with a special alloy for some protection and style."
+	desc = "A trenchcoat lined with a protective alloy and some slick leather."
 	icon_state = "jensencoat"
 	item_state = "jensencoat"
-	icon_open = "jensencoat_open"
-	icon_closed = "jensencoat"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|ARMS|LEGS
-	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
-	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/weapon/gun/projectile,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight)
+	armor = list(melee = 65, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
+	allowed = list(/obj/item/gun/energy, /obj/item/reagent_containers/spray/pepper, /obj/item/gun/projectile, /obj/item/ammo_magazine, /obj/item/ammo_casing, /obj/item/melee/baton, /obj/item/handcuffs, /obj/item/device/flashlight)
 
-/obj/item/clothing/suit/storage/toggle/armor/hos/jensen/Initialize()
+/obj/item/clothing/suit/storage/toggle/armor/hos/Initialize()
 	. = ..()
-	pockets = new/obj/item/weapon/storage/internal(src)
+	pockets = new /obj/item/storage/internal(src)
 	pockets.storage_slots = 4
-	pockets.max_w_class = 2
+	pockets.max_w_class = ITEMSIZE_SMALL
 	pockets.max_storage_space = 8
 
 /obj/item/clothing/suit/armor/riot
@@ -138,16 +142,16 @@
 	icon_state = "armor_reflec"
 	item_state = "armor_reflec"
 	blood_overlay_type = "armor"
-	armor = list(melee = 25, bullet = 25, laser = 80, energy = 10, bomb = 0, bio = 0, rad = 0)
+	armor = list(melee = 25, bullet = 25, laser = 80, energy = 40, bomb = 0, bio = 0, rad = 0)
 	siemens_coefficient = 0
 	pocket_slots = 4
 
-/obj/item/clothing/suit/armor/laserproof/handle_shield(mob/user, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
+/obj/item/clothing/suit/armor/laserproof/handle_shield(mob/user, var/on_back, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
 	if(istype(damage_source, /obj/item/projectile/energy) || istype(damage_source, /obj/item/projectile/beam))
 		var/obj/item/projectile/P = damage_source
 
 		var/reflectchance = 40 - round(damage/3)
-		if(!(def_zone in list("chest", "groin")))
+		if(!(def_zone in list(BP_CHEST, BP_GROIN)))
 			reflectchance /= 2
 		if(P.starting && prob(reflectchance))
 			visible_message("<span class='danger'>\The [user]'s [src.name] reflects [attack_text]!</span>")
@@ -171,7 +175,7 @@
 	permeability_coefficient = 0.01
 	item_flags = STOPPRESSUREDAMAGE | THICKMATERIAL
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS
-	allowed = list(/obj/item/weapon/gun,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency_oxygen)
+	allowed = list(/obj/item/gun,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/melee/baton,/obj/item/handcuffs,/obj/item/tank/emergency_oxygen)
 	slowdown = 1
 	armor = list(melee = 80, bullet = 60, laser = 50,energy = 25, bomb = 50, bio = 100, rad = 100)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
@@ -197,8 +201,7 @@
 	item_state = "armor"
 	blood_overlay_type = "armor"
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO
-	armor = list(melee = 50, bullet = 15, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
-
+	armor = list(melee = 50, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
 
 //Reactive armor
 //When the wearer gets hit, this armor will teleport the user a short distance away (to safety or to more danger, no one knows. That's the fun of it!)
@@ -212,7 +215,7 @@
 	slowdown = 1
 	armor = list(melee = 0, bullet = 0, laser = 0, energy = 0, bomb = 0, bio = 0, rad = 0)
 
-/obj/item/clothing/suit/armor/reactive/handle_shield(mob/user, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
+/obj/item/clothing/suit/armor/reactive/handle_shield(mob/user, var/on_back, var/damage, atom/damage_source = null, mob/attacker = null, var/def_zone = null, var/attack_text = "the attack")
 	if(prob(50))
 		user.visible_message("<span class='danger'>The reactive teleport system flings [user] clear of the attack!</span>")
 		var/list/turfs = new/list()
@@ -227,7 +230,7 @@
 		if(!isturf(picked)) return
 
 		spark(user, 5)
-		playsound(user.loc, "sparks", 50, 1)
+		playsound(user.loc, /decl/sound_category/spark_sound, 50, 1)
 
 		user.forceMove(picked)
 		return PROJECTILE_FORCE_MISS
@@ -257,7 +260,7 @@
 	desc = "A suit of armor most often used by Special Weapons and Tactics squads. Includes padded vest with pockets along with shoulder and kneeguards."
 	icon_state = "swatarmor"
 	item_state = "armor"
-	var/obj/item/weapon/gun/holstered = null
+	var/obj/item/gun/holstered = null
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS
 	slowdown = 1
 	armor = list(melee = 60, bullet = 60, laser = 60, energy = 40, bomb = 20, bio = 0, rad = 0)
@@ -269,7 +272,7 @@
 	holster = new()
 	holster.icon_state = null
 	holster.on_attached(src)	//its inside a suit, we set  this so it can be drawn from
-	QDEL_NULL(pockets)	//Tactical armour has internal holster instead of pockets, so we null this out
+	QDEL_NULL(pockets)	//Tactical armor has internal holster instead of pockets, so we null this out
 	cut_overlays()	// Remove the holster's overlay.
 
 /obj/item/clothing/suit/armor/tactical/attackby(obj/item/W as obj, mob/user as mob)
@@ -345,8 +348,8 @@
 	desc = "A simple kevlar plate carrier."
 	icon_state = "kvest"
 	item_state = "kvest"
-	armor = list(melee = 50, bullet = 15, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
-	allowed = list(/obj/item/weapon/gun,/obj/item/weapon/reagent_containers/spray/pepper,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/device/flashlight)
+	armor = list(melee = 50, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
+	allowed = list(/obj/item/gun,/obj/item/reagent_containers/spray/pepper,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/melee/baton,/obj/item/handcuffs,/obj/item/device/flashlight)
 	siemens_coefficient = 0.5
 
 /obj/item/clothing/suit/storage/vest/Initialize()
@@ -376,7 +379,7 @@
 	item_state = "hosvest_nobadge"
 	icon_badge = "hosvest_badge"
 	icon_nobadge = "hosvest_nobadge"
-	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
+	armor = list(melee = 65, bullet = 15, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
 
 /obj/item/clothing/suit/storage/vest/pcrc
 	name = "PCRC armor vest"
@@ -402,12 +405,14 @@
 	icon_badge = "csivest_badge"
 	icon_nobadge = "csivest_nobadge"
 
-/obj/item/clothing/suit/storage/vest/cadet
+/obj/item/clothing/suit/storage/hazardvest/cadet
 	name = "cadet hazard vest"
 	desc = "A sturdy high-visibility vest intended for in training security personnel."
 	icon_state = "hazard_cadet"
 	item_state = "hazard_cadet"
+	allowed = list(/obj/item/gun,/obj/item/reagent_containers/spray/pepper,/obj/item/ammo_magazine,/obj/item/ammo_casing,/obj/item/melee/baton,/obj/item/handcuffs,/obj/item/device/flashlight)
 	armor = list(melee = 10, bullet = 0, laser = 10, energy = 10, bomb = 10, bio = 0, rad = 0)
+	siemens_coefficient = 0.5
 
 /obj/item/clothing/suit/storage/vest/heavy
 	name = "heavy armor vest"
@@ -441,7 +446,7 @@
 	item_state = "hoswebvest_nobadge"
 	icon_badge = "hoswebvest_badge"
 	icon_nobadge = "hoswebvest_nobadge"
-	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
+	armor = list(melee = 65, bullet = 30, laser = 30, energy = 10, bomb = 25, bio = 0, rad = 0)
 
 /obj/item/clothing/suit/storage/vest/heavy/pcrc
 	name = "PCRC heavy armor vest"
@@ -455,9 +460,12 @@
 /obj/item/clothing/suit/storage/vest/merc
 	name = "heavy armor vest"
 	desc = "A high-quality armor vest in a fetching tan. It is surprisingly flexible and light, even with the added webbing and armor plating."
-	icon_state = "mercwebvest"
-	item_state = "mercwebvest"
+	icon = 'icons/clothing/kit/heavy_armor.dmi'
+	item_state = "vest"
+	icon_state = "vest"
+	contained_sprite = TRUE
 	armor = list(melee = 60, bullet = 60, laser = 60, energy = 40, bomb = 40, bio = 0, rad = 0)
+	body_parts_covered = UPPER_TORSO|LOWER_TORSO
 
 //ert related armor
 
@@ -507,35 +515,34 @@
 
 /obj/item/clothing/suit/armor/unathi
 	name = "unathi body armor"
-	desc = "An armored chestplate designated to be worn by an unathi, used commonly by the hegemony levies."
+	desc = "An outdated armored chestplate designated to be worn by an Unathi, it was commonly used by the Hegemony Levies."
 	icon = 'icons/obj/unathi_items.dmi'
 	icon_state = "unathi_armor"
 	item_state = "unathi_armor"
 	contained_sprite = TRUE
-	species_restricted = list("Unathi")
+	species_restricted = list(BODYTYPE_UNATHI)
 	armor = list(melee = 65, bullet = 30, laser = 50, energy = 10, bomb = 25, bio = 0, rad = 0)
 	siemens_coefficient = 0.35
 
-/obj/item/clothing/suit/armor/tajara
-	name = "amohdan swordsmen armor"
-	desc = "A suit of armor used by the traditional warriors of Amohda."
-	icon = 'icons/obj/tajara_items.dmi'
-	icon_state = "amohdan_armor"
-	item_state = "amohdan_armor"
+/obj/item/clothing/suit/armor/unathi/hegemony
+	name = "hegemony body armor"
+	desc = "A highly armored chestplate designated to be worn by an Unathi, a newer variant commonly worn by the Hegemony Levies."
+	icon_state = "hegemony_armor"
+	item_state = "hegemony_armor"
+	armor = list(melee = 70, bullet = 40, laser = 55, energy = 15, bomb = 25, bio = 0, rad = 40)
+
+// Vaurca version of Unathi armor
+/obj/item/clothing/suit/armor/unathi/klax
+	name = "klaxan hopeful body armor"
+	desc = "An armored chestplate designated to be worn by a K'lax hopeful. The retrofit is only a bit shoddy."
+	icon = 'icons/obj/vaurca_items.dmi'
+	icon_state = "klax_hopeful"
+	item_state = "klax_hopeful"
 	contained_sprite = TRUE
-	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|ARMS
-	allowed = list(/obj/item/weapon/gun,/obj/item/weapon/material/sword)
-	flags_inv = HIDEJUMPSUIT|HIDETAIL
-	species_restricted = list("Tajara")
-	armor = list(melee = 60, bullet = 50, laser = 20, energy = 10, bomb = 5, bio = 0, rad = 0)
+	species_restricted = list(BODYTYPE_VAURCA)
+	allowed = list(/obj/item/gun/projectile, /obj/item/gun/energy, /obj/item/gun/launcher, /obj/item/melee, /obj/item/reagent_containers/spray/pepper, /obj/item/ammo_magazine, /obj/item/ammo_casing, /obj/item/melee/baton, /obj/item/handcuffs, /obj/item/device/flashlight)
+	armor = list(melee = 70, bullet = 40, laser = 55, energy = 15, bomb = 25, bio = 0, rad = 40)
 	siemens_coefficient = 0.35
-	description_fluff = "The Feudal Era of Amohda is famous for the steel swords which became common. Many renowned swordsmen and famous warriors would travel the land fighting duels of \
-	single combat in their quests to become the greatest swordsman. Modern Amohda is a mix between loyalists to the NKA and to the DPRA, with almost universal praise for a return to \
-	traditional culture, yet often violent disagreement about the course of the island's political future. A sizable third party of monarchists which advocate the reestablishment of the \
-	Imperial Amohdan dynasty also exists, fragmenting the monarchist factions on the island and further complicating political violence in the area."
-
-
-//tau ceti foreign legion armor
 
 /obj/item/clothing/suit/storage/vest/legion
 	name = "foreign legion armored suit"
@@ -545,16 +552,29 @@
 	body_parts_covered = UPPER_TORSO | LOWER_TORSO | LEGS | ARMS
 	armor = list(melee = 50, bullet = 30, laser = 30, energy = 15, bomb = 40, bio = 0, rad = 0)
 	siemens_coefficient = 0.35
+	allowed = list(
+		/obj/item/gun,
+		/obj/item/reagent_containers/spray/pepper,
+		/obj/item/ammo_magazine,
+		/obj/item/ammo_casing,
+		/obj/item/melee/baton,
+		/obj/item/handcuffs,
+		/obj/item/device/flashlight,
+		/obj/item/material/twohanded/pike/flag
+		)
 
-/obj/item/clothing/suit/armor/vest/idris
-	name = "Idris Reclamation Unit coat"
-	desc = "A coat worn by the Idris reclamation units, notorious across space."
-	icon_state = "iru_coat"
-	item_state = "iru_coat"
-	cold_protection = 0
-	min_cold_protection_temperature = 0
-	heat_protection = 0
-	max_heat_protection_temperature = 0
+/obj/item/clothing/suit/storage/vest/legion/legate
+	name = "foreign legion legate coat"
+	desc = "A luxurious coat made out of sturdy synthetic fabrics and reinforced with lightweight alloys. Only worn by some of the highest decorated officers of the TCFL."
+	icon_state = "legion_coat"
+	item_state = "legion_coat"
+
+/obj/item/clothing/suit/storage/vest/legion/legate/Initialize()
+	. = ..()
+	pockets = new/obj/item/storage/internal(src)
+	pockets.storage_slots = 4
+	pockets.max_w_class = ITEMSIZE_SMALL
+	pockets.max_storage_space = 8
 
 /obj/item/clothing/suit/storage/vest/sol
 	name = "sol heavy armor vest"
@@ -572,9 +592,9 @@
 	desc = "A suit that protects against some damage."
 	icon_state = "centcom"
 	item_state = "centcom"
-	w_class = 4//bulky item
+	w_class = ITEMSIZE_LARGE//bulky item
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
-	allowed = list(/obj/item/weapon/gun/energy,/obj/item/weapon/melee/baton,/obj/item/weapon/handcuffs,/obj/item/weapon/tank/emergency_oxygen)
+	allowed = list(/obj/item/gun/energy,/obj/item/melee/baton,/obj/item/handcuffs,/obj/item/tank/emergency_oxygen)
 	flags_inv = HIDEGLOVES|HIDESHOES|HIDEJUMPSUIT
 	cold_protection = UPPER_TORSO | LOWER_TORSO | LEGS | FEET | ARMS | HANDS
 	min_cold_protection_temperature = SPACE_SUIT_MIN_COLD_PROTECTION_TEMPERATURE
@@ -585,7 +605,7 @@
 	desc = "A heavily armored suit that protects against moderate damage."
 	icon_state = "heavy"
 	item_state = "swat_suit"
-	w_class = 4//bulky item
+	w_class = ITEMSIZE_LARGE//bulky item
 	gas_transfer_coefficient = 0.90
 	body_parts_covered = UPPER_TORSO|LOWER_TORSO|LEGS|FEET|ARMS|HANDS
 	slowdown = 3

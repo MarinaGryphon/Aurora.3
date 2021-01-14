@@ -1,28 +1,42 @@
 /obj/structure/girder
+	desc = "The basic building block of all walls."
+	desc_info = "Use metal sheets on this to build a normal wall.<br>\
+	A false wall can be made by using a crowbar on this girder, and then adding some material.<br>\
+	You can dismantle the grider with a wrench, or add support struts with a screwdriver to enable further reinforcement."
 	icon_state = "girder"
 	anchored = 1
 	density = 1
 	layer = ABOVE_CABLE_LAYER
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 	var/state = 0
 	var/health = 200
 	var/cover = 50 //how much cover the girder provides against projectiles.
+	build_amt = 2
 	var/material/reinf_material
 	var/reinforcing = 0
+	var/plating = FALSE
+
+/obj/structure/girder/examine(mob/user, distance, infix, suffix)
+	. = ..()
+	var/state
+	var/current_damage = health / initial(health)
+	switch(current_damage)
+		if(0 to 0.2)
+			state = "<span class='danger'>The support struts are collapsing!</span>"
+		if(0.2 to 0.4)
+			state = "<span class='warning'>The support struts are warped!</span>"
+		if(0.4 to 0.8)
+			state = "<span class='notice'>The support struts are dented, but holding together.</span>"
+		if(0.8 to 1)
+			state = "<span class='notice'>The support struts look completely intact.</span>"
+	to_chat(user, state)
 
 /obj/structure/girder/displaced
+	name = "displaced girder"
 	icon_state = "displaced"
 	anchored = 0
 	health = 50
 	cover = 25
-
-/obj/structure/girder/attack_generic(var/mob/user, var/damage, var/attack_message = "smashes apart", var/wallbreaker)
-	if(!damage || !wallbreaker)
-		return 0
-	user.do_attack_animation(src)
-	visible_message("<span class='danger'>[user] [attack_message] the [src]!</span>")
-	spawn(1) dismantle()
-	return 1
 
 /obj/structure/girder/bullet_act(var/obj/item/projectile/Proj)
 	//Girders only provide partial cover. There's a chance that the projectiles will just pass through. (unless you are trying to shoot the girder)
@@ -36,12 +50,15 @@
 	if(!istype(Proj, /obj/item/projectile/beam))
 		damage *= 0.4 //non beams do reduced damage
 
-	health -= damage
-	..()
-	if(health <= 0)
-		dismantle()
+	take_damage(damage)
 
-	return
+	return ..()
+
+/obj/structure/girder/proc/take_damage(var/damage)
+	health -= damage
+	if(health <= 0)
+		visible_message("<span class='warning'>\The [src] falls apart!</span>")
+		dismantle()
 
 /obj/structure/girder/proc/reset_girder()
 	anchored = 1
@@ -69,15 +86,15 @@
 				to_chat(user, "<span class='notice'>You secured the girder!</span>")
 				reset_girder()
 
-	else if(istype(W, /obj/item/weapon/gun/energy/plasmacutter))
+	else if(istype(W, /obj/item/gun/energy/plasmacutter))
 		to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 		if(do_after(user,30/W.toolspeed))
 			if(!src) return
 			to_chat(user, "<span class='notice'>You slice apart the girder!</span>")
 			dismantle()
 
-	else if(istype(W, /obj/item/weapon/melee/energy))
-		var/obj/item/weapon/melee/energy/WT = W
+	else if(istype(W, /obj/item/melee/energy))
+		var/obj/item/melee/energy/WT = W
 		if(WT.active)
 			to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 			if(do_after(user,30/W.toolspeed))
@@ -88,15 +105,15 @@
 			to_chat(user, "<span class='notice'>You need to activate the weapon to do that!</span>")
 			return
 
-	else if(istype(W, /obj/item/weapon/melee/energy/blade))
+	else if(istype(W, /obj/item/melee/energy/blade))
 		to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 		if(do_after(user,30/W.toolspeed))
 			if(!src) return
 			to_chat(user, "<span class='notice'>You slice apart the girder!</span>")
 			dismantle()
 
-	else if(istype(W, /obj/item/weapon/melee/chainsword))
-		var/obj/item/weapon/melee/chainsword/WT = W
+	else if(istype(W, /obj/item/melee/chainsword))
+		var/obj/item/melee/chainsword/WT = W
 		if(WT.active)
 			to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 			if(do_after(user,60/W.toolspeed))
@@ -107,11 +124,11 @@
 			to_chat(user, "<span class='notice'>You need to activate the weapon to do that!</span>")
 			return
 
-	else if(istype(W, /obj/item/weapon/pickaxe/diamonddrill))
+	else if(istype(W, /obj/item/pickaxe/diamonddrill))
 		to_chat(user, "<span class='notice'>You drill through the girder!</span>")
 		dismantle()
 
-	else if(istype(W, /obj/item/weapon/melee/arm_blade/))
+	else if(istype(W, /obj/item/melee/arm_blade/))
 		to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 		if(do_after(user,150))
 			if(!src)
@@ -124,16 +141,18 @@
 			playsound(src.loc, W.usesound, 100, 1)
 			to_chat(user, "<span class='notice'>Now unsecuring support struts...</span>")
 			if(do_after(user,40/W.toolspeed))
-				if(!src) return
+				if(!src)
+					return
 				to_chat(user, "<span class='notice'>You unsecured the support struts!</span>")
 				state = 1
 		else if(anchored && !reinf_material)
 			playsound(src.loc, W.usesound, 100, 1)
 			reinforcing = !reinforcing
 			to_chat(user, "<span class='notice'>\The [src] can now be [reinforcing? "reinforced" : "constructed"]!</span>")
+			return
 
 	else if(W.iswirecutter() && state == 1)
-		playsound(src.loc, 'sound/items/Wirecutter.ogg', 100, 1)
+		playsound(src.loc, 'sound/items/wirecutter.ogg', 100, 1)
 		to_chat(user, "<span class='notice'>Now removing support struts...</span>")
 		if(do_after(user,40/W.toolspeed))
 			if(!src) return
@@ -142,7 +161,7 @@
 			reset_girder()
 
 	else if(W.iscrowbar() && state == 0 && anchored)
-		playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
+		playsound(src.loc, W.usesound, 100, 1)
 		to_chat(user, "<span class='notice'>Now dislodging the girder...</span>")
 		if(do_after(user, 40/W.toolspeed))
 			if(!src) return
@@ -160,15 +179,31 @@
 			if(!construct_wall(W, user))
 				return ..()
 
-	else
-		return ..()
+	else if(W.force)
+		var/damage_to_deal = W.force
+		var/weaken = 0
+		if(reinf_material)
+			weaken += reinf_material.integrity * 3 //Since girders don't have a secondary material, buff 'em up a bit.
+		weaken /= 100
+		do_attack_animation(src)
+		playsound(src, 'sound/weapons/smash.ogg', 50)
+		if(damage_to_deal > weaken && (damage_to_deal > MIN_DAMAGE_TO_HIT))
+			damage_to_deal -= weaken
+			visible_message("<span class='warning'>[user] strikes \the [src] with \the [W], [is_sharp(W) ? "slicing" : "denting"] a support rod!</span>")
+			take_damage(damage_to_deal)
+		else
+			visible_message("<span class='warning'>[user] strikes \the [src] with \the [W], but it bounces off!</span>")
+		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
+		return
+
+	return ..()
 
 /obj/structure/girder/proc/construct_wall(obj/item/stack/material/S, mob/user)
 	if(S.get_amount() < 2)
 		to_chat(user, "<span class='notice'>There isn't enough material here to construct a wall.</span>")
 		return 0
 
-	var/material/M = name_to_material[S.default_type]
+	var/material/M = SSmaterials.get_material_by_name(S.default_type)
 	if(!istype(M))
 		return 0
 
@@ -179,10 +214,17 @@
 		to_chat(user, "<span class='notice'>This material is too soft for use in wall construction.</span>")
 		return 0
 
-	to_chat(user, "<span class='notice'>You begin adding the plating...</span>")
+	if(!plating)
+		to_chat(user, "<span class='notice'>You begin adding the plating...</span>")
+		plating = TRUE
+	else
+		return TRUE
 
 	if(!do_after(user,40) || !S.use(2))
+		plating = FALSE
 		return 1 //once we've gotten this far don't call parent attackby()
+
+	plating = FALSE
 
 	if(anchored)
 		to_chat(user, "<span class='notice'>You added the plating!</span>")
@@ -191,8 +233,10 @@
 		wall_fake = 1
 
 	var/turf/Tsrc = get_turf(src)
+	var/original_type = Tsrc.type
 	Tsrc.ChangeTurf(/turf/simulated/wall)
-	var/turf/simulated/wall/T = get_turf(src)
+	var/turf/simulated/wall/T = Tsrc
+	T.under_turf = original_type
 	T.set_material(M, reinf_material)
 	if(wall_fake)
 		T.can_open = 1
@@ -209,7 +253,7 @@
 		to_chat(user, "<span class='notice'>There isn't enough material here to reinforce the girder.</span>")
 		return 0
 
-	var/material/M = name_to_material[S.default_type]
+	var/material/M = SSmaterials.get_material_by_name(S.default_type)
 	if(!istype(M) || M.integrity < 50)
 		to_chat(user, "You cannot reinforce \the [src] with that; it is too soft.")
 		return 0
@@ -229,11 +273,6 @@
 	state = 2
 	icon_state = "reinforced"
 	reinforcing = 0
-
-/obj/structure/girder/proc/dismantle()
-	new /obj/item/stack/material/steel(get_turf(src))
-	new /obj/item/stack/material/steel(get_turf(src))
-	qdel(src)
 
 /obj/structure/girder/attack_hand(mob/user as mob)
 	if (HULK in user.mutations)
@@ -267,6 +306,14 @@
 		dismantle()
 	return
 
+/obj/structure/girder/attack_generic(var/mob/user, var/damage, var/attack_message = "smashes apart", var/wallbreaker)
+	if(!damage || !wallbreaker)
+		return FALSE
+	user.do_attack_animation(src)
+	visible_message("<span class='danger'>[user] [attack_message] \the [src]!</span>")
+	dismantle()
+	return TRUE
+
 /obj/structure/girder/cult
 	icon= 'icons/obj/cult.dmi'
 	icon_state= "cultgirder"
@@ -286,19 +333,19 @@
 			to_chat(user, "<span class='notice'>You dissasembled the girder!</span>")
 			dismantle()
 
-	else if(istype(W, /obj/item/weapon/gun/energy/plasmacutter))
+	else if(istype(W, /obj/item/gun/energy/plasmacutter))
 		to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 		if(do_after(user,30/W.toolspeed))
 			to_chat(user, "<span class='notice'>You slice apart the girder!</span>")
 		dismantle()
 
-	else if(istype(W, /obj/item/weapon/pickaxe/diamonddrill))
+	else if(istype(W, /obj/item/pickaxe/diamonddrill))
 		to_chat(user, "<span class='notice'>You drill through the girder!</span>")
 		new /obj/effect/decal/remains/human(get_turf(src))
 		dismantle()
 
-	else if(istype(W, /obj/item/weapon/melee/energy))
-		var/obj/item/weapon/melee/energy/WT = W
+	else if(istype(W, /obj/item/melee/energy))
+		var/obj/item/melee/energy/WT = W
 		if(WT.active)
 			to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 			if(do_after(user,30/W.toolspeed))
@@ -308,14 +355,14 @@
 			to_chat(user, "<span class='notice'>You need to activate the weapon to do that!</span>")
 			return
 
-	else if(istype(W, /obj/item/weapon/melee/energy/blade))
+	else if(istype(W, /obj/item/melee/energy/blade))
 		to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 		if(do_after(user,30/W.toolspeed))
 			to_chat(user, "<span class='notice'>You slice apart the girder!</span>")
 		dismantle()
 
-	else if(istype(W, /obj/item/weapon/melee/chainsword))
-		var/obj/item/weapon/melee/chainsword/WT = W
+	else if(istype(W, /obj/item/melee/chainsword))
+		var/obj/item/melee/chainsword/WT = W
 		if(WT.active)
 			to_chat(user, "<span class='notice'>Now slicing apart the girder...</span>")
 			if(do_after(user,60/W.toolspeed))

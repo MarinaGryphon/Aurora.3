@@ -19,7 +19,7 @@
 	activators = list(
 		"fire" = IC_PINTYPE_PULSE_IN
 	)
-	var/obj/item/weapon/gun/installed_gun
+	var/obj/item/gun/installed_gun
 	spawn_flags = IC_SPAWN_RESEARCH
 	origin_tech = list(TECH_ENGINEERING = 3, TECH_DATA = 3, TECH_COMBAT = 4)
 	power_draw_per_use = 50 // The targeting mechanism uses this.  The actual gun uses its own cell for firing if it's an energy weapon.
@@ -29,8 +29,8 @@
 	. = ..()
 
 /obj/item/integrated_circuit/manipulation/weapon_firing/attackby(var/obj/O, var/mob/user)
-	if(istype(O, /obj/item/weapon/gun))
-		var/obj/item/weapon/gun/gun = O
+	if(istype(O, /obj/item/gun))
+		var/obj/item/gun/gun = O
 		if(installed_gun)
 			to_chat(user, "<span class='warning'>There's already a weapon installed.</span>")
 			return
@@ -38,7 +38,7 @@
 		installed_gun = gun
 		size += gun.w_class
 		to_chat(user, "<span class='notice'>You slide \the [gun] into the firing mechanism.</span>")
-		playsound(src.loc, 'sound/items/Crowbar.ogg', 50, 1)
+		playsound(src.loc, /decl/sound_category/crowbar_sound, 50, 1)
 	else
 		..()
 
@@ -47,7 +47,7 @@
 		installed_gun.forceMove(get_turf(src))
 		to_chat(user, "<span class='notice'>You slide \the [installed_gun] out of the firing mechanism.</span>")
 		size = initial(size)
-		playsound(loc, 'sound/items/Crowbar.ogg', 50, 1)
+		playsound(loc, /decl/sound_category/crowbar_sound, 50, 1)
 		installed_gun = null
 	else
 		to_chat(user, "<span class='notice'>There's no weapon to remove from the mechanism.</span>")
@@ -123,7 +123,7 @@
 	activators = list("prime grenade" = IC_PINTYPE_PULSE_IN)
 	spawn_flags = IC_SPAWN_RESEARCH
 	origin_tech = list(TECH_ENGINEERING = 3, TECH_DATA = 3, TECH_COMBAT = 4)
-	var/obj/item/weapon/grenade/attached_grenade
+	var/obj/item/grenade/attached_grenade
 	var/pre_attached_grenade_type
 
 /obj/item/integrated_circuit/manipulation/grenade/Initialize()
@@ -138,7 +138,7 @@
 	detach_grenade()
 	. = ..()
 
-/obj/item/integrated_circuit/manipulation/grenade/attackby(var/obj/item/weapon/grenade/G, var/mob/user)
+/obj/item/integrated_circuit/manipulation/grenade/attackby(var/obj/item/grenade/G, var/mob/user)
 	if(istype(G))
 		if(attached_grenade)
 			to_chat(user, "<span class='warning'>There is already a grenade attached!</span>")
@@ -167,7 +167,7 @@
 		log_and_message_admins("activated a grenade assembly. Last touches: Assembly: [holder.fingerprintslast] Circuit: [fingerprintslast] Grenade: [attached_grenade.fingerprintslast]")
 
 // These procs do not relocate the grenade, that's the callers responsibility
-/obj/item/integrated_circuit/manipulation/grenade/proc/attach_grenade(var/obj/item/weapon/grenade/G)
+/obj/item/integrated_circuit/manipulation/grenade/proc/attach_grenade(var/obj/item/grenade/G)
 	attached_grenade = G
 	destroyed_event.register(attached_grenade, src, .proc/detach_grenade)
 	size += G.w_class
@@ -182,7 +182,7 @@
 	desc = initial(desc)
 
 /obj/item/integrated_circuit/manipulation/grenade/frag
-	pre_attached_grenade_type = /obj/item/weapon/grenade/frag
+	pre_attached_grenade_type = /obj/item/grenade/frag
 	origin_tech = list(TECH_ENGINEERING = 3, TECH_DATA = 3, TECH_COMBAT = 10)
 	spawn_flags = null			// Used for world initializing, see the #defines above.
 
@@ -306,7 +306,7 @@
 
 		A.forceMove(get_turf(src))
 		A.throw_at(T, round(Clamp(sqrt(target_x.data*target_x.data+target_y.data*target_y.data),0,8),1), 3, assembly)
-		
+
 /obj/item/integrated_circuit/manipulation/shocker
 	name = "shocker circuit"
 	desc = "Used to shock adjacent creatures with electricity."

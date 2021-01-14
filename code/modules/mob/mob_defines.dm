@@ -7,7 +7,9 @@
 	var/datum/mind/mind
 
 	var/stat = 0 //Whether a mob is alive or dead. TODO: Move this to living - Nodrak
+	var/can_buckle = TRUE
 
+	var/obj/screen/cells = null
 	var/obj/screen/flash = null
 	var/obj/screen/blind = null
 	var/obj/screen/hands = null
@@ -15,6 +17,7 @@
 	var/obj/screen/purged = null
 	var/obj/screen/internals/internals = null
 	var/obj/screen/oxygen = null
+	var/obj/screen/paralysis_indicator = null
 	var/obj/screen/i_select = null
 	var/obj/screen/m_select = null
 	var/obj/screen/toxin = null
@@ -71,6 +74,7 @@
 	var/med_record = ""
 	var/sec_record = ""
 	var/list/incidents = list()
+	var/list/additional_vision_handlers = list()
 	var/gen_record = ""
 	var/ccia_record = ""
 	var/list/ccia_actions = list()
@@ -88,7 +92,7 @@
 	var/lying_prev = 0
 	var/canmove = 1
 	//Allows mobs to move through dense areas without restriction. For instance, in space or out of holder objects.
-	var/incorporeal_move = 0 //0 is off, 1 is normal, 2 is for ninjas.
+	var/incorporeal_move = INCORPOREAL_DISABLE
 	var/lastpuke = 0
 	var/unacidable = 0
 	var/list/pinned = list()            // List of things pinning this creature to walls (see living_defense.dm)
@@ -123,21 +127,20 @@
 	var/overeatduration = 0		// How long this guy is overeating //Carbon
 	var/overdrinkduration = 0	// How long this guy is overdrinking //Carbon
 
-	var/paralysis = 0.0
-	var/stunned = 0.0
-	var/weakened = 0.0
-	var/losebreath = 0.0//Carbon
+	var/paralysis = 0
+	var/stunned = 0
+	var/weakened = 0
+	var/losebreath = 0 //Carbon
 	var/intent = null//Living
 	var/shakecamera = 0
 	var/a_intent = I_HELP//Living
-	var/m_intent = "walk"//Living
+	var/m_intent = M_WALK //Living
 	var/lastKnownIP = null
 	var/obj/buckled = null//Living
 	var/obj/item/l_hand = null//Living
 	var/obj/item/r_hand = null//Living
-	var/obj/item/weapon/back = null//Human/Monkey
-	var/obj/item/weapon/tank/internal = null//Human/Monkey
-	var/obj/item/weapon/storage/s_active = null//Carbon
+	var/obj/item/back = null//Human/Monkey
+	var/obj/item/tank/internal = null//Human/Monkey
 	var/obj/item/clothing/mask/wear_mask = null//Carbon
 
 	var/seer = 0 //for cult//Carbon, probably Human
@@ -169,6 +172,7 @@
 	//see: setup.dm for list of mutations
 
 	var/voice_name = "unidentifiable voice"
+	var/accent
 
 	var/faction = "neutral" //Used for checking whether hostile simple animals will attack you, possibly more stuff later
 	var/captured = 0 //Functionally, should give the same effect as being buckled into a chair when true.
@@ -191,7 +195,7 @@
 	var/datum/weakref/LAssailant
 
 //Wizard mode, but can be used in other modes thanks to the brand new "Give Spell" badmin button
-	var/spell/list/spell_list
+	var/list/spell/spell_list
 
 //List of active diseases
 
@@ -203,7 +207,7 @@
 
 	mouse_drag_pointer = MOUSE_ACTIVE_POINTER
 
-	var/update_icon = 1 //Set to 1 to trigger update_icons() at the next life() call
+	var/update_icon = 1 //Set to 1 to trigger update_icon() at the next life() call
 
 	var/status_flags = CANSTUN|CANWEAKEN|CANPARALYSE|CANPUSH	//bitflags defining which status effects can be inflicted (replaces canweaken, canstun, etc)
 

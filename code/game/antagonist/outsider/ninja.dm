@@ -7,16 +7,19 @@ var/datum/antagonist/ninja/ninjas
 	bantype = "ninja"
 	landmark_id = "ninjastart"
 	welcome_text = "<span class='info'>You are an elite stealth agent. You can equip your suit with the latest technology using your uplink.</span>"
-	restricted_species = list("Diona")
-	flags = ANTAG_OVERRIDE_JOB | ANTAG_CLEAR_EQUIPMENT | ANTAG_CHOOSE_NAME | ANTAG_RANDSPAWN | ANTAG_VOTABLE | ANTAG_SET_APPEARANCE
+	restricted_species = list(SPECIES_DIONA)
+	flags = ANTAG_OVERRIDE_JOB | ANTAG_CLEAR_EQUIPMENT | ANTAG_CHOOSE_NAME | ANTAG_RANDSPAWN | ANTAG_VOTABLE | ANTAG_SET_APPEARANCE | ANTAG_NO_FLAVORTEXT
 	antaghud_indicator = "hudninja"
+	required_age = 10
 
 	initial_spawn_req = 2
 	initial_spawn_target = 2
 	hard_cap = 2
 	hard_cap_round = 3
 
-	id_type = /obj/item/weapon/card/id/syndicate
+	faction = "syndicate"
+
+	id_type = /obj/item/card/id/syndicate
 
 /datum/antagonist/ninja/New()
 	..()
@@ -100,10 +103,10 @@ var/datum/antagonist/ninja/ninjas
 
 /datum/antagonist/ninja/equip(var/mob/living/carbon/human/player)
 	if(!..())
-		return 0
+		return FALSE
 
 	for (var/obj/item/I in player)
-		if (istype(I, /obj/item/weapon/implant))
+		if (istype(I, /obj/item/implant))
 			continue
 		player.drop_from_inventory(I)
 		if(I.loc != player)
@@ -113,6 +116,7 @@ var/datum/antagonist/ninja/ninjas
 	player.force_update_limbs()
 	player.update_eyes()
 	player.regenerate_icons()
+	return TRUE
 
 /datum/antagonist/ninja/proc/generate_ninja_directive(side)
 	var/directive = "[side=="face"?"[current_map.company_name]":"A criminal syndicate"] is your employer. "//Let them know which side they're on.
@@ -157,3 +161,6 @@ var/datum/antagonist/ninja/ninjas
 		else
 			directive += "There are no special supplemental instructions at this time."
 	return directive
+
+/datum/antagonist/ninja/get_antag_radio()
+	return "Ninja"

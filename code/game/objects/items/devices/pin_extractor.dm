@@ -4,7 +4,7 @@
 	icon = 'icons/obj/device.dmi'
 	icon_state = "pin_extractor"
 	item_state = "pin_extractor"
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	flags = CONDUCT
 	action_button_name = "Toggle extractor"
 	var/on = 0
@@ -28,12 +28,12 @@
 
 /obj/item/device/pin_extractor/afterattack(atom/target, mob/user, proximity_flag)
 	if(proximity_flag)
-		if(istype(target, /obj/item/weapon/gun))
+		if(istype(target, /obj/item/gun))
 			if(!on)
 				to_chat(user, "<span class ='notice'>\The [src.name] is not turned on.</span>")
 				..()
 				return
-			var/obj/item/weapon/gun/G = target
+			var/obj/item/gun/G = target
 			if(G.pin)
 				to_chat(user, "<span class ='notice'>You begin removing [G.name]'s [G.pin.name] using \the [src.name], it will take 15 seconds.</span>")
 

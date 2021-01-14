@@ -1,8 +1,8 @@
 /mob/living/carbon/human/shadow/Initialize(mapload)
-	. = ..(mapload, "Shadow")
+	. = ..(mapload, SPECIES_SHADOW)
 
 /datum/species/shadow
-	name = "Shadow"
+	name = SPECIES_SHADOW
 	name_plural = "shadows"
 
 	blurb = "Have you ever been alone at night \
@@ -25,9 +25,8 @@
 	has_organ = list()
 	siemens_coefficient = 0
 	rarity_value = 10
-	virus_immune = 1
 
-	breakcuffs = list(MALE,FEMALE,NEUTER)
+	break_cuffs = TRUE
 
 	fall_mod = 0
 
@@ -63,17 +62,17 @@
 	vision_flags = DEFAULT_SIGHT | SEE_MOBS
 
 	has_limbs = list(
-		"chest" =  list("path" = /obj/item/organ/external/chest/unbreakable),
-		"groin" =  list("path" = /obj/item/organ/external/groin/unbreakable),
-		"head" =   list("path" = /obj/item/organ/external/head/unbreakable),
-		"l_arm" =  list("path" = /obj/item/organ/external/arm/unbreakable),
-		"r_arm" =  list("path" = /obj/item/organ/external/arm/right/unbreakable),
-		"l_leg" =  list("path" = /obj/item/organ/external/leg/unbreakable),
-		"r_leg" =  list("path" = /obj/item/organ/external/leg/right/unbreakable),
-		"l_hand" = list("path" = /obj/item/organ/external/hand/unbreakable),
-		"r_hand" = list("path" = /obj/item/organ/external/hand/right/unbreakable),
-		"l_foot" = list("path" = /obj/item/organ/external/foot/unbreakable),
-		"r_foot" = list("path" = /obj/item/organ/external/foot/right/unbreakable)
+		BP_CHEST =  list("path" = /obj/item/organ/external/chest/unbreakable),
+		BP_GROIN =  list("path" = /obj/item/organ/external/groin/unbreakable),
+		BP_HEAD =   list("path" = /obj/item/organ/external/head/unbreakable),
+		BP_L_ARM =  list("path" = /obj/item/organ/external/arm/unbreakable),
+		BP_R_ARM =  list("path" = /obj/item/organ/external/arm/right/unbreakable),
+		BP_L_LEG =  list("path" = /obj/item/organ/external/leg/unbreakable),
+		BP_R_LEG =  list("path" = /obj/item/organ/external/leg/right/unbreakable),
+		BP_L_HAND = list("path" = /obj/item/organ/external/hand/unbreakable),
+		BP_R_HAND = list("path" = /obj/item/organ/external/hand/right/unbreakable),
+		BP_L_FOOT = list("path" = /obj/item/organ/external/foot/unbreakable),
+		BP_R_FOOT = list("path" = /obj/item/organ/external/foot/right/unbreakable)
 		)
 
 	stamina	=	500			  //Tireless automatons
@@ -112,3 +111,8 @@
 
 /datum/species/shadow/get_random_name()
 	return "grue"
+
+/datum/species/shadow/handle_death_check(var/mob/living/carbon/human/H)
+	if(H.get_total_health() <= config.health_threshold_dead)
+		return TRUE
+	return FALSE

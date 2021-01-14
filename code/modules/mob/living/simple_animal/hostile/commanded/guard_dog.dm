@@ -3,7 +3,7 @@
 	short_name = "dog"
 	desc = "A dog trained to listen and obey its owner commands, this one is a german shepherd."
 
-	icon = 'icons/mob/npc/dog.dmi'
+	icon = 'icons/mob/npc/pets.dmi'
 	icon_state = "german"
 	icon_living = "german"
 	icon_dead = "german_dead"
@@ -29,17 +29,18 @@
 	harm_intent_damage = 5
 	melee_damage_lower = 15
 	melee_damage_upper = 15
+	resist_mod = 2
 
 	mob_size = 5
 
+	organ_names = list("head", "chest", "right fore leg", "left fore leg", "right rear leg", "left rear leg")
 	response_help = "pets"
 	response_harm = "hits"
 	response_disarm = "pushes"
 
 	hunger_enabled = 1 //so you can feed your dog or something
-	autoseek_food = 0
-	beg_for_food = 0
 	max_nutrition = 120
+	canbrush = TRUE
 
 	known_commands = list("stay", "stop", "attack", "follow")
 

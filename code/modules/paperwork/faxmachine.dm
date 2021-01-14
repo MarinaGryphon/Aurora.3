@@ -20,13 +20,13 @@ var/list/admin_departments
 	var/static/const/broadcastfax_cooldown = 3000
 
 	var/static/const/broadcast_departments = "Stationwide broadcast (WARNING)"
-	var/obj/item/weapon/card/id/scan = null // identification
+	var/obj/item/card/id/scan = null // identification
 	var/sendtime = 0		// Time when fax was sent
 	var/sendcooldown = 0	// Delay, before another fax can be sent (in 1/10 second). Used by set_cooldown() and get_remaining_cooldown()
 
 	var/department = "Unknown" // our department
 
-	var/list/obj/item/device/pda/alert_pdas = list() //A list of PDAs to alert upon arrival of the fax.
+	var/list/obj/item/modular_computer/alert_pdas = list() //A list of PDAs to alert upon arrival of the fax.
 
 /obj/machinery/photocopier/faxmachine/Initialize()
 	. = ..()
@@ -47,11 +47,10 @@ var/list/admin_departments
 		VUEUI_SET_CHECK(newdata["idname"], "", ., newdata)
 	VUEUI_SET_CHECK(newdata["paper"], (copyitem ? copyitem.name : ""), ., newdata)
 
-	if(newdata["alertpdas"] && alert_pdas && newdata["alertpdas"].len != alert_pdas.len)
-		. = newdata
+	VUEUI_SET_CHECK_LIST(newdata["alertpdas"], alert_pdas, ., newdata)
 	newdata["alertpdas"] = list()
 	if (alert_pdas && alert_pdas.len)
-		for (var/obj/item/device/pda/pda in alert_pdas)
+		for (var/obj/item/modular_computer/pda in alert_pdas)
 			newdata["alertpdas"] += list(list("name" = "[alert_pdas[pda]]", "ref" = "\ref[pda]"))
 	newdata["departiments"] = list()
 	for (var/dept in (alldepartments + admin_departments + broadcast_departments))
@@ -115,13 +114,13 @@ var/list/admin_departments
 				scan = null
 		else
 			var/obj/item/I = usr.get_active_hand()
-			if (istype(I, /obj/item/weapon/card/id) && usr.unEquip(I))
+			if (istype(I, /obj/item/card/id) && usr.unEquip(I))
 				I.forceMove(src)
 				scan = I
 		SSvueui.check_uis_for_change(src)
 
 	if(href_list["linkpda"])
-		var/obj/item/device/pda/pda = usr.get_active_hand()
+		var/obj/item/modular_computer/pda = usr.get_active_hand()
 		if (!pda || !istype(pda))
 			to_chat(usr, "<span class='warning'>You need to be holding a PDA to link it.</span>")
 		else if (pda in alert_pdas)
@@ -136,7 +135,7 @@ var/list/admin_departments
 			SSvueui.check_uis_for_change(src)
 
 	if(href_list["unlink"])
-		var/obj/item/device/pda/pda = locate(href_list["unlink"])
+		var/obj/item/modular_computer/pda = locate(href_list["unlink"])
 		if (pda && istype(pda))
 			if (pda in alert_pdas)
 				to_chat(usr, "<span class='notice'>You unlink [alert_pdas[pda]] from \the [src]. It will no longer be notified of new faxes.</span>")
@@ -212,7 +211,7 @@ var/list/admin_departments
 	if(department == "Unknown")
 		return 0	//You can't send faxes to "Unknown"
 
-	if (!istype(incoming, /obj/item/weapon/paper) && !istype(incoming, /obj/item/weapon/photo) && !istype(incoming, /obj/item/weapon/paper_bundle))
+	if (!istype(incoming, /obj/item/paper) && !istype(incoming, /obj/item/photo) && !istype(incoming, /obj/item/paper_bundle))
 		return 0
 
 	flick("faxreceive", src)
@@ -220,11 +219,11 @@ var/list/admin_departments
 
 	// give the sprite some time to flick
 	spawn(20)
-		if (istype(incoming, /obj/item/weapon/paper))
+		if (istype(incoming, /obj/item/paper))
 			copy(incoming, 1, 0, 0)
-		else if (istype(incoming, /obj/item/weapon/photo))
+		else if (istype(incoming, /obj/item/photo))
 			photocopy(incoming)
-		else if (istype(incoming, /obj/item/weapon/paper_bundle))
+		else if (istype(incoming, /obj/item/paper_bundle))
 			bundlecopy(incoming)
 		do_pda_alerts()
 		use_power(active_power_usage)
@@ -254,11 +253,11 @@ var/list/admin_departments
 	use_power(200)
 
 	var/obj/item/rcvdcopy
-	if (istype(copyitem, /obj/item/weapon/paper))
+	if (istype(copyitem, /obj/item/paper))
 		rcvdcopy = copy(copyitem, 0)
-	else if (istype(copyitem, /obj/item/weapon/photo))
+	else if (istype(copyitem, /obj/item/photo))
 		rcvdcopy = photocopy(copyitem)
-	else if (istype(copyitem, /obj/item/weapon/paper_bundle))
+	else if (istype(copyitem, /obj/item/paper_bundle))
 		rcvdcopy = bundlecopy(copyitem, 0)
 	else
 		visible_message("[src] beeps, \"Error transmitting message.\"")
@@ -310,9 +309,6 @@ var/list/admin_departments
 	if (!alert_pdas || !alert_pdas.len)
 		return
 
-	for (var/obj/item/device/pda/pda in alert_pdas)
-		if (pda.toff || pda.message_silent)
-			continue
-
-		var/message = "New fax has arrived at [src.department] fax machine."
-		pda.new_info(pda.message_silent, pda.ttone, "\icon[pda] <b>[message]</b>")
+	for (var/obj/item/modular_computer/pda in alert_pdas)
+		var/message = "New message has arrived!"
+		pda.get_notification(message, 1, "[department] [name]")

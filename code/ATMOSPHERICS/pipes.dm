@@ -1,5 +1,6 @@
 /obj/machinery/atmospherics/pipe
-
+	desc_info = "This pipe, and all other pipes, can be connected or disconnected by a wrench.  The internal pressure of the pipe must \
+	be below 300 kPa to do this.  More pipes can be obtained from the pipe dispenser."
 	var/datum/gas_mixture/air_temporary // used when reconstructing a pipeline that broke
 	var/datum/pipeline/parent
 	var/volume = 0
@@ -19,9 +20,11 @@
 	return -1
 
 /obj/machinery/atmospherics/pipe/Initialize()
-	if(istype(get_turf(src), /turf/simulated/wall) || istype(get_turf(src), /turf/simulated/shuttle/wall) || istype(get_turf(src), /turf/unsimulated/wall))
+	if(istype(get_turf(src), /turf/simulated/wall) || istype(get_turf(src), /turf/unsimulated/wall))
 		level = 1
 	. = ..()
+	desc_info += "<br>Most pipes and atmospheric devices can be connected or disconnected with a wrench.  The pipe's pressure must not be too high, \
+	or if it is a device, it must be turned off first."
 
 /obj/machinery/atmospherics/pipe/hides_under_flooring()
 	return level != 2
@@ -67,11 +70,10 @@
 	QDEL_NULL(parent)
 	if(air_temporary)
 		loc.assume_air(air_temporary)
-		QDEL_NULL(air_temporary)
 
 	return ..()
 
-/obj/machinery/atmospherics/pipe/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+/obj/machinery/atmospherics/pipe/attackby(var/obj/item/W as obj, var/mob/user as mob)
 	if (istype(src, /obj/machinery/atmospherics/pipe/tank))
 		return ..()
 	if (istype(src, /obj/machinery/atmospherics/pipe/vent))
@@ -80,7 +82,12 @@
 	if(istype(W,/obj/item/device/pipe_painter))
 		return 0
 
-	if (!W.iswrench() && !istype(W, /obj/item/weapon/pipewrench))
+	if(istype(W, /obj/item/device/analyzer) && Adjacent(user))
+		var/obj/item/device/analyzer/A = W
+		A.analyze_gases(src, user)
+		return FALSE
+
+	if (!W.iswrench() && !istype(W, /obj/item/pipewrench))
 		return ..()
 	var/turf/T = src.loc
 	if (level==1 && isturf(T) && !T.is_plating())
@@ -89,7 +96,7 @@
 	var/datum/gas_mixture/int_air = return_air()
 	var/datum/gas_mixture/env_air = loc.return_air()
 	if ((int_air.return_pressure()-env_air.return_pressure()) > 2*ONE_ATMOSPHERE)
-		if(!istype(W, /obj/item/weapon/pipewrench))
+		if(!istype(W, /obj/item/pipewrench))
 			to_chat(user, "<span class='warning'>You cannot unwrench \the [src], it is too exerted due to internal pressure.</span>")
 			add_fingerprint(user)
 			return 1
@@ -97,7 +104,7 @@
 			to_chat(user, "<span class='warning'>You struggle to unwrench \the [src] with your pipe wrench.</span>")
 	playsound(src.loc, W.usesound, 50, 1)
 	to_chat(user, "<span class='notice'>You begin to unfasten \the [src]...</span>")
-	if (do_after(user, istype(W, /obj/item/weapon/pipewrench) ? 80/W.toolspeed : 40/W.toolspeed, act_target = src))
+	if (do_after(user, istype(W, /obj/item/pipewrench) ? 80/W.toolspeed : 40/W.toolspeed, act_target = src))
 		user.visible_message( \
 			"<span class='notice'>\The [user] unfastens \the [src].</span>", \
 			"<span class='notice'>You have unfastened \the [src].</span>", \
@@ -233,11 +240,10 @@
 /obj/machinery/atmospherics/pipe/simple/Destroy()
 	if(node1)
 		node1.disconnect(src)
+		node1 = null
 	if(node2)
 		node2.disconnect(src)
-
-	node1 = null
-	node2 = null
+		node2 = null
 
 	return ..()
 
@@ -323,12 +329,16 @@
 	return null
 
 /obj/machinery/atmospherics/pipe/simple/visible
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "intact"
 	level = 2
 
 /obj/machinery/atmospherics/pipe/simple/visible/scrubbers
 	name = "Scrubbers pipe"
-	desc = "A one meter section of scrubbers pipe"
+	desc = "A one meter section of scrubbers pipe."
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "intact-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -370,7 +380,9 @@
 
 /obj/machinery/atmospherics/pipe/simple/hidden/scrubbers
 	name = "Scrubbers pipe"
-	desc = "A one meter section of scrubbers pipe"
+	desc = "A one meter section of scrubbers pipe."
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "intact-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -379,7 +391,9 @@
 
 /obj/machinery/atmospherics/pipe/simple/hidden/supply
 	name = "Air supply pipe"
-	desc = "A one meter section of supply pipe"
+	desc = "A one meter section of supply pipe."
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "intact-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
@@ -405,6 +419,7 @@
 	color = PIPE_COLOR_BLUE
 
 /obj/machinery/atmospherics/pipe/simple/insulated
+	desc_info = "This is completely useless, use a normal pipe."
 	icon = 'icons/obj/atmospherics/red_pipe.dmi'
 	icon_state = "intact"
 
@@ -418,10 +433,11 @@
 
 
 /obj/machinery/atmospherics/pipe/manifold
+	name = "pipe manifold"
+	desc = "A manifold composed of regular pipes."
+	desc_info = "A normal pipe with three ends to connect to."
 	icon = 'icons/atmos/manifold.dmi'
 	icon_state = ""
-	name = "pipe manifold"
-	desc = "A manifold composed of regular pipes"
 
 	volume = ATMOS_DEFAULT_VOLUME_PIPE * 1.5
 
@@ -467,14 +483,13 @@
 /obj/machinery/atmospherics/pipe/manifold/Destroy()
 	if(node1)
 		node1.disconnect(src)
+		node1 = null
 	if(node2)
 		node2.disconnect(src)
+		node2 = null
 	if(node3)
 		node3.disconnect(src)
-
-	node1 = null
-	node2 = null
-	node3 = null
+		node3 = null
 
 	return ..()
 
@@ -601,8 +616,10 @@
 	level = 2
 
 /obj/machinery/atmospherics/pipe/manifold/visible/scrubbers
-	name="Scrubbers pipe manifold"
+	name = "scrubbers pipe manifold"
 	desc = "A manifold composed of scrubbers pipes"
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -610,8 +627,10 @@
 	color = PIPE_COLOR_RED
 
 /obj/machinery/atmospherics/pipe/manifold/visible/supply
-	name="Air supply pipe manifold"
-	desc = "A manifold composed of supply pipes"
+	name = "air supply pipe manifold"
+	desc = "A manifold composed of supply pipes."
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
@@ -643,8 +662,10 @@
 	alpha = 128		//set for the benefit of mapping - this is reset to opaque when the pipe is spawned in game
 
 /obj/machinery/atmospherics/pipe/manifold/hidden/scrubbers
-	name="Scrubbers pipe manifold"
-	desc = "A manifold composed of scrubbers pipes"
+	name = "scrubbers pipe manifold"
+	desc = "A manifold composed of scrubbers pipes."
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -652,8 +673,10 @@
 	color = PIPE_COLOR_RED
 
 /obj/machinery/atmospherics/pipe/manifold/hidden/supply
-	name="Air supply pipe manifold"
-	desc = "A manifold composed of supply pipes"
+	name = "air supply pipe manifold"
+	desc = "A manifold composed of supply pipes."
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
@@ -679,10 +702,11 @@
 	color = PIPE_COLOR_BLUE
 
 /obj/machinery/atmospherics/pipe/manifold4w
+	name = "4-way pipe manifold"
+	desc = "A manifold composed of regular pipes."
+	desc_info = "This is a four-way pipe."
 	icon = 'icons/atmos/manifold.dmi'
 	icon_state = ""
-	name = "4-way pipe manifold"
-	desc = "A manifold composed of regular pipes"
 
 	volume = ATMOS_DEFAULT_VOLUME_PIPE * 2
 
@@ -712,17 +736,16 @@
 /obj/machinery/atmospherics/pipe/manifold4w/Destroy()
 	if(node1)
 		node1.disconnect(src)
+		node1 = null
 	if(node2)
 		node2.disconnect(src)
+		node2 = null
 	if(node3)
 		node3.disconnect(src)
+		node3 = null
 	if(node4)
 		node4.disconnect(src)
-
-	node1 = null
-	node2 = null
-	node3 = null
-	node4 = null
+		node4 = null
 
 	return ..()
 
@@ -863,8 +886,10 @@
 	level = 2
 
 /obj/machinery/atmospherics/pipe/manifold4w/visible/scrubbers
-	name="4-way scrubbers pipe manifold"
-	desc = "A manifold composed of scrubbers pipes"
+	name = "4-way scrubbers pipe manifold"
+	desc = "A manifold composed of scrubbers pipes."
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map_4way-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -872,8 +897,10 @@
 	color = PIPE_COLOR_RED
 
 /obj/machinery/atmospherics/pipe/manifold4w/visible/supply
-	name="4-way air supply pipe manifold"
+	name = "4-way air supply pipe manifold"
 	desc = "A manifold composed of supply pipes"
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map_4way-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
@@ -904,8 +931,10 @@
 	alpha = 128		//set for the benefit of mapping - this is reset to opaque when the pipe is spawned in game
 
 /obj/machinery/atmospherics/pipe/manifold4w/hidden/scrubbers
-	name="4-way scrubbers pipe manifold"
-	desc = "A manifold composed of scrubbers pipes"
+	name = "4-way scrubbers pipe manifold"
+	desc = "A manifold composed of scrubbers pipes."
+	desc_info = "This is a special 'scrubber' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map_4way-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
@@ -913,8 +942,10 @@
 	color = PIPE_COLOR_RED
 
 /obj/machinery/atmospherics/pipe/manifold4w/hidden/supply
-	name="4-way air supply pipe manifold"
-	desc = "A manifold composed of supply pipes"
+	name = "4-way air supply pipe manifold"
+	desc = "A manifold composed of supply pipes."
+	desc_info = "This is a special 'supply' pipe, which does not connect to 'normal' pipes.  If you want to connect it, use \
+	a Universal Adapter pipe."
 	icon_state = "map_4way-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
@@ -942,6 +973,7 @@
 /obj/machinery/atmospherics/pipe/cap
 	name = "pipe endcap"
 	desc = "An endcap for pipes"
+	desc_info = "This is a cosmetic attachment, as pipes do not spill their contents into the air."
 	icon = 'icons/atmos/pipes.dmi'
 	icon_state = ""
 	level = 2
@@ -1022,7 +1054,6 @@
 /obj/machinery/atmospherics/pipe/cap/visible/scrubbers
 	name = "scrubbers pipe endcap"
 	desc = "An endcap for scrubbers pipes"
-	icon_state = "cap-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
 	icon_connect_type = "-scrubbers"
@@ -1031,7 +1062,6 @@
 /obj/machinery/atmospherics/pipe/cap/visible/supply
 	name = "supply pipe endcap"
 	desc = "An endcap for supply pipes"
-	icon_state = "cap-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
 	icon_connect_type = "-supply"
@@ -1045,7 +1075,6 @@
 /obj/machinery/atmospherics/pipe/cap/hidden/scrubbers
 	name = "scrubbers pipe endcap"
 	desc = "An endcap for scrubbers pipes"
-	icon_state = "cap-f-scrubbers"
 	connect_types = CONNECT_TYPE_SCRUBBER
 	layer = 2.38
 	icon_connect_type = "-scrubbers"
@@ -1054,7 +1083,6 @@
 /obj/machinery/atmospherics/pipe/cap/hidden/supply
 	name = "supply pipe endcap"
 	desc = "An endcap for supply pipes"
-	icon_state = "cap-f-supply"
 	connect_types = CONNECT_TYPE_SUPPLY
 	layer = 2.39
 	icon_connect_type = "-supply"
@@ -1137,6 +1165,7 @@
 	if(istype(W, /obj/item/device/analyzer) && in_range(user, src))
 		var/obj/item/device/analyzer/A = W
 		A.analyze_gases(src, user)
+		return FALSE
 
 /obj/machinery/atmospherics/pipe/tank/air
 	name = "Pressure Tank (Air)"
@@ -1147,8 +1176,8 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T20C
 
-	air_temporary.adjust_multi("oxygen",  (start_pressure*O2STANDARD)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature), \
-	                           "nitrogen",(start_pressure*N2STANDARD)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_multi(GAS_OXYGEN,  (start_pressure*O2STANDARD)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature), \
+	                           GAS_NITROGEN,(start_pressure*N2STANDARD)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 
 	. = ..()
@@ -1163,7 +1192,7 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T20C
 
-	air_temporary.adjust_gas("oxygen", (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_gas(GAS_OXYGEN, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 	. = ..()
 	icon_state = "o2"
@@ -1177,7 +1206,7 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T20C
 
-	air_temporary.adjust_gas("nitrogen", (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_gas(GAS_NITROGEN, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 	. = ..()
 	icon_state = "n2"
@@ -1191,7 +1220,7 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T20C
 
-	air_temporary.adjust_gas("carbon_dioxide", (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_gas(GAS_CO2, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 	. = ..()
 	icon_state = "co2"
@@ -1205,10 +1234,24 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T20C
 
-	air_temporary.adjust_gas("phoron", (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_gas(GAS_PHORON, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 	. = ..()
-	icon_state = "phoron"
+	icon_state = GAS_PHORON
+
+/obj/machinery/atmospherics/pipe/tank/hydrogen
+	name = "Pressure Tank (Hydrogen)"
+	icon_state = "hydrogen_map"
+
+/obj/machinery/atmospherics/pipe/tank/hydrogen/Initialize()
+	air_temporary = new
+	air_temporary.volume = ATMOS_DEFAULT_VOLUME_FILTER
+	air_temporary.temperature = T0C
+
+	air_temporary.adjust_gas(GAS_HYDROGEN, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+
+	. = ..()
+	icon_state = "hydrogen"
 
 /obj/machinery/atmospherics/pipe/tank/nitrous_oxide
 	name = "Pressure Tank (Nitrous Oxide)"
@@ -1219,7 +1262,7 @@
 	air_temporary.volume = volume
 	air_temporary.temperature = T0C
 
-	air_temporary.adjust_gas("sleeping_agent", (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
+	air_temporary.adjust_gas(GAS_N2O, (start_pressure)*(air_temporary.volume)/(R_IDEAL_GAS_EQUATION*air_temporary.temperature))
 
 	. = ..()
 	icon_state = "n2o"
@@ -1309,8 +1352,9 @@
 
 
 /obj/machinery/atmospherics/pipe/simple/visible/universal
-	name="Universal pipe adapter"
-	desc = "An adapter for regular, supply and scrubbers pipes"
+	name = "universal pipe adapter"
+	desc = "An adapter for regular, supply and scrubbers pipes."
+	desc_info = "This allows you to connect 'normal' pipes, red 'scrubber' pipes, and blue 'supply' pipes."
 	connect_types = CONNECT_TYPE_REGULAR|CONNECT_TYPE_SUPPLY|CONNECT_TYPE_SCRUBBER
 	icon_state = "map_universal"
 	gfi_layer_rotation = GFI_ROTATION_OVERDIR
@@ -1345,8 +1389,9 @@
 
 
 /obj/machinery/atmospherics/pipe/simple/hidden/universal
-	name="Universal pipe adapter"
-	desc = "An adapter for regular, supply and scrubbers pipes"
+	name = "universal pipe adapter"
+	desc = "An adapter for regular, supply and scrubbers pipes."
+	desc_info = "This allows you to connect 'normal' pipes, red 'scrubber' pipes, and blue 'supply' pipes."
 	connect_types = CONNECT_TYPE_REGULAR|CONNECT_TYPE_SUPPLY|CONNECT_TYPE_SCRUBBER
 	icon_state = "map_universal"
 	gfi_layer_rotation = GFI_ROTATION_OVERDIR

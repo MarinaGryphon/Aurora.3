@@ -1,9 +1,9 @@
 /obj/machinery/atmospherics/tvalve
+	name = "manual switching valve"
+	desc = "A pipe valve."
+	desc_info = "Click this to toggle the mode.  The direction with the green light is where the gas will flow."
 	icon = 'icons/atmos/tvalve.dmi'
 	icon_state = "map_tvalve0"
-
-	name = "manual switching valve"
-	desc = "A pipe valve"
 
 	level = 1
 	dir = SOUTH
@@ -252,7 +252,7 @@
 
 	return 1
 
-/obj/machinery/atmospherics/tvalve/return_network_air(datum/network/reference)
+/obj/machinery/atmospherics/tvalve/return_network_air(datum/pipe_network/reference)
 	return null
 
 /obj/machinery/atmospherics/tvalve/disconnect(obj/machinery/atmospherics/reference)
@@ -297,6 +297,8 @@
 		icon_state = "tvalvenopower"
 
 /obj/machinery/atmospherics/tvalve/digital/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return src.attack_hand(user)
 
 /obj/machinery/atmospherics/tvalve/digital/attack_hand(mob/user as mob)
@@ -341,7 +343,7 @@
 			else
 				go_to_side()
 
-/obj/machinery/atmospherics/tvalve/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+/obj/machinery/atmospherics/tvalve/attackby(var/obj/item/W as obj, var/mob/user as mob)
 	if (!W.iswrench())
 		return ..()
 	if (istype(src, /obj/machinery/atmospherics/tvalve/digital))
@@ -437,6 +439,8 @@
 		icon_state = "tvalvemnopower"
 
 /obj/machinery/atmospherics/tvalve/mirrored/digital/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return src.attack_hand(user)
 
 /obj/machinery/atmospherics/tvalve/mirrored/digital/attack_hand(mob/user as mob)

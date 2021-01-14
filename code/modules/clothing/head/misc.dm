@@ -16,11 +16,7 @@
 	slot_flags = SLOT_HEAD | SLOT_EARS
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/ring.ogg'
-
-/obj/item/clothing/head/pin/pink
-	icon_state = "pinkpin"
-	item_state = "pinkpin"
-	name = "pink hair pin"
+	pickup_sound = 'sound/items/pickup/ring.ogg'
 
 /obj/item/clothing/head/pin/clover
 	icon_state = "cloverpin"
@@ -77,6 +73,12 @@
 	item_state = "hairflower_white"
 	name = "white flower pin"
 
+/obj/item/clothing/head/pin/flower/silversun
+	icon_state = "hairflower_silversun"
+	item_state = "hairflower_silversun"
+	name = "silversun flower pin"
+	desc = "A Silversun dawnflower pin, named after the same flower. This particular version is an artificial recreation, and lacks the distinctive bioluminescence of the original."
+
 /obj/item/clothing/head/pin/bow
 	icon_state = "bow"
 	item_state = "bow"
@@ -84,15 +86,11 @@
 	desc = "A ribbon tied into a bow with a clip on the back to attach to hair."
 	item_state_slots = list(slot_r_hand_str = "pill", slot_l_hand_str = "pill")
 
-/obj/item/clothing/head/pin/bow/big
-	icon_state = "whiteribbon"
-	item_state = "whiteribbon"
-	name = "ribbon"
-
-/obj/item/clothing/head/pin/bow/big/red
-	icon_state = "redribbon"
-	item_state = "redribbon"
-	name = "red ribbon"
+/obj/item/clothing/head/pin/bow/hairband
+	icon_state = "hairribbon"
+	item_state = "hairribbon"
+	name = "hair ribbon"
+	desc = "A glorified length of ribbon acting as a hairband."
 
 /obj/item/clothing/head/powdered_wig
 	name = "powdered wig"
@@ -124,13 +122,6 @@
 	permeability_coefficient = 0.01
 	siemens_coefficient = 0.9
 
-/obj/item/clothing/head/hasturhood
-	name = "hastur's hood"
-	desc = "It's unspeakably stylish"
-	icon_state = "hasturhood"
-	flags_inv = BLOCKHAIR
-	body_parts_covered = HEAD|FACE|EYES
-
 /obj/item/clothing/head/nursehat
 	name = "nurse's hat"
 	desc = "It allows quick identification of trained medical personnel."
@@ -157,14 +148,6 @@
 	flags_inv = BLOCKHAIR
 	body_parts_covered = HEAD|FACE|EYES
 
-/obj/item/clothing/head/greenbandana
-	name = "green bandana"
-	desc = "It's a green bandana with some fine nanotech lining."
-	icon_state = "greenbandana"
-	item_state = "greenbandana"
-	flags_inv = 0
-	body_parts_covered = 0
-
 /obj/item/clothing/head/cardborg
 	name = "cardborg helmet"
 	desc = "A helmet made out of a box."
@@ -172,7 +155,8 @@
 	item_state = "cardborg_h"
 	flags_inv = HIDEMASK|HIDEEARS|HIDEEYES|HIDEFACE
 	body_parts_covered = HEAD|FACE|EYES
-	drop_sound = 'sound/items/drop/box.ogg'
+	drop_sound = 'sound/items/drop/cardboardbox.ogg'
+	pickup_sound = 'sound/items/pickup/cardboardbox.ogg'
 
 /obj/item/clothing/head/justice
 	name = "justice hat"
@@ -203,10 +187,6 @@
 	name = "flat cap"
 	desc = "A working man's cap."
 	icon_state = "flat_cap"
-	item_state_slots = list(
-		slot_l_hand_str = "det_hat",
-		slot_r_hand_str = "det_hat"
-		)
 	siemens_coefficient = 0.9
 
 /obj/item/clothing/head/pirate
@@ -218,11 +198,6 @@
 	name = "pirate hat"
 	desc = "Yarr."
 	icon_state = "hgpiratecap"
-
-/obj/item/clothing/head/bandana
-	name = "pirate bandana"
-	desc = "Yarr."
-	icon_state = "bandana"
 
 /obj/item/clothing/head/bowler
 	name = "bowler-hat"
@@ -246,11 +221,6 @@
 	icon_state = "boater_hat"
 	desc = "The ultimate in summer fashion."
 
-/obj/item/clothing/head/fedora
-	name = "fedora"
-	icon_state = "fedora"
-	desc = "A sharp, stylish hat."
-
 /obj/item/clothing/head/feathertrilby
 	name = "feather trilby"
 	icon_state = "feather_trilby"
@@ -269,11 +239,6 @@
 	icon_state = "witch"
 	flags_inv = BLOCKHAIR
 	siemens_coefficient = 2.0
-
-/obj/item/clothing/head/legion_beret
-	name = "TCFL dress beret"
-	desc = "A pale blue dress beret with a rubber insignia of a torch, surrounded by red stars and the letters \"TCFL\". A common good luck charm among former legionaires."
-	icon_state = "legion_beret"
 
 /obj/item/clothing/head/chicken
 	name = "chicken suit head"
@@ -316,12 +281,6 @@
 		)
 	flags_inv = BLOCKHAIR
 	siemens_coefficient = 2.0 //why is it so conductive?!
-
-/obj/item/clothing/head/orangebandana //themij: Taryn Kifer
-	name = "orange bandana"
-	desc = "An orange piece of cloth, worn on the head."
-	icon_state = "orange_bandana"
-	body_parts_covered = 0
 
 /obj/item/clothing/head/hijab //It might've taken a year but here's your Hijab's, Dea.
 	name = "hijab"
@@ -429,6 +388,19 @@
 	icon_state = "headbando"
 	item_state = "headbando"
 
+/obj/item/clothing/head/headbando/random/Initialize()
+	. = ..()
+	color = get_random_colour(lower = 150)
+
+/obj/item/clothing/head/fedora
+	name = "fedora"
+	icon_state = "fedora"
+	desc = "A sharp, stylish hat."
+
+/obj/item/clothing/head/fedora/black
+	name = "black fedora"
+	icon_state = "black_fedora"
+
 /obj/item/clothing/head/fedora/brown
 	name = "fedora"
 	desc = "A brown fedora - either the cornerstone of a detective's style or a poor attempt at looking cool, depending on the person wearing it."
@@ -452,11 +424,9 @@
 	icon_state = "beanie"
 	item_state = "beanie"
 
-/obj/item/clothing/head/beanie_loose
-	name = "loose beanie"
-	desc = "A head-hugging brimless winter cap. This one is loose."
-	icon_state = "beanie_hang"
-	item_state = "beanie"
+/obj/item/clothing/head/beanie/random/Initialize()
+	. = ..()
+	color = get_random_colour(lower = 150)
 
 //Flower crowns
 
@@ -467,6 +437,7 @@
 	item_state = "sunflower_crown"
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/herb.ogg'
+	pickup_sound = 'sound/items/pickup/herb.ogg'
 
 /obj/item/clothing/head/lavender_crown
 	name = "harebell crown"
@@ -475,6 +446,7 @@
 	item_state = "lavender_crown"
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/herb.ogg'
+	pickup_sound = 'sound/items/pickup/herb.ogg'
 
 /obj/item/clothing/head/poppy_crown
 	name = "poppy crown"
@@ -483,6 +455,15 @@
 	item_state = "poppy_crown"
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/herb.ogg'
+	pickup_sound = 'sound/items/pickup/herb.ogg'
+
+//Tau Ceti Foreign Legion
+
+/obj/item/clothing/head/legion/legate
+	name = "TCFL peaked cap"
+	desc = "A stark red peaked cap. Worn by senior officers of the Tau Ceti Foreign Legion."
+	icon_state = "legion_cap"
+	item_state = "legion_cap"
 
 //golden beep stuff
 
@@ -493,6 +474,7 @@
 	item_state = "cobalt_headchains"
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
 
 /obj/item/clothing/head/headchain/emerald
 	name = "emerald head chains"
@@ -513,6 +495,7 @@
 	item_state = "cobalt_crest"
 	body_parts_covered = 0
 	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
 
 /obj/item/clothing/head/crest/emerald
 	name = "emerald head crest"
@@ -526,59 +509,6 @@
 	icon_state = "ruby_crest"
 	item_state = "ruby_crest"
 
-
-//ipc 'pins'
-
-/obj/item/clothing/head/antenna
-	name = "curved antennae"
-	desc = "A set of decorative antennae. This particular pair is curved in the middle point, arcing upwards. Unfortunately, it doesn't get FM here."
-	icon_state = "curvedantennae"
-	item_state = "curvedantennae"
-	slot_flags = SLOT_HEAD | SLOT_EARS
-	body_parts_covered = 0
-	matter = list(DEFAULT_WALL_MATERIAL = 10)
-	drop_sound = 'sound/items/drop/scrap.ogg'
-
-/obj/item/clothing/head/antenna/straight
-	name = "straight antennae"
-	desc = "A set of decorative antennae. This particular pair is straight, jutting out to what is reasonably shoulder width. They don't seem to plug into anything."
-	icon_state = "straightantennae"
-	item_state = "straightantennae"
-
-/obj/item/clothing/head/antenna/spiked
-	name = "spiked chassis mounts"
-	desc = "Two large mounts holding up chassis protrusions on either side of the head. Careful for doorways."
-	icon_state = "horncrown"
-	item_state = "horncrown"
-
-/obj/item/clothing/head/antenna/side
-	name = "side chassis mounts"
-	desc = "Two large mounts holding up chassis protrusions on either side of the head."
-	icon_state = "tusk"
-	item_state = "tusk"
-
-/obj/item/clothing/head/antenna/dish
-	name = "head dishes"
-	desc = "Two tiny dishes intended to hold excess wiring in a very specific manner and mostly end up being used as decoration. If only they picked up holodramas."
-	icon_state = "dish"
-	item_state = "dish"
-
-/obj/item/clothing/head/antenna/double
-	name = "antenna ears"
-	desc = "Despite being commonly seen on Shells, nobody knows what these actually do."
-	icon_state = "dual_robot_antennae"
-	item_state = "dual_robot_antennae"
-
-/obj/item/clothing/head/antenna/double/left
-	name = "left antenna ear"
-	icon_state = "left_robot_antennae"
-	item_state = "left_robot_antennae"
-
-/obj/item/clothing/head/antenna/double/right
-	name = "right antenna ear"
-	icon_state = "right_robot_antennae"
-	item_state = "right_robot_antennae"
-
 /obj/item/clothing/head/fake_culthood
 	name = "occultist hood"
 	icon_state = "culthood"
@@ -587,7 +517,7 @@
 	body_parts_covered = HEAD|EYES
 	cold_protection = HEAD
 	min_cold_protection_temperature = SPACE_HELMET_MIN_COLD_PROTECTION_TEMPERATURE
-  
+
 /obj/item/clothing/head/vaurca_breeder
 	name = "zo'ra representative shroud"
 	desc = "Large shroud used by Zo'ra representatives."
@@ -595,8 +525,8 @@
 	item_state = "shroud"
 	icon_state = "shroud"
 	contained_sprite = FALSE
-	species_restricted = list("Vaurca Breeder")
-	sprite_sheets = list("Vaurca Breeder" = 'icons/mob/species/breeder/head.dmi')
+	species_restricted = list(BODYTYPE_VAURCA_BREEDER)
+	sprite_sheets = list(BODYTYPE_VAURCA_BREEDER = 'icons/mob/species/breeder/head.dmi')
 
 /obj/item/clothing/head/navy
 	name = "sol navy utility cover"
@@ -663,3 +593,23 @@
 	item_state = "helmet_tac_sol"
 	armor = list(melee = 60, bullet = 60, laser = 60, energy = 40, bomb = 40, bio = 0, rad = 0)
 	contained_sprite = 1
+
+/obj/item/clothing/head/nonla
+	name = "non la"
+	desc = "A conical straw hat enjoyed particularly by residents of New Hai Phong, to protect the head from sweltering suns and heavy rains."
+	icon_state = "nonla"
+	item_state = "nonla"
+
+/obj/item/clothing/head/padded
+	name = "padded cap"
+	desc = "A padded skullcap for those prone to bumping their heads against hard surfaces."
+	icon_state = "tank"
+	flags_inv = BLOCKHEADHAIR
+
+/obj/item/clothing/head/buckethat
+	name = "bucket hat"
+	desc = "A hat with an all-around visor. Only slightly better than wearing an actual bucket."
+	icon_state = "buckethat"
+	sprite_sheets = list(
+		"Tajara" = 'icons/mob/species/tajaran/helmet.dmi'
+		)

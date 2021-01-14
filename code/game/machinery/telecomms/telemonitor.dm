@@ -1,6 +1,3 @@
-//This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:32
-
-
 /*
 	Telecomms monitor tracks the overall trafficing of a telecommunications network
 	and displays a heirarchy of linked machines.
@@ -9,6 +6,7 @@
 
 /obj/machinery/computer/telecomms/monitor
 	name = "Telecommunications Monitor"
+	desc = "A monitor that tracks the overall traffic of a telecommunicaations network, and displays a hierarchy of linked machines."
 	icon_screen = "comm_monitor"
 
 	var/screen = 0				// the screen number:
@@ -123,15 +121,15 @@
 		updateUsrDialog()
 		return
 
-	attackby(var/obj/item/weapon/D as obj, var/mob/user as mob)
+	attackby(var/obj/item/D as obj, var/mob/user as mob)
 		if(D.isscrewdriver())
 			playsound(src.loc, D.usesound, 50, 1)
 			if(do_after(user, 20/D.toolspeed))
 				if (src.stat & BROKEN)
 					to_chat(user, "<span class='notice'>The broken glass falls out.</span>")
 					var/obj/structure/computerframe/A = new /obj/structure/computerframe( src.loc )
-					new /obj/item/weapon/material/shard( src.loc )
-					var/obj/item/weapon/circuitboard/comm_monitor/M = new /obj/item/weapon/circuitboard/comm_monitor( A )
+					new /obj/item/material/shard( src.loc )
+					var/obj/item/circuitboard/comm_monitor/M = new /obj/item/circuitboard/comm_monitor( A )
 					for (var/obj/C in src)
 						C.forceMove(src.loc)
 					A.circuit = M
@@ -142,7 +140,7 @@
 				else
 					to_chat(user, "<span class='notice'>You disconnect the monitor.</span>")
 					var/obj/structure/computerframe/A = new /obj/structure/computerframe( src.loc )
-					var/obj/item/weapon/circuitboard/comm_monitor/M = new /obj/item/weapon/circuitboard/comm_monitor( A )
+					var/obj/item/circuitboard/comm_monitor/M = new /obj/item/circuitboard/comm_monitor( A )
 					for (var/obj/C in src)
 						C.forceMove(src.loc)
 					A.circuit = M

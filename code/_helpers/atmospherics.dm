@@ -5,7 +5,7 @@
 	A.add_fingerprint(user)
 	var/list/result = A.atmosanalyze(user)
 	if(result && result.len)
-		to_chat(user, "<span class='notice'>Results of the analysis[src == A ? "" : " of \the [A]"]</span>")
+		to_chat(user, "<span class='notice'>Results of the analysis[src == A ? "" : " of [A]"]</span>")
 		for(var/line in result)
 			to_chat(user, "<span class='notice'>[line]</span>")
 		return 1
@@ -20,6 +20,7 @@
 	var/list/results = list()
 	if (total_moles>0)
 		results += "<span class='notice'>Pressure: [round(pressure,0.1)] kPa</span>"
+		results += "<span class='notice'>Moles: [round(total_moles,0.1)]</span>"
 		for(var/mix in mixture.gas)
 			results += "<span class='notice'>[gas_data.name[mix]]: [round((mixture.gas[mix] / total_moles) * 100)]%</span>"
 		results += "<span class='notice'>Temperature: [round(mixture.temperature-T0C)]&deg;C</span>"
@@ -31,7 +32,7 @@
 /obj/proc/atmosanalyze(var/mob/user)
 	return
 
-/obj/item/weapon/tank/atmosanalyze(var/mob/user)
+/obj/item/tank/atmosanalyze(var/mob/user)
 	return atmosanalyzer_scan(src, src.air_contents, user)
 
 /obj/machinery/portable_atmospherics/atmosanalyze(var/mob/user)
@@ -43,5 +44,5 @@
 /obj/machinery/power/rad_collector/atmosanalyze(var/mob/user)
 	if(P)	return atmosanalyzer_scan(src, src.P.air_contents, user)
 
-/obj/item/weapon/flamethrower/atmosanalyze(var/mob/user)
+/obj/item/flamethrower/atmosanalyze(var/mob/user)
 	if(ptank)	return atmosanalyzer_scan(src, ptank.air_contents, user)

@@ -5,27 +5,29 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 */
 
 /obj/machinery/r_n_d/circuit_imprinter
-	name = "Circuit Imprinter"
+	name = "circuit imprinter"
+	desc = "An advanced device that can only be operated via a nearby RnD console, it can print any circuitboard the user requests, provided it has the correct materials to do so."
 	icon_state = "circuit_imprinter"
 	flags = OPENCONTAINER
 
-	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, "glass" = 0, "gold" = 0, "silver" = 0, "phoron" = 0, "uranium" = 0, "diamond" = 0)
+	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, MATERIAL_GLASS = 0, MATERIAL_GOLD = 0, MATERIAL_SILVER = 0, MATERIAL_PHORON = 0, MATERIAL_URANIUM = 0, MATERIAL_DIAMOND = 0)
 	var/list/datum/design/queue = list()
 	var/progress = 0
 
 	var/max_material_storage = 75000
 	var/mat_efficiency = 1
 	var/speed = 1
+	var/product_offset = FALSE //Set to make the printer spawn its product in a neighboring turf dictated by dir.
 
 	use_power = 1
 	idle_power_usage = 30
 	active_power_usage = 2500
 
 	component_types = list(
-		/obj/item/weapon/circuitboard/circuit_imprinter,
-		/obj/item/weapon/stock_parts/matter_bin,
-		/obj/item/weapon/stock_parts/manipulator,
-		/obj/item/weapon/reagent_containers/glass/beaker = 2
+		/obj/item/circuitboard/circuit_imprinter,
+		/obj/item/stock_parts/matter_bin,
+		/obj/item/stock_parts/manipulator,
+		/obj/item/reagent_containers/glass/beaker = 2
 	)
 
 /obj/machinery/r_n_d/circuit_imprinter/machinery_process()
@@ -50,28 +52,28 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 		update_icon()
 	else
 		if(busy)
-			visible_message("<span class='notice'>\icon [src] flashes: insufficient materials: [getLackingMaterials(D)].</span>")
+			visible_message("<span class='notice'>[icon2html(src, viewers(get_turf(src)))] flashes: insufficient materials: [getLackingMaterials(D)].</span>")
 			busy = 0
 			update_icon()
 
 /obj/machinery/r_n_d/circuit_imprinter/RefreshParts()
 	// Adjust reagent container volume to match combined volume of the inserted beakers
 	var/T = 0
-	for(var/obj/item/weapon/reagent_containers/glass/G in component_parts)
+	for(var/obj/item/reagent_containers/glass/G in component_parts)
 		T += G.reagents.maximum_volume
 	create_reagents(T)
 	// Transfer all reagents from the beakers to internal reagent container
-	for(var/obj/item/weapon/reagent_containers/glass/G in component_parts)
+	for(var/obj/item/reagent_containers/glass/G in component_parts)
 		G.reagents.trans_to_obj(src, G.reagents.total_volume)
 
 	// Adjust material storage capacity to scale with matter bin rating
 	max_material_storage = 0
-	for(var/obj/item/weapon/stock_parts/matter_bin/M in component_parts)
+	for(var/obj/item/stock_parts/matter_bin/M in component_parts)
 		max_material_storage += M.rating * 75000
 
 	// Adjust production speed to increase with manipulator rating
 	T = 0
-	for(var/obj/item/weapon/stock_parts/manipulator/M in component_parts)
+	for(var/obj/item/stock_parts/manipulator/M in component_parts)
 		T += M.rating
 	mat_efficiency = 1 - (T - 1) / 4
 	speed = T
@@ -93,7 +95,7 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 /obj/machinery/r_n_d/circuit_imprinter/dismantle()
 	for(var/obj/I in component_parts)
 		// This will distribute all reagents amongst the contained beakers
-		if(istype(I, /obj/item/weapon/reagent_containers/glass/beaker))
+		if(istype(I, /obj/item/reagent_containers/glass/beaker))
 			reagents.trans_to_obj(I, reagents.total_volume)
 	for(var/f in materials)
 		if(materials[f] >= SHEET_MATERIAL_AMOUNT)
@@ -137,6 +139,9 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 	var/obj/item/stack/material/stack = O
 	var/amount = round(input("How many sheets do you want to add?") as num)
 	if(!O)
+		return
+	if(!Adjacent(user))
+		to_chat(user, "<span class='notice'>\The [src] is too far away for you to insert this.</span>")
 		return
 	if(amount <= 0)//No negative numbers
 		return
@@ -185,7 +190,7 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 		if(!reagents.has_reagent(C, D.chemicals[C]))
 			if(ret != "")
 				ret += ", "
-			ret += C
+			ret += "[C]"
 	return ret
 
 /obj/machinery/r_n_d/circuit_imprinter/proc/build(var/datum/design/D)
@@ -201,7 +206,10 @@ using metal and glass, it uses glass and reagents (usually sulphuric acid).
 
 	if(D.build_path)
 		var/obj/new_item = D.Fabricate(src, src)
-		new_item.forceMove(loc)
+		if(product_offset)
+			new_item.forceMove(get_step(src, dir))
+		else
+			new_item.forceMove(src.loc)
 		if(mat_efficiency != 1) // No matter out of nowhere
 			if(new_item.matter && new_item.matter.len > 0)
 				for(var/i in new_item.matter)

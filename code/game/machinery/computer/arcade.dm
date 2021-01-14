@@ -10,8 +10,8 @@
 	// If it's a generic arcade machine, pick a random arcade
 	// circuit board for it and make the new machine
 	if(!circuit)
-		var/choice = pick(typesof(/obj/item/weapon/circuitboard/arcade) - /obj/item/weapon/circuitboard/arcade)
-		var/obj/item/weapon/circuitboard/CB = new choice()
+		var/choice = pick(typesof(/obj/item/circuitboard/arcade) - /obj/item/circuitboard/arcade)
+		var/obj/item/circuitboard/CB = new choice()
 		new CB.build_path(loc, CB)
 
 		return INITIALIZE_HINT_QDEL
@@ -24,6 +24,8 @@
 		chosen_prize.forceMove(src.loc)
 
 /obj/machinery/computer/arcade/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return src.attack_hand(user)
 
 /obj/machinery/computer/arcade/emp_act(severity)
@@ -49,7 +51,7 @@
 	name = "arcade machine"
 	desc = "Does not support Pinball."
 	icon_state = "arcade"
-	circuit = /obj/item/weapon/circuitboard/arcade/battle
+	circuit = /obj/item/circuitboard/arcade/battle
 	var/enemy_name = "Space Villian"
 	var/temp = "Winners don't use space drugs" //Temporary message, for attack messages, etc
 	var/player_hp = 30 //Player health/attack points
@@ -79,10 +81,9 @@
 	if(..())
 		return
 	user.set_machine(src)
-	var/dat = "<a href='byond://?src=\ref[src];close=1'>Close</a>"
-	dat += "<center><h4>[src.enemy_name]</h4></center>"
-
-	dat += "<br><center><h3>[src.temp]</h3></center>"
+	var/dat = ""
+	dat += "<center><h3>[src.enemy_name]</h3></center>"
+	dat += "<br><center><h2>[src.temp]</h2></center>"
 	dat += "<br><center>Health: [src.player_hp] | Magic: [src.player_mp] | Enemy Health: [src.enemy_hp]</center>"
 
 	dat += "<center><b>"
@@ -95,9 +96,9 @@
 
 	dat += "</b></center>"
 
-	user << browse(dat, "window=arcade")
-	onclose(user, "arcade")
-	return
+	var/datum/browser/arcade_win = new(user, "arcade", capitalize_first_letters(name))
+	arcade_win.set_content(dat)
+	arcade_win.open()
 
 /obj/machinery/computer/arcade/battle/Topic(href, href_list)
 	if(..())

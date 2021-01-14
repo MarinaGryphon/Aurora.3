@@ -45,6 +45,8 @@
 		to_chat(user, "<span class='bad'>It seems to be offline.</span>")
 
 /obj/machinery/power/breakerbox/attack_ai(mob/user)
+	if(!ai_can_interact(user))
+		return
 	if(update_locked)
 		to_chat(user, "<span class='bad'>System locked. Please try again later.</span>")
 		return
@@ -88,7 +90,7 @@
 		addtimer(CALLBACK(src, .proc/reset_locked), 600)
 	busy = 0
 
-/obj/machinery/power/breakerbox/attackby(var/obj/item/weapon/W as obj, var/mob/user as mob)
+/obj/machinery/power/breakerbox/attackby(var/obj/item/W as obj, var/mob/user as mob)
 	if(W.ismultitool())
 		var/newtag = input(user, "Enter new RCON tag. Use \"NO_TAG\" to disable RCON or leave empty to cancel.", "SMES RCON system") as text
 		if(newtag)

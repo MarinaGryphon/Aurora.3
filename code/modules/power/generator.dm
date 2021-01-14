@@ -2,10 +2,11 @@
 	name = "thermoelectric generator"
 	desc = "It's a high efficiency thermoelectric generator."
 	icon_state = "teg"
-	density = 1
-	anchored = 0
+	density = TRUE
+	anchored = FALSE
+	obj_flags = OBJ_FLAG_ROTATABLE
 
-	use_power = 1
+	use_power = FALSE
 	idle_power_usage = 100 //Watts, I hope.  Just enough to do the computer and display things.
 
 	var/max_power = 500000
@@ -69,7 +70,7 @@
 				circ1 = null
 				circ2 = null
 
-/obj/machinery/power/generator/proc/updateicon()
+/obj/machinery/power/generator/update_icon()
 	cut_overlays()
 	if(!(stat & (NOPOWER|BROKEN)) && lastgenlev)
 		add_overlay("teg-op[lastgenlev]")
@@ -138,13 +139,15 @@
 		genlev = 1
 	if(genlev != lastgenlev)
 		lastgenlev = genlev
-		updateicon()
+		update_icon()
 	add_avail(effective_gen)
 
 /obj/machinery/power/generator/attack_ai(mob/user)
+	if(!ai_can_interact(user))
+		return
 	attack_hand(user)
 
-/obj/machinery/power/generator/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/power/generator/attackby(obj/item/W as obj, mob/user as mob)
 	if(W.iswrench())
 		playsound(src.loc, W.usesound, 75, 1)
 		anchored = !anchored
@@ -220,25 +223,4 @@
 
 /obj/machinery/power/generator/power_change()
 	..()
-	updateicon()
-
-
-/obj/machinery/power/generator/verb/rotate_clock()
-	set category = "Object"
-	set name = "Rotate Generator (Clockwise)"
-	set src in view(1)
-
-	if (usr.stat || usr.restrained()  || anchored)
-		return
-
-	src.set_dir(turn(src.dir, 90))
-
-/obj/machinery/power/generator/verb/rotate_anticlock()
-	set category = "Object"
-	set name = "Rotate Generator (Counterclockwise)"
-	set src in view(1)
-
-	if (usr.stat || usr.restrained()  || anchored)
-		return
-
-	src.set_dir(turn(src.dir, -90))
+	update_icon()

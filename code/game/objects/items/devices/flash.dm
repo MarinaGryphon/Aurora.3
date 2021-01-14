@@ -2,9 +2,9 @@
 	name = "flash"
 	desc = "Used for blinding and being an asshole."
 	icon_state = "flash"
-	item_state = "flashtool"
+	item_state = "flash"
 	throwforce = 5
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	throw_speed = 4
 	throw_range = 10
 	flags = CONDUCT
@@ -36,7 +36,7 @@
 	if(!user || !M)	return	//sanity
 
 	M.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been flashed (attempt) with [src.name]  by [user.name] ([user.ckey])</font>")
-	user.attack_log += text("\[[time_stamp()]\] <font color='red'>Used the [src.name] to flash [M.name] ([M.ckey])</font>")
+	user.attack_log += text("\[[time_stamp()]\] <span class='warning'>Used the [src.name] to flash [M.name] ([M.ckey])</span>")
 	msg_admin_attack("[user.name] ([user.ckey]) Used the [src.name] to flash [M.name] ([M.ckey]) (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>)",ckey=key_name(user),ckey_target=key_name(M))
 
 	user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
@@ -71,34 +71,33 @@
 			var/mob/living/carbon/C = M
 			var/datum/dionastats/DS = C.get_dionastats()
 			DS.stored_energy += 10
-			flick("e_flash", M.flash)
+			M.flash_eyes()
 			M.Weaken(5)
 			M.eye_blind = 5
 			return
 
 		var/safety = M:eyecheck(TRUE)
 		if(safety <= 0)
-			flick("e_flash", M.flash)
+			M.flash_eyes()
+			M.confused = 10
 			var/mob/living/carbon/human/H = M
-			var/obj/item/organ/eyes/E = H.get_eyes()
+			var/obj/item/organ/internal/eyes/E = H.get_eyes()
 			if(!E)
 				return
 
 			E.flash_act()
 
 		else
-			flashfail = 1
-
+			flashfail = TRUE
 	else if(issilicon(M))
 		if(isrobot(M))
 			var/mob/living/silicon/robot/R = M
-			if(R.overclocked)
-				return
-
-		M.Weaken(rand(3,7)) //should be that borg is disabled for around 3-7 seconds
-
+			if(R.overclocked || R.flash_resistant)
+				flashfail = TRUE
+		if(!flashfail)
+			M.Weaken(rand(3, 7)) //should be that borg is disabled for around 3-7 seconds
 	else
-		flashfail = 1
+		flashfail = TRUE
 
 	if(isrobot(user))
 		spawn(0)
@@ -143,7 +142,7 @@
 	//It will never break on the first use.
 	switch(times_used)
 		if(0 to 5)
-			if(prob(10*times_used))	//More consequential rolls are made the more you overuse the device.
+			if(prob(5*times_used))	//More consequential rolls are made the more you overuse the device.
 				broken = 1
 				to_chat(user, "<span class='warning'>The bulb has burnt out!</span>")
 				icon_state = "flashburnt"
@@ -167,8 +166,8 @@
 
 	for(var/mob/living/carbon/M in oviewers(3, null))
 		if(prob(50))
-			if (locate(/obj/item/weapon/cloaking_device, M))
-				for(var/obj/item/weapon/cloaking_device/S in M)
+			if (locate(/obj/item/cloaking_device, M))
+				for(var/obj/item/cloaking_device/S in M)
 					S.active = 0
 					S.icon_state = "shield0"
 		var/safety = M.eyecheck(TRUE)
@@ -179,22 +178,20 @@
 	return
 
 /obj/item/device/flash/emp_act(severity)
-	if(broken)	return
+	if(broken)
+		return
 	flash_recharge()
 	switch(times_used)
 		if(0 to 5)
-			if(prob(20*times_used))
+			if(prob(5*times_used))
 				broken = 1
 				icon_state = "flashburnt"
 				return
 			times_used++
-			if(istype(loc, /mob/living/carbon))
+			if(iscarbon(loc))
 				var/mob/living/carbon/M = loc
-				var/safety = M.eyecheck(TRUE)
-				if(safety < FLASH_PROTECTION_MODERATE)
-					flick("e_flash", M.flash)
-					for(var/mob/O in viewers(M, null))
-						O.show_message("<span class='disarm'>[M] is blinded by the flash!</span>")
+				M.flash_eyes()
+				to_chat(M, SPAN_WARNING("Your [name] goes off!"))
 	..()
 
 /obj/item/device/flash/synthetic

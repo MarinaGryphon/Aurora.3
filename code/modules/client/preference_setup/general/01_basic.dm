@@ -1,7 +1,6 @@
 /datum/category_item/player_setup_item/general/basic
 	name = "Basic"
 	sort_order = 1
-	var/static/list/valid_player_genders = list(MALE, FEMALE)
 
 /datum/category_item/player_setup_item/general/basic/load_character(var/savefile/S)
 	S["real_name"]  >> pref.real_name
@@ -10,6 +9,10 @@
 	S["species"]    >> pref.species
 	S["spawnpoint"] >> pref.spawnpoint
 	S["OOC_Notes"]  >> pref.metadata
+	if(istype(all_species[pref.species], /datum/species/machine))
+		S["ipc_tag_status"] >> pref.machine_tag_status
+		S["ipc_serial_number"] >> pref.machine_serial_number
+		S["ipc_ownership_status"] >> pref.machine_ownership_status
 
 /datum/category_item/player_setup_item/general/basic/save_character(var/savefile/S)
 	S["real_name"]  << pref.real_name
@@ -18,7 +21,13 @@
 	S["species"]    << pref.species
 	S["spawnpoint"] << pref.spawnpoint
 	S["OOC_Notes"]  << pref.metadata
+	if(istype(all_species[pref.species], /datum/species/machine))
+		S["ipc_tag_status"] << pref.machine_tag_status
+		S["ipc_serial_number"] << pref.machine_serial_number
+		S["ipc_ownership_status"] << pref.machine_ownership_status
 
+// if table_name and pref.var_name is different, then do it like
+// "table_name" = "pref.var_name", as below
 /datum/category_item/player_setup_item/general/basic/gather_load_query()
 	return list(
 		"ss13_characters" = list(
@@ -31,12 +40,25 @@
 				"species"
 			),
 			"args" = list("id")
+		),
+		"ss13_characters_ipc_tags" = list(
+			"vars" = list(
+				"tag_status" = "machine_tag_status",
+				"serial_number" = "machine_serial_number",
+				"ownership_status" = "machine_ownership_status"
+				),
+			"args" = list("char_id")
 		)
 	)
 
+// Generally, this doesn't USUALLY need changing
 /datum/category_item/player_setup_item/general/basic/gather_load_parameters()
-	return list("id" = pref.current_character)
+	return list(
+			"id" = pref.current_character,
+			"char_id" = pref.current_character
+			)
 
+// Only need to list the SQL table field names here
 /datum/category_item/player_setup_item/general/basic/gather_save_query()
 	return list(
 		"ss13_characters" = list(
@@ -48,6 +70,12 @@
 			"species",
 			"id" = 1,
 			"ckey" = 1
+		),
+		"ss13_characters_ipc_tags" = list(
+			"tag_status",
+			"serial_number",
+			"ownership_status",
+			"char_id" = 1 // = 1 signifies argument
 		)
 	)
 
@@ -59,12 +87,17 @@
 		"metadata" = pref.metadata,
 		"spawnpoint" = pref.spawnpoint,
 		"species" = pref.species,
+		"tag_status" = pref.machine_tag_status,
+		"serial_number" = pref.machine_serial_number,
+		"ownership_status" = pref.machine_ownership_status,
 		"id" = pref.current_character,
+		"char_id" = pref.current_character,
 		"ckey" = PREF_CLIENT_CKEY
 	)
 
 /datum/category_item/player_setup_item/general/basic/load_special()
-	pref.can_edit_name = 1
+	pref.can_edit_name = TRUE
+	pref.can_edit_ipc_tag = TRUE
 
 	if (config.sql_saves && pref.current_character)
 		if (!establish_db_connection(dbcon))
@@ -77,23 +110,32 @@
 
 		if (query.NextRow())
 			if (text2num(query.item[1]) > 5)
-				pref.can_edit_name = 0
+				pref.can_edit_name = FALSE
+				if(config.ipc_timelock_active)
+					pref.can_edit_ipc_tag = FALSE
 		else
 			error("SQL CHARACTER LOAD: Logic error, general/basic/load_special() didn't return any rows when it should have.")
 			log_debug("SQL CHARACTER LOAD: Logic error, general/basic/load_special() didn't return any rows when it should have. Character ID: [pref.current_character].")
 
 /datum/category_item/player_setup_item/general/basic/sanitize_character()
-	if(!pref.species || !(pref.species in playable_species))
-		pref.species = "Human"
+	if(!pref.species)
+		pref.species = SPECIES_HUMAN
+	var/is_in_playable_species = FALSE
+	for(var/thing in playable_species)
+		if(pref.species in playable_species[thing])
+			is_in_playable_species = TRUE
+	if(!is_in_playable_species)
+		pref.species = SPECIES_HUMAN
 
-	pref.age           = sanitize_integer(text2num(pref.age), pref.getMinAge(), pref.getMaxAge(), initial(pref.age))
-	pref.gender        = sanitize_inlist(pref.gender, valid_player_genders, pick(valid_player_genders))
-	pref.real_name     = sanitize_name(pref.real_name, pref.species)
+	pref.age                = sanitize_integer(text2num(pref.age), pref.getMinAge(), pref.getMaxAge(), initial(pref.age))
+	pref.gender             = sanitize_gender(pref.gender, pref.species)
+	pref.real_name          = sanitize_name(pref.real_name, pref.species)
 	if(!pref.real_name)
-		pref.real_name = random_name(pref.gender, pref.species)
-	pref.spawnpoint    = sanitize_inlist(pref.spawnpoint, SSatlas.spawn_locations, initial(pref.spawnpoint))
+		pref.real_name      = random_name(pref.gender, pref.species)
+	pref.spawnpoint         = sanitize_inlist(pref.spawnpoint, SSatlas.spawn_locations, initial(pref.spawnpoint))
+	pref.machine_tag_status = text2num(pref.machine_tag_status) // SQL queries return as text, so make this a num
 
-/datum/category_item/player_setup_item/general/basic/content()
+/datum/category_item/player_setup_item/general/basic/content(var/mob/user)
 	var/list/dat = list("<b>Name:</b> ")
 	if (pref.can_edit_name)
 		dat += "<a href='?src=\ref[src];rename=1'><b>[pref.real_name]</b></a><br>"
@@ -105,6 +147,22 @@
 	dat += "<b>Gender:</b> <a href='?src=\ref[src];gender=1'><b>[capitalize(lowertext(pref.gender))]</b></a><br>"
 	dat += "<b>Age:</b> <a href='?src=\ref[src];age=1'>[pref.age]</a><br>"
 	dat += "<b>Spawn Point</b>: <a href='?src=\ref[src];spawnpoint=1'>[pref.spawnpoint]</a><br>"
+	if(istype(all_species[pref.species], /datum/species/machine))
+		if(pref.can_edit_ipc_tag)
+			dat += "<b>Has Tag:</b> <a href='?src=\ref[src];ipc_tag=1'>[pref.machine_tag_status ? "Yes" : "No"]</a><br>"
+		else
+			dat += "<b>Has Tag:</b> [pref.machine_tag_status ? "Yes" : "No"] (<a href='?src=\ref[src];namehelp=1'>?</a>)<br>"
+		if(pref.machine_tag_status)
+			if(!pref.machine_serial_number)
+				var/generated_serial = uppertext(dd_limittext(md5(pref.real_name), 12))
+				pref.machine_serial_number = generated_serial
+			if(pref.can_edit_ipc_tag)
+				dat += "<b>Serial Number:</b> <a href='?src=\ref[src];serial_number=1'>[pref.machine_serial_number]</a><br>"
+				dat += "(<a href='?src=\ref[src];generate_serial=1'>Generate Serial Number</A>)<br>"
+				dat += "<b>Ownership Status:</b> <a href='?src=\ref[src];ownership_status=1'>[pref.machine_ownership_status]</a><br>"
+			else
+				dat += "<b>Serial Number:</b> [pref.machine_serial_number] (<a href='?src=\ref[src];namehelp=1'>?</a>)<br>"
+				dat += "<b>Ownership Status:</b> [pref.machine_ownership_status] (<a href='?src=\ref[src];namehelp=1'>?</a>)<br>"
 	if(config.allow_Metadata)
 		dat += "<b>OOC Notes:</b> <a href='?src=\ref[src];metadata=1'> Edit </a><br>"
 
@@ -116,18 +174,33 @@
 			alert(user, "You can no longer edit the name of your character.<br><br>If there is a legitimate need, please contact an administrator regarding the matter.")
 			return TOPIC_NOACTION
 
+		var/current_character = pref.current_character
 		var/raw_name = input(user, "Choose your character's name:", "Character Name")  as text|null
+		if(current_character != pref.current_character) //Without this, you can switch slots while the input menu is up to change your character's name past the grace period
+			return
 		if (!isnull(raw_name) && CanUseTopic(user))
 			var/new_name = sanitize_name(raw_name, pref.species)
 			if(new_name)
+				if(new_name == pref.real_name)
+					return TOPIC_NOACTION //If the name is the same do nothing
+				if(config.sql_saves)
+					//Check if the player already has a character with the same name. (We dont have to account for the current char in that query, as that is already handled by the condition above)
+					var/DBQuery/query = dbcon.NewQuery("SELECT COUNT(*) FROM ss13_characters WHERE ckey = :ckey: and name = :char_name:")
+					query.Execute(list("ckey" = user.client.ckey, "char_name" = new_name))
+					query.NextRow()
+					var/count = text2num(query.item[1])
+					if(count > 0)
+						to_chat(user, SPAN_WARNING("Invalid name. You have already used this name for another character. If you have deleted the character contact an admin to restore it."))
+						return TOPIC_NOACTION
+
 				pref.real_name = new_name
 				return TOPIC_REFRESH
 			else
-				to_chat(user, "<span class='warning'>Invalid name. Your name should be at least 2 and at most [MAX_NAME_LEN] characters long. It may only contain the characters A-Z, a-z, -, ' and .</span>")
+				to_chat(user, SPAN_WARNING("Invalid name. Your name should be at least 2 and at most [MAX_NAME_LEN] characters long. It may only contain the characters A-Z, a-z, -, ' and ."))
 				return TOPIC_NOACTION
 
 	else if(href_list["namehelp"])
-		alert(user, "Due to game mechanics, you are no longer able to edit the name for this character. The grace period offered is 5 days since the character's initial save.\n\nIf you have a need to change the character's name, or further questions regarding this policy, please contact an administrator.")
+		alert(user, "Due to game mechanics, you are no longer able to edit this information for this character. The grace period offered is 5 days since the character's initial save.\n\nIf you have a need to change the character's information, or further questions regarding this policy, please contact an administrator.")
 		return TOPIC_NOACTION
 
 	else if(href_list["random_name"])
@@ -139,11 +212,12 @@
 		return TOPIC_REFRESH
 
 	else if(href_list["gender"])
-		pref.gender = next_in_list(pref.gender, valid_player_genders)
+		var/datum/species/S = all_species[pref.species]
+		pref.gender = next_in_list(pref.gender, valid_player_genders & S.default_genders)
 
 		var/datum/category_item/player_setup_item/general/equipment/equipment_item = category.items[4]
 		equipment_item.sanitize_character()	// sanitize equipment
-		return TOPIC_REFRESH
+		return TOPIC_REFRESH_UPDATE_PREVIEW
 
 	else if(href_list["age"])
 		var/new_age = input(user, "Choose your character's age:\n([pref.getMinAge()]-[pref.getMaxAge()])", "Character Preference", pref.age) as num|null
@@ -161,9 +235,50 @@
 		return TOPIC_REFRESH
 
 	else if(href_list["metadata"])
-		var/new_metadata = sanitize(input(user, "Enter any information you'd like others to see, such as Roleplay-preferences:", "Game Preference" , pref.metadata)) as message|null
+		var/new_metadata = sanitize(input(user, "Enter any information you'd like others to see, such as Roleplay-preferences:", "Game Preference" , pref.metadata) as message|null)
 		if(new_metadata && CanUseTopic(user))
 			pref.metadata = sanitize(new_metadata)
+			return TOPIC_REFRESH
+
+	else if(href_list["ipc_tag"])
+		if(!pref.can_edit_ipc_tag)
+			to_chat(usr, SPAN_WARNING("You are unable to edit your IPC tag due to a timelock restriction. If you got here, it is either a hack or a bug."))
+			return
+		var/choice = alert(user, "Do you wish for your IPC to have a tag?\n\nWARNING: Being an untagged IPC in Tau space is highly illegal!", "IPC Tag", "Yes", "No")
+		if(CanUseTopic(user))
+			if(choice == "Yes")
+				pref.machine_tag_status = TRUE
+			else
+				pref.machine_tag_status = FALSE
+			return TOPIC_REFRESH
+
+	else if(href_list["serial_number"])
+		if(!pref.can_edit_ipc_tag)
+			to_chat(usr, SPAN_WARNING("You are unable to edit your IPC tag due to a timelock restriction. If you got here, it is either a hack or a bug."))
+			return
+		var/new_serial_number = sanitize(input(user, "Enter what you want to set your serial number to.", "IPC Serial Number", pref.machine_serial_number) as message|null)
+		new_serial_number = uppertext(dd_limittext(new_serial_number, 12))
+		if(new_serial_number && CanUseTopic(user))
+			pref.machine_serial_number = sanitize(new_serial_number)
+			return TOPIC_REFRESH
+
+	else if(href_list["generate_serial"])
+		if(!pref.can_edit_ipc_tag)
+			to_chat(usr, SPAN_WARNING("You are unable to edit your IPC tag due to a timelock restriction. If you got here, it is either a hack or a bug."))
+			return
+		if(pref.real_name)
+			var/generated_serial = uppertext(dd_limittext(md5(pref.real_name), 12))
+			pref.machine_serial_number = generated_serial
+			return TOPIC_REFRESH
+
+	else if(href_list["ownership_status"])
+		if(!pref.can_edit_ipc_tag)
+			to_chat(usr, SPAN_WARNING("You are unable to edit your IPC tag due to a timelock restriction. If you got here, it is either a hack or a bug."))
+			return
+		var/static/list/ownership_options = list(IPC_OWNERSHIP_COMPANY, IPC_OWNERSHIP_PRIVATE, IPC_OWNERSHIP_SELF)
+		var/new_ownership_status = input(user, "Choose your IPC's ownership status.", "IPC Ownership Status") as null|anything in ownership_options
+		if(new_ownership_status && CanUseTopic(user))
+			pref.machine_ownership_status = new_ownership_status
 			return TOPIC_REFRESH
 
 	return ..()

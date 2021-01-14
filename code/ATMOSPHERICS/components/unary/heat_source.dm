@@ -3,7 +3,10 @@
 
 /obj/machinery/atmospherics/unary/heater
 	name = "gas heating system"
-	desc = "Heats gas when connected to a pipe network"
+	desc = "Heats gas when connected to a pipe network."
+	desc_info = "Heats up the gas of the pipe it is connected to.  It uses massive amounts of electricity while on. \
+	It can be upgraded by replacing the capacitors, manipulators, and matter bins.  It can be deconstructed by screwing the maintenance panel open with a \
+	screwdriver, and then using a crowbar."
 	icon = 'icons/obj/sleeper.dmi'
 	icon_state = "heater_0"
 	density = 1
@@ -21,9 +24,9 @@
 	var/heating = 0		//mainly for icon updates
 
 	component_types = list(
-		/obj/item/weapon/circuitboard/unary_atmos/heater,
-		/obj/item/weapon/stock_parts/matter_bin,
-		/obj/item/weapon/stock_parts/capacitor = 2,
+		/obj/item/circuitboard/unary_atmos/heater,
+		/obj/item/stock_parts/matter_bin,
+		/obj/item/stock_parts/capacitor = 2,
 		/obj/item/stack/cable_coil{amount = 5}
 	)
 
@@ -84,14 +87,24 @@
 	update_icon()
 
 /obj/machinery/atmospherics/unary/heater/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	ui_interact(user)
 
 /obj/machinery/atmospherics/unary/heater/attack_hand(mob/user as mob)
 	ui_interact(user)
 
-/obj/machinery/atmospherics/unary/heater/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1)
-	// this is the data which will be sent to the ui
-	var/data[0]
+/obj/machinery/atmospherics/unary/heater/ui_interact(mob/user)
+	var/datum/vueui/ui = SSvueui.get_open_ui(user, src)
+	if(!ui)
+		ui = new(user, src, "machinery-atmospherics-freezer", 440, 300, "Gas Heating System")
+		ui.auto_update_content = TRUE
+	
+	ui.open()
+
+/obj/machinery/atmospherics/unary/heater/vueui_data_change(list/data, mob/user, datum/vueui/ui)
+	data = list()
+
 	data["on"] = use_power ? 1 : 0
 	data["gasPressure"] = round(air_contents.return_pressure())
 	data["gasTemperature"] = round(air_contents.temperature)
@@ -100,23 +113,12 @@
 	data["targetGasTemperature"] = round(set_temperature)
 	data["powerSetting"] = power_setting
 
-	var/temp_class = "normal"
-	if(air_contents.temperature > (T20C+40))
-		temp_class = "bad"
-	data["gasTemperatureClass"] = temp_class
+	data["gasTemperatureBadTop"] = (T20C+40)
+	data["gasTemperatureBadBottom"] = null
+	data["gasTemperatureAvgTop"] = null
+	data["gasTemperatureAvgBottom"] = null
 
-	// update the ui if it exists, returns null if no ui is passed/found
-	ui = SSnanoui.try_update_ui(user, src, ui_key, ui, data, force_open)
-	if(!ui)
-		// the ui does not exist, so we'll create a new() one
-        // for a list of parameters and their descriptions see the code docs in \code\modules\nano\nanoui.dm
-		ui = new(user, src, ui_key, "freezer.tmpl", "Gas Heating System", 440, 300)
-		// when the ui is first opened this is the data it will use
-		ui.set_initial_data(data)
-		// open the new ui window
-		ui.open()
-		// auto update every Master Controller tick
-		ui.set_auto_update(1)
+	return data
 
 /obj/machinery/atmospherics/unary/heater/Topic(href, href_list)
 	if(..())
@@ -141,7 +143,7 @@
 	..()
 	var/cap_rating = 0
 	var/bin_rating = 0
-	for(var/obj/item/weapon/stock_parts/P in component_parts)
+	for(var/obj/item/stock_parts/P in component_parts)
 		if(iscapacitor(P))
 			cap_rating += P.rating
 		else if(ismatterbin(P))

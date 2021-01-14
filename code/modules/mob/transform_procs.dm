@@ -108,7 +108,7 @@
 		src << sound(null, repeat = 0, wait = 0, volume = 85, channel = 1) // stop the jams for AIs)
 	var/mob/living/silicon/ai/O = new (loc, base_law_type,,1)//No MMI but safety is in effect.
 	O.invisibility = 0
-	O.aiRestorePowerRoutine = 0
+	O.ai_restore_power_routine = 0
 
 	if(mind)
 		mind.transfer_to(O)
@@ -168,10 +168,9 @@
 	O.cell.maxcharge = 7500
 	O.cell.charge = 7500
 
-
 	O.gender = gender
 	O.invisibility = 0
-
+	
 	if(mind)		//TODO
 		mind.transfer_to(O)
 		if(O.mind.assigned_role == "Cyborg")
@@ -250,7 +249,7 @@
 		qdel(t)
 
 	var/mob/living/simple_animal/corgi/new_corgi = new /mob/living/simple_animal/corgi (loc)
-	new_corgi.a_intent = I_HURT
+	new_corgi.set_intent(I_HURT)
 	new_corgi.key = key
 
 	to_chat(new_corgi, "<B>You are now a Corgi. Yap Yap!</B>")
@@ -283,7 +282,7 @@
 	var/mob/new_mob = new mobpath(src.loc)
 
 	new_mob.key = key
-	new_mob.a_intent = I_HURT
+	new_mob.set_intent(I_HURT)
 
 
 	to_chat(new_mob, "You suddenly feel more... animalistic.")
@@ -303,7 +302,7 @@
 	var/mob/new_mob = new mobpath(src.loc)
 
 	new_mob.key = key
-	new_mob.a_intent = I_HURT
+	new_mob.set_intent(I_HURT)
 	to_chat(new_mob, "You feel more... animalistic")
 
 	qdel(src)
@@ -322,10 +321,7 @@
 	if(ispath(MP, /mob/living/simple_animal/space_worm))
 		return 0 //Unfinished. Very buggy, they seem to just spawn additional space worms everywhere and eating your own tail results in new worms spawning.
 
-	if(ispath(MP, /mob/living/simple_animal/construct/behemoth))
-		return 0 //I think this may have been an unfinished WiP or something. These constructs should really have their own class simple_animal/construct/subtype
-
-	if(ispath(MP, /mob/living/simple_animal/construct/armoured))
+	if(ispath(MP, /mob/living/simple_animal/construct/armored))
 		return 0 //Verbs do not appear for players. These constructs should really have their own class simple_animal/construct/subtype
 
 	if(ispath(MP, /mob/living/simple_animal/construct/wraith))
