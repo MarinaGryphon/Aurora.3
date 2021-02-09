@@ -60,34 +60,34 @@
 /area/mine/unexplored)
 "n" = (
 /turf/simulated/wall/shuttle/unique/escape_pod{
-	icon_state = "2,1"
-	},
-/area/mine/unexplored)
-"p" = (
-/turf/simulated/wall/shuttle/unique/escape_pod{
 	icon_state = "0,2"
 	},
 /area/mine/unexplored)
 "x" = (
 /turf/simulated/wall/shuttle/unique/escape_pod{
-	icon_state = "2,0"
-	},
-/area/mine/unexplored)
-"y" = (
-/turf/simulated/wall/shuttle/unique/escape_pod{
-	icon_state = "0,1"
-	},
-/area/mine/unexplored)
-"K" = (
-/turf/simulated/wall/shuttle/unique/escape_pod{
 	icon_state = "2,2"
 	},
 /area/mine/unexplored)
-"Y" = (
+"z" = (
 /obj/structure/shuttle_part/escape_pod{
 	icon_state = "2,3"
 	},
 /turf/unsimulated/floor/asteroid/ash/rocky,
+/area/mine/unexplored)
+"D" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "0,1"
+	},
+/area/mine/unexplored)
+"R" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "2,0"
+	},
+/area/mine/unexplored)
+"Z" = (
+/turf/simulated/wall/shuttle/unique/escape_pod{
+	icon_state = "2,1"
+	},
 /area/mine/unexplored)
 
 (1,1,1) = {"
@@ -615,8 +615,8 @@ b
 b
 i
 c
-p
-y
+n
+D
 g
 i
 i
@@ -682,10 +682,10 @@ k
 k
 b
 i
-Y
-K
-n
+z
 x
+Z
+R
 i
 i
 i

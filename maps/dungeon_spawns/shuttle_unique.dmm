@@ -428,10 +428,6 @@
 /obj/structure/table/rack,
 /turf/simulated/floor/tiled/dark,
 /area/dungeon/crashed_ship)
-"bo" = (
-/obj/structure/table/rack,
-/turf/simulated/floor/tiled/dark,
-/area/dungeon/crashed_ship)
 "bp" = (
 /obj/structure/closet/crate/large,
 /obj/item/archaeological_find,
@@ -471,6 +467,10 @@
 "bv" = (
 /obj/structure/closet/secure_closet/guncabinet,
 /obj/random/energy,
+/turf/simulated/floor/tiled/dark,
+/area/dungeon/crashed_ship)
+"bw" = (
+/obj/structure/table/rack,
 /turf/simulated/floor/tiled/dark,
 /area/dungeon/crashed_ship)
 "bx" = (
@@ -529,7 +529,7 @@
 	},
 /turf/simulated/floor/tiled/dark,
 /area/dungeon/crashed_ship)
-"Fq" = (
+"YQ" = (
 /turf/unsimulated/floor/asteroid/ash/rocky,
 /area/mine/unexplored)
 
@@ -935,7 +935,7 @@ ae
 bk
 ai
 ai
-bo
+bw
 ae
 aa
 aa
@@ -1116,7 +1116,7 @@ aa
 aa
 aa
 aa
-Fq
+YQ
 ad
 ae
 ae
@@ -1238,7 +1238,7 @@ aK
 aK
 bf
 ae
-bo
+bw
 ai
 ai
 bA
