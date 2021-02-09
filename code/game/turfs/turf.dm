@@ -8,6 +8,7 @@
 	var/carbon_dioxide = 0
 	var/nitrogen = 0
 	var/phoron = 0
+	var/hydrogen = 0
 
 	//Properties for airtight tiles (/wall)
 	var/thermal_conductivity = 0.05
@@ -22,7 +23,7 @@
 	var/pathweight = 1          // How much does it cost to pathfind over this turf?
 	var/blessed = 0             // Has the turf been blessed?
 
-	var/footstep_sound = "defaultstep"
+	var/footstep_sound = /decl/sound_category/tiles_footstep
 
 	var/list/decals
 
@@ -34,6 +35,12 @@
 
 	var/movement_cost = 0 // How much the turf slows down movement, if any.
 
+	// Footprint info
+	var/tracks_footprint = TRUE // Whether footprints will appear on this turf
+	var/does_footprint = FALSE // Whether stepping on this turf will dirty your shoes or feet with the below
+	var/footprint_color // The hex color produced by the turf
+	var/track_distance = 12 // How far the tracks last
+
 	//Mining resources (for the large drills).
 	var/has_resources
 	var/list/resources
@@ -43,6 +50,7 @@
 	var/base_desc = "The naked hull."
 	var/base_icon = 'icons/turf/flooring/plating.dmi'
 	var/base_icon_state = "plating"
+	var/last_clean //for clean log spam.
 
 // Parent code is duplicated in here instead of ..() for performance reasons.
 // There's ALSO a copy of this in mine_turfs.dm!
@@ -117,6 +125,9 @@
 
 /turf/ex_act(severity)
 	return 0
+
+/turf/proc/is_solid_structure()
+	return 1
 
 /turf/proc/is_space()
 	return 0
@@ -207,6 +218,64 @@ var/const/enterloopsanity = 100
 			M.inertia_dir = 0
 			M.make_floating(0)
 
+	if(does_footprint && footprint_color && ishuman(AM))
+		var/mob/living/carbon/human/H = AM
+		var/obj/item/organ/external/l_foot = H.get_organ(BP_L_FOOT)
+		var/obj/item/organ/external/r_foot = H.get_organ(BP_R_FOOT)
+		var/has_feet = TRUE
+		if((!l_foot || l_foot.is_stump()) && (!r_foot || r_foot.is_stump()))
+			has_feet = FALSE
+		if(!H.buckled && !H.lying && has_feet)
+			if(H.shoes) //Adding ash to shoes
+				var/obj/item/clothing/shoes/S = H.shoes
+				if(istype(S))
+					S.blood_color = footprint_color
+					S.track_footprint = max(track_distance, S.track_footprint)
+
+					if(!S.blood_overlay)
+						S.generate_blood_overlay()
+					if(S.blood_overlay?.color != footprint_color)
+						S.cut_overlay(S.blood_overlay, TRUE)
+
+					S.blood_overlay.color = footprint_color
+					S.add_overlay(S.blood_overlay, TRUE)
+			else
+				H.footprint_color = footprint_color
+				H.track_footprint = max(track_distance, H.track_footprint)
+
+		H.update_inv_shoes(TRUE)
+
+	if(istype(AM, /mob/living/carbon/human))
+		var/mob/living/carbon/human/H = AM
+		// Tracking blood
+		var/list/footprint_DNA = list()
+		var/footprint_color
+		var/will_track = FALSE
+		if(H.shoes)
+			var/obj/item/clothing/shoes/S = H.shoes
+			if(istype(S))
+				S.handle_movement(src, H.m_intent == M_RUN ? TRUE : FALSE)
+				if(S.track_footprint)
+					if(S.blood_DNA)
+						footprint_DNA = S.blood_DNA
+					footprint_color = S.blood_color
+					S.track_footprint--
+					will_track = TRUE
+		else
+			if(H.track_footprint)
+				if(H.feet_blood_DNA)
+					footprint_DNA = H.feet_blood_DNA
+				footprint_color = H.footprint_color
+				H.track_footprint--
+				will_track = TRUE
+
+		if(tracks_footprint && will_track)
+			add_tracks(H.species.get_move_trail(H), footprint_DNA, H.dir, 0, footprint_color) // Coming
+			var/turf/simulated/from = get_step(H, reverse_direction(H.dir))
+			if(istype(from) && from)
+				from.add_tracks(H.species.get_move_trail(H), footprint_DNA, 0, H.dir, footprint_color) // Going
+			footprint_DNA = null
+
 	..()
 
 	var/objects = 0
@@ -218,6 +287,12 @@ var/const/enterloopsanity = 100
 
 			if (oAM.simulated)
 				AM.proximity_callback(oAM)
+
+/turf/proc/add_tracks(var/typepath, var/footprint_DNA, var/comingdir, var/goingdir, var/footprint_color="#A10808")
+	var/obj/effect/decal/cleanable/blood/tracks/tracks = locate(typepath) in src
+	if(!tracks)
+		tracks = new typepath(src)
+	tracks.add_tracks(footprint_DNA, comingdir, goingdir, footprint_color)
 
 /atom/movable/proc/proximity_callback(atom/movable/AM)
 	set waitfor = FALSE
@@ -309,7 +384,7 @@ var/const/enterloopsanity = 100
 
 //expects an atom containing the reagents used to clean the turf
 /turf/proc/clean(atom/source, mob/user)
-	if(source.reagents.has_reagent("water", 1) || source.reagents.has_reagent("cleaner", 1))
+	if(source.reagents.has_reagent(/decl/reagent/water, 1) || source.reagents.has_reagent(/decl/reagent/spacecleaner, 1))
 		clean_blood()
 		if(istype(src, /turf/simulated))
 			var/turf/simulated/T = src
@@ -321,10 +396,12 @@ var/const/enterloopsanity = 100
 			if(istype(O,/obj/effect/rune))
 				var/obj/effect/rune/R = O
 				// Only show message for visible runes
-				if (R.visibility)
-					to_chat(user, "<span class='warning'>No matter how well you wash, the bloody symbols remain!</span>")
+				if(!R.invisibility)
+					to_chat(user, SPAN_WARNING("No matter how well you wash, the bloody symbols remain!"))
 	else
-		to_chat(user, "<span class='warning'>\The [source] is too dry to wash that.</span>")
+		if( !(last_clean && world.time < last_clean + 100) )
+			to_chat(user, SPAN_WARNING("\The [source] is too dry to wash that."))
+			last_clean = world.time
 	source.reagents.trans_to_turf(src, 1, 10)	//10 is the multiplier for the reaction effect. probably needed to wet the floor properly.
 
 /turf/proc/update_blood_overlays()
@@ -409,7 +486,7 @@ var/const/enterloopsanity = 100
 			L.Add(t)
 	return L
 
-
+// CRAWLING + MOVING STUFF
 /turf/MouseDrop_T(atom/movable/O as mob|obj, mob/user as mob)
 	var/turf/T = get_turf(user)
 	var/area/A = T.loc
@@ -417,7 +494,7 @@ var/const/enterloopsanity = 100
 		return
 	if(istype(O, /obj/screen))
 		return
-	if(user.restrained() || user.stat || user.stunned || user.paralysis || !user.lying)
+	if(user.restrained() || user.stat || user.incapacitated(INCAPACITATION_KNOCKOUT) || !user.lying)
 		return
 	if((!(istype(O, /atom/movable)) || O.anchored || !Adjacent(user) || !Adjacent(O) || !user.Adjacent(O)))
 		return
@@ -425,15 +502,40 @@ var/const/enterloopsanity = 100
 		return
 	if(isanimal(user) && O != user)
 		return
+
+	var/tally = 0
+
 	if(ishuman(user))
 		var/mob/living/carbon/human/H = user
-		var/has_right_hand = TRUE
-		var/obj/item/organ/external/rhand = H.organs_by_name["r_hand"]
-		if(!rhand || rhand.is_stump())
-			has_right_hand = FALSE
-		var/obj/item/organ/external/lhand = H.organs_by_name["l_hand"]
-		if(!lhand || lhand.is_stump())
-			if(!has_right_hand)
-				return
-	if (do_after(user, 25 + (5 * user.weakened)) && !(user.stat))
+
+		var/obj/item/organ/external/rhand = H.organs_by_name[BP_R_HAND]
+		tally += limbCheck(rhand)
+
+		var/obj/item/organ/external/lhand = H.organs_by_name[BP_L_HAND]
+		tally += limbCheck(lhand)
+
+		var/obj/item/organ/external/rfoot = H.organs_by_name[BP_R_FOOT]
+		tally += limbCheck(rfoot)
+
+		var/obj/item/organ/external/lfoot = H.organs_by_name[BP_L_FOOT]
+		tally += limbCheck(lfoot)
+
+	if(tally >= 120)
+		to_chat(user, SPAN_NOTICE("You're too injured to do this!"))
+		return
+
+	var/finaltime = 25 + (5 * (user.weakened * 1.5))
+	if(tally >= 45) // If you have this much missing, you'll crawl slower.
+		finaltime += tally
+
+	if(do_after(user, finaltime) && !user.stat)
 		step_towards(O, src)
+
+// Checks status of limb, returns an amount to
+/turf/proc/limbCheck(var/obj/item/organ/external/limb)
+	if(!limb) // Limb is null, thus missing. Add 3 seconds.
+		return 30
+	else if(!limb.is_usable() || limb.is_broken()) // You can't use the limb, but it's still there to manoevre yourself
+		return 15
+	else
+		return 0

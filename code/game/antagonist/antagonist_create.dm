@@ -18,6 +18,7 @@
 	greet(target)
 	if(!gag_announcement)
 		announce_antagonist_spawn()
+	LAZYDISTINCTADD(SSticker.mode.antag_templates, src)
 
 /datum/antagonist/proc/create_default(var/mob/source)
 	var/mob/living/M
@@ -33,7 +34,7 @@
 
 /datum/antagonist/proc/create_id(var/assignment, var/mob/living/carbon/human/player, var/equip = 1)
 
-	var/obj/item/weapon/card/id/W = new id_type(player)
+	var/obj/item/card/id/W = new id_type(player)
 	if(!W) return
 	W.access |= default_access
 	W.assignment = "[assignment]"
@@ -45,12 +46,18 @@
 	var/obj/item/device/radio/R
 
 	switch(freq)
+		if(NINJ_FREQ)
+			R = new /obj/item/device/radio/headset/ninja(player)
+		if(BLSP_FREQ)
+			R = new /obj/item/device/radio/headset/bluespace(player)
+		if(BURG_FREQ)
+			R = new /obj/item/device/radio/headset/burglar(player)
 		if(SYND_FREQ)
-			R = new/obj/item/device/radio/headset/syndicate(player)
+			R = new /obj/item/device/radio/headset/syndicate(player)
 		if(RAID_FREQ)
-			R = new/obj/item/device/radio/headset/raider(player)
+			R = new /obj/item/device/radio/headset/raider(player)
 		else
-			R = new/obj/item/device/radio/headset(player)
+			R = new /obj/item/device/radio/headset(player)
 			R.set_frequency(freq)
 
 	R.set_frequency(freq)
@@ -77,7 +84,7 @@
 
 		if(paper_spawn_loc)
 			// Create and pass on the bomb code paper.
-			var/obj/item/weapon/paper/P = new(paper_spawn_loc)
+			var/obj/item/paper/P = new(paper_spawn_loc)
 			P.set_content_unsafe("nuclear bomb code", "The nuclear authorization code is: <b>[code]</b>")
 			if(leader && leader.current)
 				if(get_turf(P) == get_turf(leader.current) && !(leader.current.l_hand && leader.current.r_hand))
@@ -104,6 +111,9 @@
 	else
 		to_chat(player.current, "<span class='notice'>[welcome_text]</span>")
 
+	if(antag_sound)
+		player.current.playsound_simple(get_turf(src), sound(antag_sound), 50, FALSE)
+
 	if((flags & ANTAG_HAS_NUKE) && !spawned_nuke)
 		create_nuke()
 
@@ -113,6 +123,14 @@
 
 /datum/antagonist/proc/set_antag_name(var/mob/living/player)
 	// Choose a name, if any.
+	if(ishuman(player))
+		var/mob/living/carbon/human/H = player
+		var/datum/language/L = H.default_language
+		if(!L)
+			L = all_languages[LANGUAGE_TCB]
+		H.real_name = L.get_random_name()
+		H.name = H.real_name
+		H.dna.real_name = H.real_name
 	var/newname = sanitize(input(player, "You are a [role_text]. Would you like to change your name to something else?", "Name change") as null|text, MAX_NAME_LEN)
 	if (newname)
 		player.real_name = newname

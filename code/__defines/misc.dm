@@ -1,19 +1,8 @@
 #define DEBUG
 
-//These get to go at the top, because they're special
-//You can use these defines to get the typepath of the currently running proc/verb (yes procs + verbs are objects)
-/* eg:
-/mob/living/carbon/human/death()
-	world << THIS_PROC_TYPE_STR //You can only output the string versions
-Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a string with () (eg: the _WITH_ARGS defines) to make it look nicer)
-*/
-#define THIS_PROC_TYPE .....
-#define THIS_PROC_TYPE_STR "[THIS_PROC_TYPE]" //Because you can only obtain a string of THIS_PROC_TYPE using "[]", and it's nice to just +/+= strings
-#define THIS_PROC_TYPE_STR_WITH_ARGS "[THIS_PROC_TYPE]([args.Join(",")])"
-#define THIS_PROC_TYPE_WEIRD ...... //This one is WEIRD, in some cases (When used in certain defines? (eg: ASSERT)) THIS_PROC_TYPE will fail to work, but THIS_PROC_TYPE_WEIRD will work instead
-#define THIS_PROC_TYPE_WEIRD_STR "[THIS_PROC_TYPE_WEIRD]" //Included for completeness
-#define THIS_PROC_TYPE_WEIRD_STR_WITH_ARGS "[THIS_PROC_TYPE_WEIRD]([args.Join(",")])" //Ditto
-
+// Flags
+#define ALL (~0) //For convenience.
+#define NONE 0
 
 // Turf-only flags.
 #define NOJAUNT 1          // This is used in literally one place, turf.dm, to block ethereal jaunt.
@@ -49,7 +38,7 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define AGE_MIN 17
 #define AGE_MAX 85
 
-#define MAX_GEAR_COST 10 // Used in chargen for accessory loadout limit.
+#define MAX_GEAR_COST 15 // Used in chargen for accessory loadout limit.
 
 // Preference toggles.
 #define SOUND_ADMINHELP 0x1
@@ -73,8 +62,7 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define PARALLAX_DUST  0x2
 #define PROGRESS_BARS  0x4
 #define PARALLAX_IS_STATIC 0x8
-//Gun safety check.
-#define SAFETY_CHECK 0x10
+#define FLOATING_MESSAGES 0x10
 
 #define TOGGLES_DEFAULT (SOUND_ADMINHELP|SOUND_MIDI|SOUND_AMBIENCE|SOUND_LOBBY|CHAT_OOC|CHAT_DEAD|CHAT_GHOSTEARS|CHAT_GHOSTSIGHT|CHAT_PRAYER|CHAT_RADIO|CHAT_ATTACKLOGS|CHAT_LOOC)
 
@@ -84,11 +72,14 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define ASFX_VOTE		4
 #define ASFX_VOX		8
 #define ASFX_DROPSOUND	16
+#define ASFX_ARCADE		32
+#define ASFX_RADIO		64
+#define ASFX_INSTRUMENT 128
 
-#define ASFX_DEFAULT (ASFX_AMBIENCE|ASFX_FOOTSTEPS|ASFX_VOTE|ASFX_VOX|ASFX_DROPSOUND)
+#define ASFX_DEFAULT (ASFX_AMBIENCE|ASFX_FOOTSTEPS|ASFX_VOTE|ASFX_VOX|ASFX_DROPSOUND|ASFX_ARCADE|ASFX_RADIO|ASFX_INSTRUMENT)
 
 // For secHUDs and medHUDs and variants. The number is the location of the image on the list hud_list of humans.
-#define      HEALTH_HUD 1 // A simple line rounding the mob's number health.
+#define      HEALTH_HUD 1 // A simple line reading the pulse.
 #define      STATUS_HUD 2 // Alive, dead, diseased, etc.
 #define          ID_HUD 3 // The job asigned to your ID.
 #define      WANTED_HUD 4 // Wanted, released, paroled, security status.
@@ -98,41 +89,6 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define SPECIALROLE_HUD 8 // AntagHUD image.
 #define  STATUS_HUD_OOC 9 // STATUS_HUD without virus DB check for someone being ill.
 #define 	  LIFE_HUD 10 // STATUS_HUD that only reports dead or alive
-
-//some colors
-#define COLOR_WHITE            "#ffffff"
-#define COLOR_SILVER           "#c0c0c0"
-#define COLOR_GRAY             "#808080"
-#define COLOR_BLACK            "#000000"
-#define COLOR_RED              "#ff0000"
-#define COLOR_RED_LIGHT        "#ff3333"
-#define COLOR_MAROON           "#800000"
-#define COLOR_YELLOW           "#ffff00"
-#define COLOR_OLIVE            "#808000"
-#define COLOR_LIME             "#00ff00"
-#define COLOR_GREEN            "#008000"
-#define COLOR_CYAN             "#00ffff"
-#define COLOR_TEAL             "#008080"
-#define COLOR_BLUE             "#0000ff"
-#define COLOR_BLUE_LIGHT       "#33ccff"
-#define COLOR_NAVY             "#000080"
-#define COLOR_PINK             "#ff00ff"
-#define COLOR_PURPLE           "#800080"
-#define COLOR_ORANGE           "#ff9900"
-#define COLOR_LUMINOL          "#66ffff"
-#define COLOR_BEIGE            "#ceb689"
-#define COLOR_BLUE_GRAY        "#6a97b0"
-#define COLOR_BROWN            "#b19664"
-#define COLOR_DARK_BROWN       "#917448"
-#define COLOR_DARK_ORANGE      "#b95a00"
-#define COLOR_GREEN_GRAY       "#8daf6a"
-#define COLOR_RED_GRAY         "#aa5f61"
-#define COLOR_PALE_BLUE_GRAY   "#8bbbd5"
-#define COLOR_PALE_GREEN_GRAY  "#aed18b"
-#define COLOR_PALE_RED_GRAY    "#cc9090"
-#define COLOR_PALE_PURPLE_GRAY "#bda2ba"
-#define COLOR_PURPLE_GRAY      "#a2819e"
-#define COLOR_SUN              "#ec8b2f"
 
 //	Shuttles.
 
@@ -147,6 +103,7 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define SHUTTLE_IDLE      0
 #define SHUTTLE_WARMUP    1
 #define SHUTTLE_INTRANSIT 2
+#define SHUTTLE_HALT      3 // State of no recovery
 
 // Ferry shuttle processing status.
 #define IDLE_STATE   0
@@ -160,7 +117,7 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define MAX_PAPER_MESSAGE_LEN 3072
 #define MAX_BOOK_MESSAGE_LEN  9216
 #define MAX_LNAME_LEN         64
-#define MAX_NAME_LEN          26
+#define MAX_NAME_LEN          63
 
 // Event defines.
 #define EVENT_LEVEL_MUNDANE  1
@@ -173,10 +130,12 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define DEFAULT_JOB_TYPE /datum/job/assistant
 
 //Area flags, possibly more to come
-#define RAD_SHIELDED 1 //shielded from radiation, clearly
-#define SPAWN_ROOF   2 // if we should attempt to spawn a roof above us.
-#define HIDE_FROM_HOLOMAP 4 // if we shouldn't be drawn on station holomaps
-#define FIRING_RANGE	8
+#define RAD_SHIELDED        1 //shielded from radiation, clearly
+#define SPAWN_ROOF          2 // if we should attempt to spawn a roof above us.
+#define HIDE_FROM_HOLOMAP   4 // if we shouldn't be drawn on station holomaps
+#define FIRING_RANGE        8
+#define NO_CREW_EXPECTED   16 // Areas where crew is not expected to ever be. Used to tell antag bases and such from crew-accessible areas on centcom level.
+#define PRISON             32 // Marks prison area for purposes of checking if brigged/imprisoned
 
 // Convoluted setup so defines can be supplied by Bay12 main server compile script.
 // Should still work fine for people jamming the icons into their repo.
@@ -192,6 +151,8 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 
 #define WALL_CAN_OPEN 1
 #define WALL_OPENING 2
+
+#define MIN_DAMAGE_TO_HIT 15 //Minimum damage needed to dent walls and girders by hitting them with a weapon.
 
 #define DEFAULT_TABLE_MATERIAL "plastic"
 #define DEFAULT_WALL_MATERIAL "steel"
@@ -222,15 +183,25 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define NTNETSPEED_LOWSIGNAL 0.05	// GQ/s transfer speed when the device is wirelessly connected and on Low signal
 #define NTNETSPEED_HIGHSIGNAL 0.25	// GQ/s transfer speed when the device is wirelessly connected and on High signal
 #define NTNETSPEED_ETHERNET 1	  // GQ/s transfer speed when the device is using wired connection
-#define NTNETSPEED_DOS_AMPLIFICATION 5	// Multiplier for Denial of Service program. Resulting load on NTNet relay is this multiplied by NTNETSPEED of the device
+#define NTNETSPEED_DOS_AMPLIFICATION 20	// Multiplier for Denial of Service program. Resulting load on NTNet relay is this multiplied by NTNETSPEED of the device
 
 // Program bitflags
-#define PROGRAM_ALL 15
 #define PROGRAM_CONSOLE 1
 #define PROGRAM_LAPTOP 2
 #define PROGRAM_TABLET 4
 #define PROGRAM_TELESCREEN 8
+#define PROGRAM_SILICON_AI 16
+#define PROGRAM_WRISTBOUND 32
+#define PROGRAM_SILICON_ROBOT 64
+#define PROGRAM_SILICON_PAI 128
 
+#define PROGRAM_ALL (PROGRAM_CONSOLE | PROGRAM_LAPTOP | PROGRAM_TABLET | PROGRAM_WRISTBOUND | PROGRAM_TELESCREEN | PROGRAM_SILICON_AI | PROGRAM_SILICON_ROBOT | PROGRAM_SILICON_PAI)
+#define PROGRAM_SILICON (PROGRAM_SILICON_AI | PROGRAM_SILICON_ROBOT | PROGRAM_SILICON_PAI)
+#define PROGRAM_STATIONBOUND (PROGRAM_SILICON_AI | PROGRAM_SILICON_ROBOT)
+#define PROGRAM_ALL_REGULAR (PROGRAM_CONSOLE | PROGRAM_LAPTOP | PROGRAM_TABLET | PROGRAM_WRISTBOUND | PROGRAM_TELESCREEN)
+#define PROGRAM_ALL_HANDHELD (PROGRAM_TABLET | PROGRAM_WRISTBOUND)
+
+#define PROGRAM_STATE_DISABLED -1
 #define PROGRAM_STATE_KILLED 0
 #define PROGRAM_STATE_BACKGROUND 1
 #define PROGRAM_STATE_ACTIVE 2
@@ -243,9 +214,22 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define PROGRAM_ACCESS_LIST_ONE 2
 #define PROGRAM_ACCESS_LIST_ALL 3
 
+#define PROGRAM_NORMAL 1
+#define PROGRAM_SERVICE 2
+#define PROGRAM_TYPE_ALL (PROGRAM_NORMAL | PROGRAM_SERVICE)
+
+#define DEVICE_UNKNOWN 0
+#define DEVICE_COMPANY 1
+#define DEVICE_PRIVATE 2
+
+#define SCANNER_MEDICAL 1
+#define SCANNER_REAGENT 2
+#define SCANNER_GAS 4
+
 // Special return values from bullet_act(). Positive return values are already used to indicate the blocked level of the projectile.
 #define PROJECTILE_CONTINUE   -1 //if the projectile should continue flying after calling bullet_act()
 #define PROJECTILE_FORCE_MISS -2 //if the projectile should treat the attack as a miss (suppresses attack and admin logs) - only applies to mobs.
+#define PROJECTILE_DODGED     -3 //this is similar to the above, but the check and message is run on the mob, instead of on the projectile code. basically just has a unique message
 
 //Camera capture modes
 #define CAPTURE_MODE_REGULAR 0 //Regular polaroid camera mode
@@ -255,12 +239,12 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 //Cargo random stock vars
 //These are used in randomstock.dm
 //And also for generating random loot crates in crates.dm
-#define TOTAL_STOCK 	100//The total number of items we'll spawn in cargo stock
+#define TOTAL_STOCK 	180//The total number of items we'll spawn in cargo stock
 
-#define STOCK_UNCOMMON_PROB	23
+#define STOCK_UNCOMMON_PROB	25
 //The probability, as a percentage for each item, that we'll choose from the uncommon spawns list
 
-#define STOCK_RARE_PROB	2.8
+#define STOCK_RARE_PROB	3
 //The probability, as a percentage for each item, that we'll choose from the rare spawns list
 
 //If an item is not rare or uncommon, it will be chosen from the common spawns list.
@@ -273,10 +257,6 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 
 // Law settings
 #define PERMABRIG_SENTENCE 90 // Measured in minutes
-
-#define LAYER_TABLE	2.8
-#define LAYER_UNDER_TABLE	2.79
-#define LAYER_ABOVE_TABLE	2.81
 
 // Stoplag.
 #define TICK_CHECK (world.tick_usage > CURRENT_TICKLIMIT)
@@ -292,24 +272,16 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
   )
 
 #define get_turf(A) (get_step(A, 0))
+#define NORTH_OF_TURF(T)	locate(T.x, T.y + 1, T.z)
+#define EAST_OF_TURF(T)		locate(T.x + 1, T.y, T.z)
+#define SOUTH_OF_TURF(T)	locate(T.x, T.y - 1, T.z)
+#define WEST_OF_TURF(T)		locate(T.x - 1, T.y, T.z)
 
 #define UNTIL(X) while(!(X)) stoplag()
 
 #define MIDNIGHT_ROLLOVER		864000	//number of deciseconds in a day
 
 #define DEBUG_REF(D) (D ? "\ref[D]|[D] ([D.type])" : "NULL")
-
-// These defines write to log_debug, prefixing the path to the current proc.
-//  When using them, try PROCLOG first. If it does not compile, try PROCLOG_WEIRD.
-#define PROCLOG(thing) log_debug("[THIS_PROC_TYPE]: [thing]")
-#define PROCLOG_WEIRD(thing) log_debug("[THIS_PROC_TYPE_WEIRD]: [thing]")
-
-//Recipe type defines. Used to determine what machine makes them
-#define MICROWAVE			0x1
-#define FRYER				0x2
-#define OVEN				0x4
-#define CANDYMAKER			0x8
-#define CEREALMAKER			0x10
 
 // MultiZAS directions.
 #define NORTHUP (NORTH|UP)
@@ -326,11 +298,10 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define NL_PERMANENT_DISABLE 2
 
 // Used for creating soft references to objects. A manner of storing an item reference
-// as text so you don't necessarily fuck with an object's ability to be garbage collected.
-#define SOFTREF(A) "\ref[A]"
+#define SOFTREF(A) ref(A)
 
 // This only works on 511 because it relies on 511's `var/something = foo = bar` syntax.
-#define WEAKREF(D) (istype(D, /datum) && !D:gcDestroyed ? (D:weakref || (D:weakref = new(D))) : null)
+#define WEAKREF(D) (istype(D, /datum) && !D:gcDestroyed ? (D:weakref || (D:weakref = new/datum/weakref(D))) : null)
 
 #define ADD_VERB_IN(the_atom,time,verb) addtimer(CALLBACK(the_atom, /atom/.proc/add_verb, verb), time, TIMER_UNIQUE | TIMER_OVERRIDE | TIMER_NO_HASH_WAIT)
 #define ADD_VERB_IN_IF(the_atom,time,verb,callback) addtimer(CALLBACK(the_atom, /atom/.proc/add_verb, verb, callback), time, TIMER_UNIQUE | TIMER_OVERRIDE | TIMER_NO_HASH_WAIT)
@@ -366,15 +337,20 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define isStationLevel(Z) ((Z) in current_map.station_levels)
 #define isNotStationLevel(Z) !isStationLevel(Z)
 
-//Affects the chance that armour will block an attack. Should be between 0 and 1.
-//If set to 0, then armor will always prevent the same amount of damage, always, with no randomness whatsoever.
-//Of course, this will affect code that checks for blocked < 100, as blocked will be less likely to actually be 100.
-#define ARMOR_BLOCK_CHANCE_MULT 1.0
+#define isPlayerLevel(Z) ((Z) in current_map.player_levels)
+#define isNotPlayerLevel(Z) !isPlayerLevel(Z)
+
+#define isAdminLevel(Z) ((Z) in current_map.admin_levels)
+#define isNotAdminLevel(Z) !isAdminLevel(Z)
+
+#define isContactLevel(Z) ((Z) in current_map.contact_levels)
+#define isNotContactLevel(Z) !isContactLevel(Z)
 
 //Cargo Container Types
 #define CARGO_CONTAINER_CRATE "crate"
 #define CARGO_CONTAINER_FREEZER "freezer"
 #define CARGO_CONTAINER_BOX "box"
+#define CARGO_CONTAINER_BODYBAG "bodybag"
 
 // We should start using these.
 #define ITEMSIZE_TINY   1
@@ -382,6 +358,7 @@ Will print: "/mob/living/carbon/human/death" (you can optionally embed it in a s
 #define ITEMSIZE_NORMAL 3
 #define ITEMSIZE_LARGE  4
 #define ITEMSIZE_HUGE   5
+#define ITEMSIZE_IMMENSE 6
 
 // getFlatIcon function altering defines
 #define GFI_ROTATION_DEFAULT 0 //Don't do anything special
@@ -464,3 +441,31 @@ Define for getting a bitfield of adjacent turfs that meet a condition.
 
 //Lying animation
 #define ANIM_LYING_TIME 2
+
+// Cooking appliances.
+#define MIX					1 << 0
+#define FRYER				1 << 1
+#define OVEN				1 << 2
+#define SKILLET				1 << 3
+#define SAUCEPAN			1 << 4
+#define POT					1 << 5
+#define GRILL				1 << 6
+
+// Cooking misc.
+// can_insert return values
+#define CANNOT_INSERT		0
+#define CAN_INSERT			1
+#define INSERT_GRABBED		2
+// check_contents return values
+#define CONTAINER_EMPTY		0
+#define CONTAINER_SINGLE	1
+#define CONTAINER_MANY		2
+//Misc text define. Does 4 spaces. Used as a makeshift tabulator.
+#define FOURSPACES "&nbsp;&nbsp;&nbsp;&nbsp;"
+#define CLIENT_FROM_VAR(I) (ismob(I) ? I:client : (isclient(I) ? I : (istype(I, /datum/mind) ? I:current?:client : null)))
+
+// check_items/check_reagents/check_fruits return values
+#define COOK_CHECK_FAIL		-1
+#define COOK_CHECK_EXTRA	0
+#define COOK_CHECK_EXACT	1
+

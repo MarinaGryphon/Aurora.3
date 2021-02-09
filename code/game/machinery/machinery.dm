@@ -96,7 +96,8 @@ Class Procs:
 /obj/machinery
 	name = "machinery"
 	icon = 'icons/obj/stationobjs.dmi'
-	w_class = 10
+	w_class = ITEMSIZE_IMMENSE
+	layer = OBJ_LAYER - 0.01
 
 	var/stat = 0
 	var/emagged = 0
@@ -130,6 +131,7 @@ Class Procs:
 	var/has_special_power_checks = FALSE	// If true, call auto_use_power instead of doing it all in SSmachinery.
 	var/clicksound //played sound on usage
 	var/clickvol = 40 //volume
+	var/obj/item/device/assembly/signaler/signaler // signaller attached to the machine
 
 /obj/machinery/Initialize(mapload, d = 0, populate_components = TRUE)
 	. = ..()
@@ -161,6 +163,11 @@ Class Procs:
 				component_parts -= A
 
 	return ..()
+
+/obj/machinery/examine(mob/user)
+	. = ..()
+	if(signaler && Adjacent(user))
+		to_chat(user, SPAN_WARNING("\The [src] has a hidden signaler attached to it."))
 
 /obj/machinery/proc/machinery_process()	//If you dont use process or power why are you here
 	if(!(use_power || idle_power_usage || active_power_usage))
@@ -231,7 +238,7 @@ Class Procs:
 
 /obj/machinery/CouldUseTopic(var/mob/user)
 	..()
-	if(istype (user, /mob/living/carbon))
+	if(clicksound && iscarbon(user))
 		playsound(src, clicksound, clickvol)
 	user.set_machine(src)
 
@@ -241,6 +248,8 @@ Class Procs:
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 /obj/machinery/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	if(isrobot(user))
 		// For some reason attack_robot doesn't work
 		// This is to stop robots from using cameras to remotely control machines.
@@ -276,6 +285,44 @@ Class Procs:
 
 	return ..()
 
+/obj/machinery/attackby(obj/item/W, mob/user)
+	if(obj_flags & OBJ_FLAG_SIGNALER)
+		if(issignaler(W))
+			if(signaler)
+				to_chat(user, SPAN_WARNING("\The [src] already has a signaler attached."))
+				return
+			var/obj/item/device/assembly/signaler/S = W
+			user.drop_from_inventory(W, src)
+			signaler = S
+			S.machine = src
+			user.visible_message("<b>[user]</b> attaches \the [S] to \the [src].", SPAN_NOTICE("You attach \the [S] to \the [src]."), range = 3)
+			log_and_message_admins("has attached a signaler to \the [src].", user, get_turf(src))
+			return
+		else if(W.iswirecutter() && signaler)
+			user.visible_message("<b>[user]</b> removes \the [signaler] from \the [src].", SPAN_NOTICE("You remove \the [signaler] from \the [src]."), range = 3)
+			user.put_in_hands(detach_signaler())
+			return
+
+	return ..()
+
+/obj/machinery/proc/detach_signaler(var/turf/detach_turf)
+	if(!signaler)
+		return
+
+	if(!detach_turf)
+		detach_turf = get_turf(src)
+	if(!detach_turf)
+		log_debug("[src] tried to drop a signaler, but it had no turf ([src.x]-[src.y]-[src.z])")
+		return
+	
+	var/obj/item/device/assembly/signaler/S = signaler
+
+	signaler.forceMove(detach_turf)
+	signaler.machine = null
+	signaler = null
+
+	return S
+
 /obj/machinery/proc/RefreshParts()
 
 /obj/machinery/proc/assign_uid()
@@ -284,7 +331,7 @@ Class Procs:
 
 /obj/machinery/proc/state(var/msg)
 	for(var/mob/O in hearers(src, null))
-		O.show_message("\icon[src] <span class = 'notice'>[msg]</span>", 2)
+		O.show_message("[icon2html(src, O)] <span class = 'notice'>[msg]</span>", 2)
 
 /obj/machinery/proc/ping(text=null)
 	if (!text)
@@ -324,38 +371,38 @@ Class Procs:
 			return 1
 	return 0
 
-/obj/machinery/proc/default_deconstruction_crowbar(var/mob/user, var/obj/item/weapon/crowbar/C)
-	if(!istype(C))
+/obj/machinery/proc/default_deconstruction_crowbar(var/mob/user, var/obj/item/C)
+	if(!istype(C) || !C.iscrowbar())
 		return 0
 	if(!panel_open)
 		return 0
 	. = dismantle()
 
-/obj/machinery/proc/default_deconstruction_screwdriver(var/mob/user, var/obj/item/weapon/screwdriver/S)
-	if(!istype(S))
-		return 0
-	playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
+/obj/machinery/proc/default_deconstruction_screwdriver(var/mob/user, var/obj/item/S)
+	if(!istype(S) || !S.isscrewdriver())
+		return FALSE
+	playsound(src.loc, S.usesound, 50, 1)
 	panel_open = !panel_open
 	to_chat(user, "<span class='notice'>You [panel_open ? "open" : "close"] the maintenance hatch of [src].</span>")
 	update_icon()
-	return 1
+	return TRUE
 
-/obj/machinery/proc/default_part_replacement(var/mob/user, var/obj/item/weapon/storage/part_replacer/R)
+/obj/machinery/proc/default_part_replacement(var/mob/user, var/obj/item/storage/part_replacer/R)
 	if(!istype(R))
-		return 0
+		return FALSE
 	if(!LAZYLEN(component_parts))
-		return 0
-
+		return FALSE
+	var/parts_replaced = FALSE
 	if(panel_open)
-		var/obj/item/weapon/circuitboard/CB = locate(/obj/item/weapon/circuitboard) in component_parts
+		var/obj/item/circuitboard/CB = locate(/obj/item/circuitboard) in component_parts
 		var/P
-		for(var/obj/item/weapon/reagent_containers/glass/G in component_parts)
+		for(var/obj/item/reagent_containers/glass/G in component_parts)
 			for(var/D in CB.req_components)
 				var/T = text2path(D)
 				if(ispath(G.type, T))
 					P = T
 					break
-			for(var/obj/item/weapon/reagent_containers/glass/B in R.contents)
+			for(var/obj/item/reagent_containers/glass/B in R.contents)
 				if(B.reagents && B.reagents.total_volume > 0) continue
 				if(istype(B, P) && istype(G, P))
 					if(B.volume > G.volume)
@@ -366,13 +413,13 @@ Class Procs:
 						B.forceMove(src)
 						to_chat(user, "<span class='notice'>[G.name] replaced with [B.name].</span>")
 						break
-		for(var/obj/item/weapon/stock_parts/A in component_parts)
+		for(var/obj/item/stock_parts/A in component_parts)
 			for(var/D in CB.req_components)
 				var/T = text2path(D)
 				if(ispath(A.type, T))
 					P = T
 					break
-			for(var/obj/item/weapon/stock_parts/B in R.contents)
+			for(var/obj/item/stock_parts/B in R.contents)
 				if(istype(B, P) && istype(A, P))
 					if(B.rating > A.rating)
 						R.remove_from_storage(B, src)
@@ -381,27 +428,29 @@ Class Procs:
 						component_parts += B
 						B.forceMove(src)
 						to_chat(user, "<span class='notice'>[A.name] replaced with [B.name].</span>")
+						parts_replaced = TRUE
 						break
 		RefreshParts()
 		update_icon()
 	else
-		to_chat(user, "<span class='notice'>Following parts detected in the machine:</span>")
-		for(var/var/obj/item/C in component_parts)
-			to_chat(user, "<span class='notice'>    [C.name]</span>")
+		to_chat(user, "<span class='notice'>The following parts have been detected in \the [src]:</span>")
+		to_chat(user, counting_english_list(component_parts))
+	if(parts_replaced) //only play sound when RPED actually replaces parts
+		playsound(src, 'sound/items/rped.ogg', 40, TRUE)
 	return 1
 
 /obj/machinery/proc/dismantle()
-	playsound(loc, 'sound/items/Crowbar.ogg', 50, 1)
+	playsound(loc, /decl/sound_category/crowbar_sound, 50, 1)
 	var/obj/machinery/constructable_frame/machine_frame/M = new /obj/machinery/constructable_frame/machine_frame(loc)
 	M.set_dir(src.dir)
-	M.state = 2
-	M.icon_state = "box_1"
+	M.state = 3
+	M.icon_state = "blueprint_1"
 	for(var/obj/I in component_parts)
 		I.forceMove(loc)
 	qdel(src)
 	return 1
 
-/obj/machinery/proc/print(var/obj/paper, var/play_sound = 1, var/print_sfx = 'sound/items/polaroid1.ogg', var/print_delay = 10)
+/obj/machinery/proc/print(var/obj/paper, var/play_sound = 1, var/print_sfx = 'sound/items/polaroid1.ogg', var/print_delay = 10, var/message)
 	if( printing )
 		return 0
 
@@ -410,7 +459,9 @@ Class Procs:
 	if (play_sound)
 		playsound(src.loc, print_sfx, 50, 1)
 
-	visible_message("<span class='notice'>[src] rattles to life and spits out a paper titled [paper].</span>")
+	if(!message)
+		message = "\The [src] rattles to life and spits out a paper titled [paper]."
+	visible_message(SPAN_NOTICE(message))
 
 	addtimer(CALLBACK(src, .proc/print_move_paper, paper), print_delay)
 
@@ -419,3 +470,32 @@ Class Procs:
 /obj/machinery/proc/print_move_paper(obj/paper)
 	paper.forceMove(loc)
 	printing = FALSE
+
+/obj/machinery/proc/do_hair_pull(mob/living/carbon/human/H)
+	if(stat & (NOPOWER|BROKEN))
+		return
+
+	if(!istype(H))
+		return
+
+	//for whatever reason, skrell's tentacles have a really long length
+	//horns would not get caught in the machine
+	//vaurca have fine control of their antennae
+	if(isskrell(H) || isunathi(H) || isvaurca(H))
+		return
+
+	var/datum/sprite_accessory/hair/hair_style = hair_styles_list[H.h_style]
+	for(var/obj/item/protection in list(H.head))
+		if(protection && (protection.flags_inv & BLOCKHAIR|BLOCKHEADHAIR))
+			return
+
+	if(hair_style.length >= 4 && prob(25))
+		H.apply_damage(30, BRUTE, BP_HEAD)
+		H.visible_message(SPAN_DANGER("\The [H]'s hair catches in \the [src]!"),
+					SPAN_DANGER("Your hair gets caught in \the [src]!"))
+		if(H.can_feel_pain())
+			H.emote("scream")
+			H.apply_damage(45, PAIN)
+
+/obj/machinery/proc/do_signaler() // override this to customize effects
+	return

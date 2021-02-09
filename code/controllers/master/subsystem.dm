@@ -67,6 +67,7 @@
 	throw EXCEPTION("Subsystem [src]([type]) does not fire() but did not set the SS_NO_FIRE flag. Please add the SS_NO_FIRE flag to any subsystem that doesn't fire so it doesn't get added to the processing list and waste cpu.")
 
 /datum/controller/subsystem/Destroy()
+	SHOULD_CALL_PARENT(FALSE)
 	dequeue()
 	can_fire = 0
 	flags |= SS_NO_FIRE
@@ -171,7 +172,7 @@
 	var/time = (REALTIMEOFDAY - start_timeofday) / 10
 	init_time = time
 	var/msg = "Initialized [name] subsystem within [time] second[time == 1 ? "" : "s"]!"
-	admin_notice(span("danger", msg), R_DEBUG)
+	admin_notice(SPAN_DANGER(msg), R_DEBUG)
 	world.log <<  "SS Init: [msg]"
 	log_ss_init(msg)
 	return time

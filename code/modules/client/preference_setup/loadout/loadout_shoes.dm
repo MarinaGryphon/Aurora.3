@@ -1,21 +1,9 @@
 // Shoelocker
 /datum/gear/shoes
-	display_name = "jackboots"
-	path = /obj/item/clothing/shoes/jackboots
-	slot = slot_shoes
-	sort_category = "Shoes and Footwear"
-
-/datum/gear/shoes/workboots
-	display_name = "workboots"
-	path = /obj/item/clothing/shoes/workboots
-
-/datum/gear/shoes/winterboots
-	display_name = "winter boots"
-	path = /obj/item/clothing/shoes/winter
-
-/datum/gear/shoes/sandals
 	display_name = "sandals"
 	path = /obj/item/clothing/shoes/sandal
+	slot = slot_shoes
+	sort_category = "Shoes and Footwear"
 
 /datum/gear/shoes/color
 	display_name = "shoe selection"
@@ -37,12 +25,16 @@
 	gear_tweaks += new/datum/gear_tweak/path(shoes)
 
 /datum/gear/shoes/dress
-	display_name = "shoes, dress"
+	display_name = "oxford shoe selection"
 	path = /obj/item/clothing/shoes/laceup
 
-/datum/gear/shoes/leather
-	display_name = "shoes, leather"
-	path = /obj/item/clothing/shoes/leather
+/datum/gear/shoes/dress/New()
+	..()
+	var/shoes = list()
+	shoes["black oxford shoes"] = /obj/item/clothing/shoes/laceup
+	shoes["grey oxford shoes"] = /obj/item/clothing/shoes/laceup/grey
+	shoes["brown oxford shoes"] = /obj/item/clothing/shoes/laceup/brown
+	gear_tweaks += new/datum/gear_tweak/path(shoes)
 
 /datum/gear/shoes/flats
 	display_name = "flats selection"
@@ -60,33 +52,15 @@
 	shoes["dress flats, purple"] = /obj/item/clothing/shoes/flats/purple
 	gear_tweaks += new/datum/gear_tweak/path(shoes)
 
-/datum/gear/shoes/cowboy
-	display_name = "cowboy boots selection"
-	path = /obj/item/clothing/shoes/cowboy
-
-/datum/gear/shoes/cowboy/New()
-	..()
-	var/shoes = list()
-	shoes["cowboy boots"] = /obj/item/clothing/shoes/cowboy
-	shoes["classic cowboy boots"] = /obj/item/clothing/shoes/cowboy/classic
-	shoes["snakeskin cowboy boots"] = /obj/item/clothing/shoes/cowboy/snakeskin
-	gear_tweaks += new/datum/gear_tweak/path(shoes)
-
 /datum/gear/shoes/heels
 	display_name = "high heels"
 	path = /obj/item/clothing/shoes/heels
-
-/datum/gear/shoes/heels/New()
-	..()
-	gear_tweaks = list(gear_tweak_free_color_choice)
+	flags = GEAR_HAS_NAME_SELECTION | GEAR_HAS_DESC_SELECTION | GEAR_HAS_COLOR_SELECTION
 
 /datum/gear/shoes/tongs
 	display_name = "flip flops"
 	path = /obj/item/clothing/shoes/sandal/flipflop
-
-/datum/gear/shoes/tongs/New()
-	..()
-	gear_tweaks = list(gear_tweak_free_color_choice)
+	flags = GEAR_HAS_NAME_SELECTION | GEAR_HAS_DESC_SELECTION | GEAR_HAS_COLOR_SELECTION
 
 /datum/gear/shoes/hitops
 	display_name = "high-top selection"
@@ -105,10 +79,46 @@
 	shoes["high-tops, yellow"] = /obj/item/clothing/shoes/hitops/yellow
 	gear_tweaks += new/datum/gear_tweak/path(shoes)
 
-/datum/gear/shoes/black_boots
-	display_name = "black boots"
-	path = /obj/item/clothing/shoes/black_boots
+/datum/gear/shoes/boots
+	display_name = "boot selection"
+	description = "Boots, in a variety of styles."
+	path = /obj/item/clothing/shoes/jackboots
+
+/datum/gear/shoes/boots/New()
+	..()
+	var/shoes = list()
+	shoes["black boots, short"] = /obj/item/clothing/shoes/jackboots
+	shoes["black boots, knee"] = /obj/item/clothing/shoes/jackboots/knee
+	shoes["black boots, thigh"] = /obj/item/clothing/shoes/jackboots/thigh
+	shoes["cowboy boots"] = /obj/item/clothing/shoes/cowboy
+	shoes["classic cowboy boots"] = /obj/item/clothing/shoes/cowboy/classic
+	shoes["snakeskin cowboy boots"] = /obj/item/clothing/shoes/cowboy/snakeskin
+	shoes["brown workboots"] = /obj/item/clothing/shoes/workboots
+	shoes["grey workboots"] = /obj/item/clothing/shoes/workboots/grey
+	shoes["dark workboots"] = /obj/item/clothing/shoes/workboots/dark
+	shoes["winter boots"] = /obj/item/clothing/shoes/winter
+	gear_tweaks += new/datum/gear_tweak/path(shoes)
+
+/datum/gear/shoes/lyodsuit_boots
+	display_name = "lyodsuit boots"
+	path = /obj/item/clothing/shoes/lyodsuit
 
 /datum/gear/shoes/circuitry
 	display_name = "boots, circuitry (empty)"
 	path = /obj/item/clothing/shoes/circuitry
+
+/datum/gear/shoes/slippers
+	display_name = "bunny slippers"
+	path = /obj/item/clothing/shoes/slippers
+
+/datum/gear/shoes/slippers/New()
+	..()
+	var/slippers = list()
+	slippers["bunny slippers"] = /obj/item/clothing/shoes/slippers
+	slippers["worn bunny slippers"] = /obj/item/clothing/shoes/slippers_worn
+	gear_tweaks += new/datum/gear_tweak/path(slippers)
+
+/datum/gear/shoes/clog
+	display_name = "plastic clogs"
+	path = /obj/item/clothing/shoes/sandal/clogs
+	flags = GEAR_HAS_NAME_SELECTION | GEAR_HAS_DESC_SELECTION | GEAR_HAS_COLOR_SELECTION

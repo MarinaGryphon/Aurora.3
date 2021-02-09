@@ -2,19 +2,19 @@
 
 
 //endless reagents!
-/obj/item/weapon/reagent_containers/glass/replenishing
+/obj/item/reagent_containers/glass/replenishing
 	var/spawning_id
 
-/obj/item/weapon/reagent_containers/glass/replenishing/Initialize()
+/obj/item/reagent_containers/glass/replenishing/Initialize()
 	. = ..()
 	START_PROCESSING(SSprocessing, src)
-	spawning_id = pick("blood","holywater","lube","stoxin","ethanol","ice","glycerol","fuel","cleaner")
+	spawning_id = pick(/decl/reagent/blood,/decl/reagent/water/holywater,/decl/reagent/lube,/decl/reagent/soporific,/decl/reagent/alcohol,/decl/reagent/drink/ice,/decl/reagent/glycerol,/decl/reagent/fuel,/decl/reagent/spacecleaner)
 
 
-/obj/item/weapon/reagent_containers/glass/replenishing/process()
+/obj/item/reagent_containers/glass/replenishing/process()
 	reagents.add_reagent(spawning_id, 0.3)
 
-/obj/item/weapon/reagent_containers/glass/replenishing/Destroy()
+/obj/item/reagent_containers/glass/replenishing/Destroy()
 	STOP_PROCESSING(SSprocessing, src)
 	return ..()
 
@@ -51,7 +51,7 @@
 
 //a vampiric statuette
 //todo: cult integration
-/obj/item/weapon/vampiric
+/obj/item/vampiric
 	name = "statuette"
 	icon_state = "statuette"
 	icon = 'icons/obj/xenoarchaeology.dmi'
@@ -64,17 +64,17 @@
 	var/wight_check_index = 1
 	var/list/shadow_wights = list()
 
-/obj/item/weapon/vampiric/New()
+/obj/item/vampiric/New()
 	..()
 	START_PROCESSING(SSprocessing, src)
 	listening_objects += src
 
-/obj/item/weapon/vampiric/Destroy()
+/obj/item/vampiric/Destroy()
 	STOP_PROCESSING(SSprocessing, src)
 	listening_objects -= src
 	return ..()
 
-/obj/item/weapon/vampiric/process()
+/obj/item/vampiric/process()
 	//see if we've identified anyone nearby
 	if(world.time - last_bloodcall > bloodcall_interval && nearby_mobs.len)
 		var/mob/living/carbon/human/M = pop(nearby_mobs)
@@ -98,13 +98,13 @@
 	//use up stored charges
 	if(charges >= 10)
 		charges -= 10
-		new /obj/effect/spider/eggcluster(pick(view(1,src)))
+		new /obj/effect/spider/eggcluster(pick(seen_turfs_in_range(src, 1)))
 
 	if(charges >= 3)
 		if(prob(5))
 			charges -= 1
 			var/spawn_type = pick(/mob/living/simple_animal/hostile/creature)
-			new spawn_type(pick(view(1,src)))
+			new spawn_type(pick(seen_turfs_in_range(src, 1)))
 			playsound(src.loc, pick('sound/hallucinations/growl1.ogg','sound/hallucinations/growl2.ogg','sound/hallucinations/growl3.ogg'), 50, 1, -3)
 
 	if(charges >= 1)
@@ -115,7 +115,7 @@
 
 	if(charges >= 0.1)
 		if(prob(5))
-			src.visible_message("<span class='warning'>\icon[src] [src]'s eyes glow ruby red for a moment!</span>")
+			src.visible_message("<span class='warning'>[icon2html(src, viewers(get_turf(src)))] [src]'s eyes glow ruby red for a moment!</span>")
 			charges -= 0.1
 
 	//check on our shadow wights
@@ -132,12 +132,12 @@
 		else if(get_dist(W, src) > 10)
 			shadow_wights.Remove(wight_check_index)
 
-/obj/item/weapon/vampiric/hear_talk(mob/M as mob, text)
+/obj/item/vampiric/hear_talk(mob/M as mob, text)
 	..()
-	if(world.time - last_bloodcall >= bloodcall_interval && M in view(7, src))
+	if(world.time - last_bloodcall >= bloodcall_interval && (M in view(7, src)))
 		bloodcall(M)
 
-/obj/item/weapon/vampiric/proc/bloodcall(var/mob/living/carbon/human/M)
+/obj/item/vampiric/proc/bloodcall(var/mob/living/carbon/human/M)
 	last_bloodcall = world.time
 	if(istype(M))
 		playsound(src.loc, pick('sound/hallucinations/wail.ogg','sound/hallucinations/veryfar_noise.ogg','sound/hallucinations/far_noise.ogg'), 50, 1, -3)
@@ -147,10 +147,10 @@
 		M.apply_damage(rand(5, 10), BRUTE, target)
 		to_chat(M, "<span class='warning'>The skin on your [parse_zone(target)] feels like it's ripping apart, and a stream of blood flies out.</span>")
 		var/obj/effect/decal/cleanable/blood/splatter/animated/B = new(M.loc)
-		B.target_turf = pick(range(1, src))
+		B.target_turf = pick(seen_turfs_in_range(src, 1))
 		B.blood_DNA = list()
 		B.blood_DNA[M.dna.unique_enzymes] = M.dna.b_type
-		M.vessel.remove_reagent("blood",rand(25,50))
+		M.vessel.remove_reagent(/decl/reagent/blood,rand(25,50))
 
 //animated blood 2 SPOOKY
 /obj/effect/decal/cleanable/blood/splatter/animated
@@ -201,7 +201,7 @@
 
 /obj/effect/shadow_wight/process()
 	if(src.loc)
-		src.forceMove(get_turf(pick(orange(1,src))))
+		src.forceMove(pick(seen_turfs_in_range(src, 1) - get_turf(src)))
 		var/mob/living/carbon/M = locate() in src.loc
 		if(M)
 			playsound(src.loc, pick('sound/hallucinations/behind_you1.ogg',\

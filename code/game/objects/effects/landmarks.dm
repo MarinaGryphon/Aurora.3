@@ -37,6 +37,10 @@
 			latejoin_cryo += loc
 			delete_me = 1
 			return
+		if("JoinLateCryoCommand")
+			latejoin_cryo_command += loc
+			delete_me = 1
+			return
 		if("JoinLateCyborg")
 			latejoin_cyborg += loc
 			delete_me = 1
@@ -124,7 +128,7 @@
 /obj/effect/landmark/costume/chicken/New()
 	new /obj/item/clothing/suit/chickensuit(src.loc)
 	new /obj/item/clothing/head/chicken(src.loc)
-	new /obj/item/weapon/reagent_containers/food/snacks/egg(src.loc)
+	new /obj/item/reagent_containers/food/snacks/egg(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/gladiator/New()
@@ -135,8 +139,8 @@
 /obj/effect/landmark/costume/madscientist/New()
 	new /obj/item/clothing/under/gimmick/rank/captain/suit(src.loc)
 	new /obj/item/clothing/head/flatcap(src.loc)
-	new /obj/item/clothing/suit/storage/toggle/labcoat/mad(src.loc)
-	new /obj/item/clothing/glasses/gglasses(src.loc)
+	new /obj/item/clothing/suit/storage/toggle/labcoat(src.loc)
+	new /obj/item/clothing/glasses/regular(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/elpresidente/New()
@@ -162,14 +166,14 @@
 /obj/effect/landmark/costume/scratch/New()
 	new /obj/item/clothing/gloves/white(src.loc)
 	new /obj/item/clothing/shoes/white(src.loc)
-	new /obj/item/clothing/under/scratch(src.loc)
+	new /obj/item/clothing/under/suit_jacket/white(src.loc)
 	if (prob(30))
 		new /obj/item/clothing/head/cueball(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/highlander/New()
 	new /obj/item/clothing/under/kilt(src.loc)
-	new /obj/item/clothing/head/beret(src.loc)
+	new /obj/item/clothing/head/beret/red(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/prig/New()
@@ -178,7 +182,7 @@
 	var/CHOICE= pick( /obj/item/clothing/head/bowler, /obj/item/clothing/head/that)
 	new CHOICE(src.loc)
 	new /obj/item/clothing/shoes/black(src.loc)
-	new /obj/item/weapon/cane(src.loc)
+	new /obj/item/cane(src.loc)
 	new /obj/item/clothing/under/sl_suit(src.loc)
 	new /obj/item/clothing/mask/fakemoustache(src.loc)
 	delete_me = 1
@@ -195,21 +199,18 @@
 
 /obj/effect/landmark/costume/waiter/New()
 	new /obj/item/clothing/under/waiter(src.loc)
-	var/CHOICE= pick( /obj/item/clothing/head/kitty, /obj/item/clothing/head/rabbitears)
-	new CHOICE(src.loc)
+	new /obj/item/clothing/head/rabbitears(src.loc)
 	new /obj/item/clothing/suit/apron(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/pirate/New()
-	new /obj/item/clothing/under/pirate(src.loc)
 	new /obj/item/clothing/suit/pirate(src.loc)
-	var/CHOICE = pick( /obj/item/clothing/head/pirate , /obj/item/clothing/head/bandana )
+	var/CHOICE = pick( /obj/item/clothing/head/pirate , /obj/item/clothing/head/bandana/pirate)
 	new CHOICE(src.loc)
 	new /obj/item/clothing/glasses/eyepatch(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/commie/New()
-	new /obj/item/clothing/under/soviet(src.loc)
 	new /obj/item/clothing/head/ushanka/grey(src.loc)
 	delete_me = 1
 
@@ -231,13 +232,13 @@
 /obj/effect/landmark/costume/cutewitch/New()
 	new /obj/item/clothing/under/sundress(src.loc)
 	new /obj/item/clothing/head/witchwig(src.loc)
-	new /obj/item/weapon/staff/broom(src.loc)
+	new /obj/item/staff/broom(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/fakewizard/New()
 	new /obj/item/clothing/suit/wizrobe/fake(src.loc)
 	new /obj/item/clothing/head/wizard/fake(src.loc)
-	new /obj/item/weapon/staff/(src.loc)
+	new /obj/item/staff/(src.loc)
 	delete_me = 1
 
 /obj/effect/landmark/costume/sexyclown/New()
@@ -254,3 +255,6 @@
 	name = "asteroid spawn"
 	icon = 'icons/1024x1024.dmi'
 	icon_state = "yellow"
+
+/obj/effect/landmark/distress_team_equipment
+	name = "distress equipment"

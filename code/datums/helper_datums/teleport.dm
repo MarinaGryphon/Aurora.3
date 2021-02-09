@@ -1,7 +1,6 @@
 //wrapper
 /proc/do_teleport(ateleatom, adestination, aprecision=0, afteleport=1, aeffectin=null, aeffectout=null, asoundin=null, asoundout=null)
 	new /datum/teleport/instant/science(arglist(args))
-	return
 
 /datum/teleport
 	var/atom/movable/teleatom //atom to teleport
@@ -43,16 +42,15 @@
 	if(istype(adestination))
 		var/list/turf/good_turfs = list()
 		var/list/turf/bad_turfs = list()
-		for(var/found_inhibitor in circlerange(adestination,8))
-			if(!istype(found_inhibitor,/obj/machinery/anti_bluespace))
-				continue
+		var/turf/T = get_turf(adestination)
+		for(var/found_inhibitor in bluespace_inhibitors)
 			var/obj/machinery/anti_bluespace/AB = found_inhibitor
-			if(AB.stat & (NOPOWER | BROKEN) )
+			if(T.z != AB.z || get_dist(adestination, AB) > 8 || (AB.stat & (NOPOWER | BROKEN)))
 				continue
 			AB.use_power(AB.active_power_usage)
 			bad_turfs += circlerangeturfs(get_turf(AB),8)
 			good_turfs += circlerangeturfs(get_turf(AB),9)
-		if(good_turfs.len && bad_turfs.len)
+		if(length(good_turfs) && length(bad_turfs))
 			good_turfs -= bad_turfs
 			return pick(good_turfs)
 
@@ -128,7 +126,7 @@
 	var/area/destarea = get_area(destination)
 	if(precision)
 		var/list/posturfs = circlerangeturfs(destination,precision)
-		destturf = safepick(posturfs)
+		destturf = LAZYPICK(posturfs, null)
 	else
 		destturf = get_turf(destination)
 
@@ -192,20 +190,6 @@
 				if(O.opacity)
 					boominess += 10
 
-			if(istype(teleatom, /obj/mecha))
-				valid = 1
-				var/obj/mecha/M = teleatom
-				if(newdest)
-					M.ex_act(3)
-					M.occupant.adjustHalLoss(25)
-					to_chat(M.occupant, "<span class='danger'>You feel a sharp abdominal pain inside yourself as the [teleatom] phases into \the [impediment]</span>")
-
-				boominess += max(0, M.w_class - 1)
-				if(M.density)
-					boominess += 5
-				if(M.opacity)
-					boominess += 10
-
 			if(istype(teleatom, /mob/living))
 				valid = 1
 				var/mob/living/L = teleatom
@@ -222,36 +206,12 @@
 							if(organs_to_gib.len)
 								var/obj/item/organ/external/E = pick(organs_to_gib)
 								to_chat(H, "<span class='danger'>You partially phase into \the [impediment], causing your [E.name] to violently dematerialize!</span>")
-								H.apply_damage(35, BRUTE, E, 0, sharp=0, edge=0)
+								H.apply_damage(35, BRUTE, E, 0)
 
 					else
 						if(newdest)
 							to_chat(L, "<span class='danger'>You partially phase into \the [impediment], causing a chunk of you to violently dematerialize!</span>")
 							L.adjustBruteLoss(40)
-
-					if(!newdest && L.mind)
-						var/mob/living/simple_animal/shade/bluespace/BS = new /mob/living/simple_animal/shade/bluespace(destturf)
-						to_chat(L, "<span class='danger'>You feel your spirit violently rip from your body in a flurry of violent extradimensional disarray!</span>")
-						L.mind.transfer_to(BS)
-						to_chat(BS, "<b>You are now a bluespace echo - consciousness imprinted upon wavelengths of bluespace energy. You currently retain no memories of your previous life, but do express a strong desire to return to corporeality. You will die soon, fading away forever. Good luck!</b>")
-						BS.original_body = L
-
-						var/list/turfs_to_teleport = list()
-						for(var/turf/T in orange(20, get_turf(BS)))
-							turfs_to_teleport += T
-						do_teleport(BS, pick(turfs_to_teleport))
-
-						for(var/mob/living/M in L)
-							if(M.mind)
-								var/mob/living/simple_animal/shade/bluespace/more_BS = new /mob/living/simple_animal/shade/bluespace(get_turf(M))
-								to_chat(M, "<span class='danger'>You feel your spirit violently rip from your body in a flurry of violent extradimensional disarray!</span>")
-								M.mind.transfer_to(more_BS)
-								to_chat(more_BS, "<b>You are now a bluespace echo - consciousness imprinted upon wavelengths of bluespace energy. You currently retain no memories of your previous life, but do express a strong desire to return to corporeality. You will die soon, fading away forever. Good luck!</b>")
-								more_BS.original_body = M
-
-								for(var/turf/T in orange(20, get_turf(BS)))
-									turfs_to_teleport += T
-								do_teleport(more_BS, pick(turfs_to_teleport))
 
 				else
 					newdest = destturf
@@ -325,10 +285,10 @@
 
 /datum/teleport/instant/science/setPrecision(aprecision)
 	..()
-	if(istype(teleatom, /obj/item/weapon/storage/backpack/holding))
+	if(istype(teleatom, /obj/item/storage/backpack/holding))
 		precision = rand(1,100)
 
-	var/list/bagholding = teleatom.search_contents_for(/obj/item/weapon/storage/backpack/holding)
+	var/list/bagholding = teleatom.search_contents_for(/obj/item/storage/backpack/holding)
 	if(bagholding.len)
 		precision = max(rand(1,100)*bagholding.len,100)
 		if(istype(teleatom, /mob/living))
@@ -337,7 +297,7 @@
 	return 1
 
 /datum/teleport/instant/science/teleportChecks()
-	if(istype(teleatom, /obj/item/weapon/disk/nuclear)) // Don't let nuke disks get teleported --NeoFite
+	if(istype(teleatom, /obj/item/disk/nuclear)) // Don't let nuke disks get teleported --NeoFite
 		teleatom.visible_message("<span class='danger'>\The [teleatom] bounces off of the portal!</span>")
 		return 0
 
@@ -346,7 +306,7 @@
 		return 0
 
 
-	if(!isemptylist(teleatom.search_contents_for(/obj/item/weapon/disk/nuclear)))
+	if(!isemptylist(teleatom.search_contents_for(/obj/item/disk/nuclear)))
 		if(istype(teleatom, /mob/living))
 			var/mob/living/MM = teleatom
 			MM.visible_message("<span class='danger'>\The [MM] bounces off of the portal!</span>","<span class='warning'>Something you are carrying seems to be unable to pass through the portal. Better drop it if you want to go through.</span>")
@@ -354,9 +314,8 @@
 			teleatom.visible_message("<span class='danger'>\The [teleatom] bounces off of the portal!</span>")
 		return 0
 
-	if(destination.z in current_map.admin_levels) //centcomm z-level
-
-		if(!isemptylist(teleatom.search_contents_for(/obj/item/weapon/storage/backpack/holding)))
+	if(isAdminLevel(destination.z)) //centcomm z-level
+		if(!isemptylist(teleatom.search_contents_for(/obj/item/storage/backpack/holding)))
 			teleatom.visible_message("<span class='danger'>\The [teleatom] bounces off of the portal!</span>")
 			return 0
 

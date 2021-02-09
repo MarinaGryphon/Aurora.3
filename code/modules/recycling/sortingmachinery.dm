@@ -43,7 +43,7 @@
 		else
 			to_chat(user, "<span class='warning'>You need to set a destination first!</span>")
 
-	else if(istype(W, /obj/item/weapon/pen))
+	else if(W.ispen())
 		switch(alert("What would you like to alter?",,"Title","Description", "Cancel"))
 			if("Title")
 				var/str = sanitizeSafe(input(usr,"Label text?","Set label",""), MAX_NAME_LEN)
@@ -118,7 +118,8 @@
 	name = "small parcel"
 	icon = 'icons/obj/storage.dmi'
 	icon_state = "deliverycrate3"
-	drop_sound = 'sound/items/drop/box.ogg'
+	drop_sound = 'sound/items/drop/cardboardbox.ogg'
+	pickup_sound = 'sound/items/pickup/cardboardbox.ogg'
 	var/obj/item/wrapped = null
 	var/sortTag = null
 	var/examtext = null
@@ -153,7 +154,7 @@
 		else
 			to_chat(user, "<span class='warning'>You need to set a destination first!</span>")
 
-	else if(istype(W, /obj/item/weapon/pen))
+	else if(W.ispen())
 		switch(alert("What would you like to alter?",,"Title","Description", "Cancel"))
 			if("Title")
 				var/str = sanitizeSafe(input(usr,"Label text?","Set label",""), MAX_NAME_LEN)
@@ -236,8 +237,8 @@
 	desc = "Used to set the destination of properly wrapped packages."
 	icon_state = "dest_tagger"
 	var/currTag = 0
-	matter = list(DEFAULT_WALL_MATERIAL = 250, "glass" = 140)
-	w_class = 2
+	matter = list(DEFAULT_WALL_MATERIAL = 250, MATERIAL_GLASS = 140)
+	w_class = ITEMSIZE_SMALL
 	item_state = "electronic"
 	flags = CONDUCT
 	slot_flags = SLOT_BELT
@@ -263,7 +264,7 @@
 
 /obj/item/device/destTagger/Topic(href, href_list)
 	src.add_fingerprint(usr)
-	if(href_list["nextTag"] && href_list["nextTag"] in SSdisposals.tagger_locations)
+	if(href_list["nextTag"] && (href_list["nextTag"] in SSdisposals.tagger_locations))
 		src.currTag = href_list["nextTag"]
 	if(href_list["nextTag"] == "CUSTOM")
 		var/dest = input("Please enter custom location.", "Location", src.currTag ? src.currTag : "None")
@@ -274,7 +275,7 @@
 	openwindow(usr)
 
 /obj/machinery/disposal/deliveryChute
-	name = "Delivery chute"
+	name = "delivery chute"
 	desc = "A chute for big and small packages alike!"
 	density = 1
 	icon_state = "intake"
@@ -339,23 +340,27 @@
 	if(!I || !user)
 		return
 
+	if(istype(I, /obj/item/holder))
+		user.drop_item(I)
+		CollidedWith(I)
+
 	if(I.isscrewdriver())
 		if(c_mode==0)
 			c_mode=1
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
+			playsound(src.loc, I.usesound, 50, 1)
 			to_chat(user, "You remove the screws around the power connection.")
 			return
 		else if(c_mode==1)
 			c_mode=0
-			playsound(src.loc, 'sound/items/Screwdriver.ogg', 50, 1)
+			playsound(src.loc, I.usesound, 50, 1)
 			to_chat(user, "You attach the screws around the power connection.")
 			return
 	else if(I.iswelder() && c_mode==1)
-		var/obj/item/weapon/weldingtool/W = I
+		var/obj/item/weldingtool/W = I
 		if(W.remove_fuel(1,user))
 			to_chat(user, "You start slicing the floorweld off the delivery chute.")
-			if(do_after(user,20))
-				playsound(src.loc, 'sound/items/Welder2.ogg', 100, 1)
+			if(do_after(user,20/W.toolspeed))
+				playsound(src.loc, 'sound/items/welder_pry.ogg', 100, 1)
 				if(!src || !W.isOn()) return
 				to_chat(user, "You sliced the floorweld off the delivery chute.")
 				var/obj/structure/disposalconstruct/C = new (src.loc)

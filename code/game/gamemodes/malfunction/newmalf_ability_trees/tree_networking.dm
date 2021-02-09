@@ -41,7 +41,11 @@
 	set name = "Basic Encryption Hack"
 	set desc = "10 CPU - Basic encryption hack that allows you to overtake APCs on the station."
 	var/price = 10
+
 	var/mob/living/silicon/ai/user = usr
+	if(user.stat == DEAD)
+		to_chat(user, SPAN_WARNING("You are dead!"))
+		return
 
 	if(!A)
 		return
@@ -87,7 +91,11 @@
 	set name = "Advanced Encryption Hack"
 	set desc = "75 CPU - Attempts to bypass encryption on the Command Quantum Relay, giving you ability to fake legitimate messages. Has chance of failing."
 	var/price = 75
+
 	var/mob/living/silicon/ai/user = usr
+	if(user.stat == DEAD)
+		to_chat(user, SPAN_WARNING("You are dead!"))
+		return
 
 	if(!ability_prechecks(user, price))
 		return
@@ -97,8 +105,10 @@
 	var/reporttype = input(usr, "Choose whether to use a template or custom report.", "Create Command Report") in list("Template", "Custom", "Cancel")
 	switch(reporttype)
 		if("Template")
-			establish_db_connection(dbcon)
-			if (!dbcon.IsConnected())
+			if(!config.sql_enabled)
+				to_chat(src, "<span class='notice'>DB Connection Disabled.</span>")
+				return
+			if (!establish_db_connection(dbcon))
 				to_chat(src, "<span class='notice'>Unable to connect to the database.</span>")
 				return
 			var/DBQuery/query = dbcon.NewQuery("SELECT title, message FROM ss13_ccia_general_notice_list WHERE deleted_at IS NULL")
@@ -130,8 +140,8 @@
 			return
 
 	if (reporttype == "Template")
-		sanitizeSafe(alert(usr, "Would you like it to appear as if CCIAMS made the report?",,"Yes","No"))
-		if ("Yes")
+		var/resp = alert(usr, "Would you like it to appear as if CCIAMS made the report?",,"Yes","No")
+		if (resp == "Yes")
 			reportbody += "\n\n- CCIAMS, [commstation_name()]"
 		else
 
@@ -173,7 +183,7 @@
 			//	return
 			log_ability_use(user, "advanced encryption hack (SUCCESS - title: [reporttitle])")
 			to_world("<span class='alert'>New [current_map.company_name] Update available at all communication consoles.</span>")
-			to_world(sound('sound/AI/commandreport.ogg'))
+			sound_to(world, ('sound/AI/commandreport.ogg'))
 			post_comm_message(reporttitle, reportbody)
 
 /datum/game_mode/malfunction/verb/elite_encryption_hack()
@@ -181,11 +191,12 @@
 	set name = "Elite Encryption Hack"
 	set desc = "200 CPU - Allows you to hack station's ALERTCON system, changing alert level. Has high chance of failing."
 	var/price = 200
+
 	var/mob/living/silicon/ai/user = usr
 	if(!ability_prechecks(user, price))
 		return
 
-	var/alert_target = input("Select new alert level:") in list("green", "blue", "red", "delta", "CANCEL")
+	var/alert_target = input("Select new alert level:") in list("green", "blue", "red", "yellow", "CANCEL")
 	if(!alert_target || !ability_pay(user, price) || alert_target == "CANCEL")
 		to_chat(user, "Hack Aborted")
 		return
@@ -208,7 +219,12 @@
 	set name = "System Override"
 	set desc = "500 CPU - Begins hacking station's primary firewall, quickly overtaking remaining APC systems. When completed grants access to station's self-destruct mechanism. Network administrators will probably notice this."
 	var/price = 500
+
 	var/mob/living/silicon/ai/user = usr
+	if(user.stat == DEAD)
+		to_chat(user, SPAN_WARNING("You are dead!"))
+		return
+
 	if (alert(user, "Begin system override? This cannot be stopped once started. The network administrators will probably notice this.", "System Override:", "Yes", "No") != "Yes")
 		return
 	if (!ability_prechecks(user, price) || !ability_pay(user, price) || user.system_override)
@@ -218,14 +234,14 @@
 	log_ability_use(user, "system override (STARTED)")
 	var/list/remaining_apcs = list()
 	for(var/obj/machinery/power/apc/A in SSmachinery.processing_machines)
-		if(!(A.z in current_map.station_levels)) 		// Only station APCs
+		if(isNotStationLevel(A.z)) // Only station APCs
 			continue
 		if(A.hacker == user || A.aidisabled) 		// This one is already hacked, or AI control is disabled on it.
 			continue
 		remaining_apcs += A
 
-	var/duration = (remaining_apcs.len * 100)		// Calculates duration for announcing system
-	if(duration > 3000)								// Two types of announcements. Short hacks trigger immediate warnings. Long hacks are more "progressive".
+	var/duration = (remaining_apcs.len * 50)		// Calculates duration for announcing system
+	if(duration > 1500)								// Two types of announcements. Short hacks trigger immediate warnings. Long hacks are more "progressive".
 		spawn(0)
 			sleep(duration/5)
 			if(!user || user.stat == DEAD)
@@ -249,9 +265,9 @@
 	to_chat(user, "## ESTIMATED DURATION: [round((duration+300)/600)] MINUTES")
 	user.hacking = 1
 	user.system_override = 1
-	// Now actually begin the hack. Each APC takes 10 seconds.
+	// Now actually begin the hack. Each APC takes 5 seconds.
 	for(var/obj/machinery/power/apc/A in shuffle(remaining_apcs))
-		sleep(100)
+		sleep(50)
 		if(!user || user.stat == DEAD)
 			return
 		if(!A || !istype(A) || A.aidisabled)
@@ -264,7 +280,7 @@
 	sleep(300)
 	// Hack all APCs, including those built during hack sequence.
 	for(var/obj/machinery/power/apc/A in SSmachinery.processing_machines)
-		if((!A.hacker || A.hacker != src) && !A.aidisabled && A.z in current_map.station_levels)
+		if((!A.hacker || A.hacker != src) && !A.aidisabled && isStationLevel(A.z))
 			A.ai_hack(src)
 
 	log_ability_use(user, "system override (FINISHED)")

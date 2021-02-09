@@ -10,7 +10,7 @@
 	var/list/network
 	var/mapping = 0//For the overview file, interesting bit of code.
 	var/cache_id = 0
-	circuit = /obj/item/weapon/circuitboard/security
+	circuit = /obj/item/circuitboard/security
 
 /obj/machinery/computer/security/Initialize()
 	if(!network)
@@ -20,10 +20,12 @@
 		current_network = network[1]
 
 /obj/machinery/computer/security/attack_ai(var/mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return attack_hand(user)
 
 /obj/machinery/computer/security/check_eye(var/mob/user as mob)
-	if (user.stat || ((get_dist(user, src) > 1 || !( user.canmove ) || user.blinded) && !istype(user, /mob/living/silicon))) //user can't see - not sure why canmove is here.
+	if (use_check_and_message(user) || user.blinded || inoperable())
 		return -1
 	if(!current_camera)
 		return 0
@@ -36,6 +38,8 @@
 	if(src.z > 6) return
 	if(stat & (NOPOWER|BROKEN)) return
 	if(user.stat) return
+
+	user.set_machine(src)
 
 	var/data[0]
 	var/list/all_networks[0]
@@ -122,7 +126,11 @@
 	if (!C.can_use() || user.stat || (get_dist(user, src) > 1 || user.machine != src || user.blinded || !( user.canmove ) && !istype(user, /mob/living/silicon)))
 		return 0
 	set_current(C)
-	user.reset_view(current_camera)
+	if(ishuman(user))
+		var/mob/living/carbon/human/H = user
+		H.reset_view(current_camera)
+	else
+		user.reset_view(current_camera)
 	check_eye(user)
 	return 1
 
@@ -231,7 +239,6 @@
 /obj/machinery/computer/security/telescreen/entertainment
 	name = "entertainment monitor"
 	desc = "Damn, why do they never have anything interesting on these things?"
-	icon = 'icons/obj/status_display.dmi'
 	icon_screen = "entertainment"
 	light_color = "#FFEEDB"
 	light_range_on = 2
@@ -251,14 +258,14 @@
 	desc = "Used to access the various cameras on the outpost."
 	icon_screen = "miningcameras"
 	network = list("MINE")
-	circuit = /obj/item/weapon/circuitboard/security/mining
+	circuit = /obj/item/circuitboard/security/mining
 	light_color = "#F9BBFC"
 
 /obj/machinery/computer/security/engineering
 	name = "engineering camera monitor"
 	desc = "Used to monitor fires and breaches."
 	icon_screen = "engineeringcameras"
-	circuit = /obj/item/weapon/circuitboard/security/engineering
+	circuit = /obj/item/circuitboard/security/engineering
 	light_color = "#FAC54B"
 
 /obj/machinery/computer/security/engineering/Initialize()

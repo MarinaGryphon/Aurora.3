@@ -59,7 +59,7 @@
 		if("remains")
 			new /obj/effect/decal/remains/xeno (get_turf(src))
 		if("xenoarch")
-			new /obj/item/weapon/archaeological_find (get_turf(src))
+			new /obj/item/archaeological_find (get_turf(src))
 		if("highvalue")
 			new /obj/random/highvalue (get_turf(src))
 		if("supermatter")
@@ -75,4 +75,4 @@
 	desc = "An archaic key, probably not used to open any airlock on station."
 	icon = 'icons/obj/xenoarchaeology.dmi'
 	icon_state = "unknown1"
-	w_class = 2
+	w_class = ITEMSIZE_SMALL

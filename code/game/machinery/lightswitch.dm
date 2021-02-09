@@ -10,6 +10,7 @@
 	var/on = 1
 	var/area/area = null
 	var/otherarea = null
+	power_channel = LIGHT
 	//	luminosity = 1
 
 /obj/machinery/light_switch/Initialize()
@@ -23,6 +24,7 @@
 		name = "light switch ([area.name])"
 
 	src.on = src.area.lightswitch
+	addtimer(CALLBACK(src, .proc/sync_lights), 25)
 	update_icon()
 
 /obj/machinery/light_switch/update_icon()
@@ -39,10 +41,16 @@
 		to_chat(user, "A light switch. It is [on? "on" : "off"].")
 
 /obj/machinery/light_switch/attack_hand(mob/user)
-	playsound(src, "switch", 30)
+	playsound(src, /decl/sound_category/switch_sound, 30)
 	on = !on
+	sync_lights()
 
-	area.lightswitch = on
+/obj/machinery/light_switch/proc/sync_lights()
+	var/area/A = get_area(src)
+	if(!A)
+		return
+
+	A.lightswitch = on
 
 	for(var/obj/machinery/light_switch/L in area)
 		L.on = on
@@ -53,16 +61,11 @@
 			L.stat &= ~POWEROFF
 		else
 			L.stat |= POWEROFF
-
 		L.update()
 
 /obj/machinery/light_switch/power_change()
-
 	if(!otherarea)
-		if(powered(LIGHT))
-			stat &= ~NOPOWER
-		else
-			stat |= NOPOWER
+		..()
 
 		update_icon()
 

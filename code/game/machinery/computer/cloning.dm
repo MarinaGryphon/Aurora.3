@@ -3,8 +3,8 @@
 
 	icon_screen = "dna"
 	light_color = "#315ab4"
-	circuit = /obj/item/weapon/circuitboard/cloning
-	req_access = list(access_heads) //Only used for record deletion right now.
+	circuit = /obj/item/circuitboard/cloning
+	req_access = list(access_genetics)
 	var/obj/machinery/dna_scannernew/scanner = null //Linked scanner. For scanning.
 	var/list/pods = list() //Linked cloning pods.
 	var/temp = ""
@@ -12,12 +12,11 @@
 	var/menu = 1 //Which menu screen to display
 	var/list/records = list()
 	var/datum/dna2/record/active_record = null
-	var/obj/item/weapon/disk/data/diskette = null //Mostly so the geneticist can steal everything.
+	var/obj/item/disk/data/diskette = null //Mostly so the geneticist can steal everything.
 	var/loading = 0 // Nice loading text
 
 /obj/machinery/computer/cloning/Initialize()
 	. = ..()
-	set_expansion(/datum/expansion/multitool, new/datum/expansion/multitool/cryo(src, list(/proc/is_operable)))
 	updatemodules()
 
 /obj/machinery/computer/cloning/Destroy()
@@ -89,7 +88,7 @@
 			P.name = "[initial(P.name)] #[num++]"
 
 /obj/machinery/computer/cloning/attackby(obj/item/W as obj, mob/user as mob)
-	if (istype(W, /obj/item/weapon/disk/data)) //INSERT SOME DISKETTES
+	if (istype(W, /obj/item/disk/data)) //INSERT SOME DISKETTES
 		if (!src.diskette)
 			user.drop_from_inventory(W,src)
 			src.diskette = W
@@ -101,9 +100,15 @@
 	return
 
 /obj/machinery/computer/cloning/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return attack_hand(user)
 
 /obj/machinery/computer/cloning/attack_hand(mob/user as mob)
+	if(!allowed(user))
+		to_chat(user, "<span class='warning'>Access Denied.</span>")
+		return
+
 	user.set_machine(src)
 	add_fingerprint(user)
 
@@ -177,7 +182,7 @@
 			else
 				dat += {"<br><font size=1><a href='byond://?src=\ref[src];del_rec=1'>Delete Record</a></font><br>
 					<b>Name:</b> [src.active_record.dna.real_name]<br>"}
-				var/obj/item/weapon/implant/health/H = null
+				var/obj/item/implant/health/H = null
 				if(src.active_record.implant)
 					H=locate(src.active_record.implant)
 
@@ -263,8 +268,8 @@
 			src.menu = 4
 
 		else if (src.menu == 4)
-			var/obj/item/weapon/card/id/C = usr.get_active_hand()
-			if (istype(C)||istype(C, /obj/item/device/pda))
+			var/obj/item/card/id/C = usr.GetIdCard()
+			if (istype(C))
 				if(src.check_access(C))
 					src.records.Remove(src.active_record)
 					qdel(src.active_record)
@@ -372,7 +377,7 @@
 	if (!subject.has_brain())
 		if(istype(subject, /mob/living/carbon/human))
 			var/mob/living/carbon/human/H = subject
-			if(H.species.has_organ["brain"])
+			if(H.species.has_organ[BP_BRAIN])
 				scantemp = "Error: No signs of intelligence detected."
 		else
 			scantemp = "Error: No signs of intelligence detected."
@@ -403,9 +408,9 @@
 	R.cloning_species = subject.species.get_cloning_variant()
 
 	//Add an implant if needed
-	var/obj/item/weapon/implant/health/imp = locate(/obj/item/weapon/implant/health, subject)
+	var/obj/item/implant/health/imp = locate(/obj/item/implant/health, subject)
 	if (isnull(imp))
-		imp = new /obj/item/weapon/implant/health(subject)
+		imp = new /obj/item/implant/health(subject)
 		imp.implanted = subject
 		R.implant = "\ref[imp]"
 	//Update it if needed

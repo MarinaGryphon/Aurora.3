@@ -19,7 +19,7 @@
 	desc = "You have a chronic case of stuttering, repeating sounds involuntarily."
 
 /datum/character_disabilities/stutter/apply_self(var/mob/living/carbon/human/H)
-	H.disabilities |= STUTTER
+	H.disabilities |= STUTTERING
 
 /datum/character_disabilities/deuteranomaly
 	name = "Deuteranopia"
@@ -72,3 +72,4 @@
 	if(H.max_stamina)
 		H.max_stamina *= 0.8
 		H.stamina = H.max_stamina
+

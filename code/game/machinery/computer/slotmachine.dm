@@ -4,18 +4,18 @@
 #define JACKPOT 10000
 #define SPIN_TIME 65
 #define REEL_DEACTIVATE_DELAY 7
-#define SEVEN "<font color='red'>7</font>"
+#define SEVEN "<span class='warning'>7</span>"
 
 /obj/machinery/computer/slot_machine
 	name = "slot machine"
-	desc = "Gambling for the antisocial."
+	desc = "A large slot machine with various colourful slots on its face and a lever on its side. It takes various material coins."
 	icon = 'icons/obj/machines/slotmachine.dmi'
 	icon_state = "slots1"
 	density = TRUE
 	use_power = 1
 	idle_power_usage = 250
 	active_power_usage = 500
-	circuit = /obj/item/weapon/circuitboard/slot_machine
+	circuit = /obj/item/circuitboard/slot_machine
 	var/emmaged = FALSE
 	var/money = 3000 //How much money it has CONSUMED
 	var/plays = 0
@@ -24,7 +24,7 @@
 	var/jackpots = 0
 	var/list/coinvalues = list()
 	var/list/reels = list(list("", "", "") = 0, list("", "", "") = 0, list("", "", "") = 0, list("", "", "") = 0, list("", "", "") = 0)
-	var/list/symbols = list(SEVEN = 1, "<font color='orange'>&</font>" = 2, "<font color='yellow'>@</font>" = 2, "<font color='green'>$</font>" = 2, "<font color='blue'>?</font>" = 2, "<font color='grey'>#</font>" = 2, "<font color='white'>!</font>" = 2, "<font color='fuchsia'>%</font>" = 2) //if people are winning too much, multiply every number in this list by 2 and see if they are still winning too much.
+	var/list/symbols = list(SEVEN = 1, "<font color='orange'>&</font>" = 2, "<font color='yellow'>@</font>" = 2, "<font color='green'>$</font>" = 2, "<span class='notice'>?</span>" = 2, "<font color='grey'>#</font>" = 2, "<font color='white'>!</font>" = 2, "<font color='fuchsia'>%</font>" = 2) //if people are winning too much, multiply every number in this list by 2 and see if they are still winning too much.
 
 	light_color = LIGHT_COLOR_BROWN
 
@@ -41,8 +41,8 @@
 
 	toggle_reel_spin(0)
 
-	for(var/cointype in typesof(/obj/item/weapon/coin))
-		var/obj/item/weapon/coin/C = cointype
+	for(var/cointype in typesof(/obj/item/coin))
+		var/obj/item/coin/C = cointype
 		var/value = get_value(C)
 		coinvalues["[cointype]"] = value
 
@@ -82,8 +82,8 @@
 	update_icon()
 
 /obj/machinery/computer/slot_machine/attackby(obj/item/I, mob/living/user, params)
-	if(istype(I, /obj/item/weapon/coin))
-		var/obj/item/weapon/coin/C = I
+	if(istype(I, /obj/item/coin))
+		var/obj/item/coin/C = I
 		to_chat(user, "<span class='notice'>You insert a \the [C] into \the [src]'s slot!</span>")
 		var/value = get_value(C)
 		balance += value
@@ -95,7 +95,7 @@
 	if(!emagged)
 		emmaged = TRUE
 		spark(src, 3)
-		playsound(src, "sparks", 50, 1)
+		playsound(src, /decl/sound_category/spark_sound, 50, 1)
 		return TRUE
 
 /obj/machinery/computer/slot_machine/ui_interact(mob/living/user)
@@ -171,7 +171,7 @@
 	update_icon()
 	updateUsrDialog()
 
-	addtimer(CALLBACK(src, .proc/do_reels), 0)
+	INVOKE_ASYNC(src, .proc/do_reels)
 
 	addtimer(CALLBACK(src, .proc/finish_spin, user, the_name), SPIN_TIME - (REEL_DEACTIVATE_DELAY * reels.len)) //WARNING: no sanity checking for user since it's not needed and would complicate things (machine should still spin even if user is gone), be wary of this if you're changing this code.
 
@@ -224,8 +224,8 @@
 		money = 0
 
 		for(var/i = 0, i < 5, i++)
-			var/cointype = pick(subtypesof(/obj/item/weapon/coin))
-			var/obj/item/weapon/coin/C = new cointype(loc)
+			var/cointype = pick(subtypesof(/obj/item/coin))
+			var/obj/item/coin/C = new cointype(loc)
 			C.forceMove(get_turf(src))
 
 	else if(linelength == 5)
@@ -270,7 +270,7 @@
 	balance += surplus
 
 /obj/machinery/computer/slot_machine/proc/give_coins(amount)
-	var/cointype = emagged ? /obj/item/weapon/coin/iron : /obj/item/weapon/coin/silver
+	var/cointype = emagged ? /obj/item/coin/iron : /obj/item/coin/silver
 
 	if(!(emagged))
 		amount = dispense(amount, cointype, null, 0)
@@ -282,10 +282,10 @@
 
 	return amount
 
-/obj/machinery/computer/slot_machine/proc/dispense(amount = 0, cointype = /obj/item/weapon/coin/silver, mob/living/target, throwit = 0)
+/obj/machinery/computer/slot_machine/proc/dispense(amount = 0, cointype = /obj/item/coin/silver, mob/living/target, throwit = 0)
 	var/value = coinvalues["[cointype]"]
 	while(amount >= value)
-		var/obj/item/weapon/coin/C = new cointype(loc)
+		var/obj/item/coin/C = new cointype(loc)
 		amount -= value
 		if(throwit && target)
 			C.throw_at(target, 3, 10)

@@ -3,7 +3,7 @@
 	icon_state = "spark"
 	damage = 0
 	damage_type = BURN
-	check_armour = "energy"
+	check_armor = "energy"
 
 //releases a burst of light on impact or after travelling a distance
 /obj/item/projectile/energy/flash
@@ -16,14 +16,19 @@
 	var/brightness = 7
 	var/light_duration = 5
 
-/obj/item/projectile/energy/flash/on_impact(var/atom/A)
-	var/turf/T = flash_range? src.loc : get_turf(A)
-	if(!istype(T)) return
+/obj/item/projectile/energy/flash/on_impact(var/atom/A, affected_limb)
+	var/turf/T = flash_range ? src.loc : get_turf(A)
+	if(!istype(T))
+		return
 
 	//blind adjacent people
-	for (var/mob/living/carbon/M in viewers(T, flash_range))
+	for(var/mob/living/carbon/M in viewers(T, flash_range))
 		if(M.eyecheck() < FLASH_PROTECTION_MODERATE)
-			flick("e_flash", M.flash)
+			M.confused = rand(5,15)
+			M.flash_eyes()
+		else if(affected_limb && M == A)
+			M.confused = rand(2, 7)
+			flick("flash", M.flash)
 
 	//snap pop
 	playsound(src, 'sound/effects/snap.ogg', 50, 1)
@@ -43,10 +48,11 @@
 /obj/item/projectile/energy/electrode
 	name = "electrode"
 	icon_state = "spark"
-	nodamage = 1
+	damage = 2 //Flavor.
+	damage_type = BURN
 	taser_effect = 1
 	agony = 40
-	damage_type = HALLOSS
+	eyeblur = 1
 	//Damage will be handled on the MOB side, to prevent window shattering.
 
 /obj/item/projectile/energy/electrode/stunshot
@@ -72,17 +78,14 @@
 /obj/item/projectile/energy/bolt
 	name = "bolt"
 	icon_state = "cbbolt"
-	damage = 10
-	damage_type = TOX
-	nodamage = 0
-	agony = 40
+	damage_type = PAIN
+	agony = 45
 	stutter = 10
-
 
 /obj/item/projectile/energy/bolt/large
 	name = "largebolt"
-	damage = 20
-
+	damage_type = PAIN
+	agony = 60
 
 /obj/item/projectile/energy/neurotoxin
 	name = "neuro"
@@ -94,15 +97,13 @@
 /obj/item/projectile/energy/phoron
 	name = "phoron bolt"
 	icon_state = "energy"
-	damage = 20
-	damage_type = TOX
 	irradiate = 20
 
 /obj/item/projectile/energy/bfg
 	name = "distortion"
 	icon = 'icons/obj/projectiles.dmi'
 	icon_state = "bfg"
-	check_armour = "bomb"
+	check_armor = "bomb"
 	damage = 60
 	damage_type = BRUTE
 	pass_flags = PASSTABLE | PASSGLASS | PASSGRILLE
@@ -132,7 +133,7 @@
 			if(M.stat == DEAD)
 				M.gib()
 			else
-				M.apply_damage(60, BRUTE, "head")
+				M.apply_damage(60, BRUTE, BP_HEAD)
 			playsound(src, 'sound/magic/LightningShock.ogg', 75, 1)
 		else if(isturf(a) || isobj(a))
 			var/atom/A = a
@@ -140,24 +141,6 @@
 				continue
 			A.ex_act(2)
 			playsound(src, 'sound/magic/LightningShock.ogg', 75, 1)
-
-/obj/item/projectile/energy/tesla
-	name = "tesla bolt"
-	icon = 'icons/effects/effects.dmi'
-	icon_state = "lightning1"
-	damage = 10
-	damage_type = BURN
-	pass_flags = PASSTABLE | PASSGRILLE
-	range = 40
-	embed = 0
-	speed = 1.5
-	light_range = 5
-	light_color = "#b5ff5b"
-
-/obj/item/projectile/energy/tesla/on_impact(atom/target)
-	. = ..()
-	if(isliving(target))
-		tesla_zap(target, 3, 5000)
 
 /obj/item/projectile/energy/gravitydisabler
 	name = "gravity disabler"
@@ -190,7 +173,7 @@
 	name = "bees"
 	icon = 'icons/obj/apiary_bees_etc.dmi'
 	icon_state = "beegun"
-	check_armour = "bio"
+	check_armor = "bio"
 	damage = 5
 	damage_type = BRUTE
 	pass_flags = PASSTABLE | PASSGRILLE
@@ -200,7 +183,7 @@
 /obj/item/projectile/energy/bee/on_impact(var/atom/A)
 	playsound(src.loc, pick('sound/effects/Buzz1.ogg','sound/effects/Buzz2.ogg'), 70, 1)
 	var/turf/T = get_turf(A)
-	if(!istype(T, /turf/simulated/wall) && !istype(T, /turf/simulated/shuttle/wall) && !istype(A, /obj/structure/window) && !istype(A, /obj/machinery/door))
+	if(!istype(T, /turf/simulated/wall) && !istype(A, /obj/structure/window) && !istype(A, /obj/machinery/door))
 		for(var/i=1, i<=8, i++)
 			var/atom/movable/x = new /mob/living/simple_animal/bee/beegun //hackmaster pro, butt fuck it
 			x.forceMove(T)
@@ -212,11 +195,27 @@
 	name = "blaster bolt"
 	icon_state = "heavybolt"
 	damage = 30
-	check_armour = "laser"
+	check_armor = "laser"
 	damage_type = BURN
 	pass_flags = PASSTABLE | PASSGLASS | PASSGRILLE
 	muzzle_type = /obj/effect/projectile/muzzle/bolt
 	hit_effect = /obj/effect/temp_visual/blaster_effect
+
+/obj/item/projectile/energy/blaster/disruptor
+	damage = 20
+	pass_flags = PASSTABLE
+
+/obj/item/projectile/energy/disruptorstun
+	name = "disruptor bolt"
+	icon_state = "blue_laser"
+	agony = 30
+	speed = 0.4
+	damage_type = PAIN // Can't blow your own head off with a stunbolt.
+	taser_effect = TRUE
+	eyeblur = TRUE
+	pass_flags = PASSTABLE
+	muzzle_type = /obj/effect/projectile/muzzle/bolt
+
 
 /obj/item/projectile/energy/blaster/heavy
 	damage = 35

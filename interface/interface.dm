@@ -37,7 +37,7 @@
 			return
 		send_link(src, config.githuburl + "/issues")
 	else
-		to_chat(src, span("warning", "The issue tracker URL is not set in the server configuration."))
+		to_chat(src, SPAN_WARNING("The issue tracker URL is not set in the server configuration."))
 	return
 
 #define RULES_FILE "config/rules.html"
@@ -45,7 +45,8 @@
 	set name = "Rules"
 	set desc = "Show Server Rules."
 	set hidden = 1
-	src << browse(file(RULES_FILE), "window=rules;size=640x500")
+	send_theme_resources(src)
+	src << browse(enable_ui_theme(src, file2text(RULES_FILE)), "window=rules;size=640x500")
 #undef RULES_FILE
 
 /client/verb/hotkeys_help()
@@ -182,7 +183,7 @@ Any-Mode: (hotkey doesn't need to be on)
 			return
 		send_link(src, config.webint_url)
 	else
-		to_chat(src, span("warning", "The web interface URL is not set in the server configuration."))
+		to_chat(src, SPAN_WARNING("The web interface URL is not set in the server configuration."))
 	return
 
 /client/verb/open_discord()
@@ -196,6 +197,6 @@ Any-Mode: (hotkey doesn't need to be on)
 			if (url_link)
 				send_link(src, url_link)
 			else
-				to_chat(src, span("danger", "An error occured retreiving the invite."))
+				to_chat(src, SPAN_DANGER("An error occured retreiving the invite."))
 	else
-		to_chat(src, span("warning", "The serverside Discord bot is not set up."))
+		to_chat(src, SPAN_WARNING("The serverside Discord bot is not set up."))

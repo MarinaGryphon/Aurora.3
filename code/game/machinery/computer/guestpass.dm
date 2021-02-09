@@ -1,29 +1,30 @@
 /////////////////////////////////////////////
 //Guest pass ////////////////////////////////
 /////////////////////////////////////////////
-/obj/item/weapon/card/id/guest
+/obj/item/card/id/guest
 	name = "guest pass"
 	desc = "Allows temporary access to station areas."
 	icon_state = "guest"
+	overlay_state = "guest"
 
 	var/temp_access = list() //to prevent agent cards stealing access as permanent
 	var/expiration_time = 0
 	var/reason = "NOT SPECIFIED"
 
-/obj/item/weapon/card/id/guest/GetAccess()
+/obj/item/card/id/guest/GetAccess()
 	if (world.time > expiration_time)
 		return access
 	else
 		return temp_access
 
-/obj/item/weapon/card/id/guest/examine(mob/user)
+/obj/item/card/id/guest/examine(mob/user)
 	..(user)
 	if (world.time < expiration_time)
 		to_chat(user, "<span class='notice'>This pass expires at [worldtime2text(expiration_time)].</span>")
 	else
 		to_chat(user, "<span class='warning'>It expired at [worldtime2text(expiration_time)].</span>")
 
-/obj/item/weapon/card/id/guest/read()
+/obj/item/card/id/guest/read()
 	if (world.time > expiration_time)
 		to_chat(usr, "<span class='notice'>This pass expired at [worldtime2text(expiration_time)].</span>")
 	else
@@ -35,13 +36,14 @@
 	to_chat(usr, "<span class='notice'>Issuing reason: [reason].</span>")
 	return
 
-/obj/item/weapon/card/id/guest/Initialize(mapload, duration)
+/obj/item/card/id/guest/Initialize(mapload, duration)
 	. = ..(mapload)
 	expiration_time = duration + world.time
 	addtimer(CALLBACK(src, .proc/expire), duration)
 
-/obj/item/weapon/card/id/guest/proc/expire()
+/obj/item/card/id/guest/proc/expire()
 	icon_state += "_invalid"
+	overlay_state += "_invalid"
 
 /////////////////////////////////////////////
 //Guest pass terminal////////////////////////
@@ -50,14 +52,16 @@
 /obj/machinery/computer/guestpass
 	name = "guest pass terminal"
 	desc = "Allows issuing temporary access to an area."
-	icon_state = "guest"
+	icon_state = "guestw"
 
 	light_color = LIGHT_COLOR_BLUE
-	icon_screen = "pass"
-	is_holographic = FALSE
-	density = 0
+	icon_state = "altcomputerw"
+	icon_screen = "guest"
+	icon_scanline = "altcomputerw-scanline"
+	density = FALSE
+	appearance_flags = TILE_BOUND // prevents people from viewing the overlay through a wall
 
-	var/obj/item/weapon/card/id/giver
+	var/obj/item/card/id/giver
 	var/list/accesses = list()
 	var/giv_name = "NOT SPECIFIED"
 	var/reason = "NOT SPECIFIED"
@@ -71,7 +75,7 @@
 	uid = "[rand(100,999)]-G[rand(10,99)]"
 
 /obj/machinery/computer/guestpass/attackby(obj/O, mob/user)
-	if(istype(O, /obj/item/weapon/card/id))
+	if(istype(O, /obj/item/card/id))
 		if(!giver && user.unEquip(O))
 			O.forceMove(src)
 			giver = O
@@ -82,6 +86,8 @@
 	..()
 
 /obj/machinery/computer/guestpass/attack_ai(var/mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return attack_hand(user)
 
 /obj/machinery/computer/guestpass/attack_hand(var/mob/user as mob)
@@ -109,13 +115,13 @@
 			for (var/A in giver.access)
 				var/area = get_access_desc(A)
 				if (A in accesses)
-					area = "<b>[area]</b>"
+					area = "<span style='color:#00dd12'>[area]</span>"
 				dat += "<a href='?src=\ref[src];choice=access;access=[A]'>[area]</a><br>"
 		dat += "<br><a href='?src=\ref[src];action=issue'>Issue pass</a><br>"
 
-	user << browse(dat, "window=guestpass;size=400x520")
-	onclose(user, "guestpass")
-
+	var/datum/browser/guestpass_win = new(user, "guestpass", capitalize_first_letters(name), 400, 520)
+	guestpass_win.set_content(dat)
+	guestpass_win.open()
 
 /obj/machinery/computer/guestpass/Topic(href, href_list)
 	if(..())
@@ -127,7 +133,7 @@
 	if (href_list["choice"])
 		switch(href_list["choice"])
 			if ("giv_name")
-				var/nam = sanitize(input("Person pass is issued to", "Name", giv_name) as text|null)
+				var/nam = sanitizeName(input("Person pass is issued to", "Name", giv_name) as text|null)
 				if (nam)
 					giv_name = nam
 			if ("reason")
@@ -135,9 +141,9 @@
 				if(reas)
 					reason = reas
 			if ("duration")
-				var/dur = input("Duration (in minutes) during which pass is valid (up to 30 minutes).", "Duration") as num|null
+				var/dur = input("Duration (in minutes) during which pass is valid (up to 60 minutes).", "Duration") as num|null
 				if (dur)
-					if (dur > 0 && dur <= 30)
+					if (dur > 0 && dur <= 60)
 						duration = dur
 					else
 						to_chat(usr, "<span class='warning'>Invalid duration.</span>")
@@ -162,7 +168,7 @@
 					accesses.Cut()
 				else
 					var/obj/item/I = usr.get_active_hand()
-					if (istype(I, /obj/item/weapon/card/id) && usr.unEquip(I))
+					if (istype(I, /obj/item/card/id) && usr.unEquip(I))
 						I.forceMove(src)
 						giver = I
 				updateUsrDialog()
@@ -173,7 +179,7 @@
 					dat += "[entry]<br><hr>"
 				//to_chat(usr, "Printing the log, standby...")
 				//sleep(50)
-				var/obj/item/weapon/paper/P = new/obj/item/weapon/paper( loc )
+				var/obj/item/paper/P = new/obj/item/paper( loc )
 				P.set_content_unsafe("activity log", dat)
 
 			if ("issue")
@@ -188,7 +194,7 @@
 					entry += ". Expires at [worldtime2text(world.time + duration*10*60)]."
 					internal_log.Add(entry)
 
-					var/obj/item/weapon/card/id/guest/pass = new(loc, duration MINUTES)
+					var/obj/item/card/id/guest/pass = new(loc, duration MINUTES)
 					pass.temp_access = accesses.Copy()
 					pass.registered_name = giv_name
 					pass.reason = reason

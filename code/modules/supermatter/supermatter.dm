@@ -20,8 +20,8 @@
 #define DECAY_FACTOR 700			//Affects how fast the supermatter power decays
 #define CRITICAL_TEMPERATURE 5000	//K
 #define CHARGING_FACTOR 0.05
-#define DAMAGE_RATE_LIMIT 3			//damage rate cap at power = 300, scales linearly with power
-
+#define DAMAGE_RATE_LIMIT 2			//damage rate cap at power = 300, scales linearly with power
+#define SPACED_DAMAGE_FACTOR 0.5	//multiplier for damage taken in a vacuum, but on a tile. Used to prevent/configure near-instant explosions when vented
 
 //These would be what you would get at point blank, decreases with distance
 #define DETONATION_RADS 200
@@ -35,10 +35,22 @@
 /obj/machinery/power/supermatter
 	name = "Supermatter"
 	desc = "A strangely translucent and iridescent crystal. <span class='warning'>You get headaches just from looking at it.</span>"
+	desc_info = "When energized by a laser (or something hitting it), it emits radiation and heat.  If the heat reaches above 7000 kelvin, it will send an alert and start taking damage. \
+	After integrity falls to zero percent, it will delaminate, causing a massive explosion, station-wide radiation spikes, and hallucinations. \
+	Supermatter reacts badly to oxygen in the atmosphere.  It'll also heat up really quick if it is in vacuum.<br>\
+	<br>\
+	Supermatter cores are extremely dangerous to be close to, and requires protection to handle properly.  The protection you will need is:<br>\
+	Optical meson scanners on your eyes, to prevent hallucinations when looking at the supermatter.<br>\
+	Radiation helmet and suit, as the supermatter is radioactive.<br>\
+	<br>\
+	Touching the supermatter will result in *instant death*, with no corpse left behind!  You can drag the supermatter, but anything else will kill you."
+	desc_antag = "Always ahelp before sabotaging the supermatter, as it can potentially ruin the round. Exposing the supermatter to oxygen or vaccuum will cause it to start rapidly heating up.  \
+	Sabotaging the supermatter and making it explode will cause a period of lag as the explosion is processed by the server, as well as irradiating the entire station and causing hallucinations to happen.  \
+	Wearing radiation equipment will protect you from most of the delamination effects sans explosion."
 	icon = 'icons/obj/engine.dmi'
 	icon_state = "darkmatter"
-	density = 1
-	anchored = 0
+	density = TRUE
+	anchored = FALSE
 	light_range = 4
 	light_power = 1
 
@@ -62,6 +74,8 @@
 	uv_intensity = 255
 	var/warning_color = "#B8B800"
 	var/emergency_color = "#D9D900"
+
+	var/filter_offset = 0
 
 	var/grav_pulling = 0
 	var/pull_radius = 14
@@ -99,6 +113,7 @@
 	. = ..()
 	radio = new /obj/item/device/radio{channels=list("Engineering")}(src)
 	soundloop = new(list(src), TRUE)
+	filters += filter(type="rays", size=0, factor=1)
 
 /obj/machinery/power/supermatter/Destroy()
 	QDEL_NULL(radio)
@@ -195,7 +210,9 @@
 		return  //Yeah just stop.
 
 	if(power)
-		soundloop.volume = min(40, (round(power/100)/50)+1)
+		soundloop.volume = min(100, (round(power/7)+1))
+	else
+		soundloop.volume = 0
 
 	if(damage > explosion_point)
 		if(!exploded)
@@ -226,7 +243,7 @@
 		removed = env.remove(gasefficency * env.total_moles)	//Remove gas from surrounding area
 
 	if(!env || !removed || !removed.total_moles)
-		damage += max((power - 15*POWER_FACTOR)/10, 0)
+		damage += max((SPACED_DAMAGE_FACTOR*(power - 15*POWER_FACTOR))/10, 0)
 	else if (grav_pulling) //If supermatter is detonating, remove all air from the zone
 		env.remove(env.total_moles)
 	else
@@ -235,7 +252,7 @@
 		damage = max( damage + min( ( (removed.temperature - CRITICAL_TEMPERATURE) / 150 ), damage_inc_limit ) , 0 )
 		//Ok, 100% oxygen atmosphere = best reaction
 		//Maxes out at 100% oxygen pressure
-		oxygen = max(min((removed.gas["oxygen"] - (removed.gas["nitrogen"] * NITROGEN_RETARDATION_FACTOR)) / removed.total_moles, 1), 0)
+		oxygen = max(min((removed.gas[GAS_OXYGEN] - (removed.gas[GAS_NITROGEN] * NITROGEN_RETARDATION_FACTOR)) / removed.total_moles, 1), 0)
 
 		//calculate power gain for oxygen reaction
 		var/temp_factor
@@ -259,8 +276,8 @@
 
 		//Release reaction gasses
 		var/heat_capacity = removed.heat_capacity()
-		removed.adjust_multi("phoron", max(device_energy / PHORON_RELEASE_MODIFIER, 0), \
-		                     "oxygen", max((device_energy + removed.temperature - T0C) / OXYGEN_RELEASE_MODIFIER, 0))
+		removed.adjust_multi(GAS_PHORON, max(device_energy / PHORON_RELEASE_MODIFIER, 0), \
+		                     GAS_OXYGEN, max((device_energy + removed.temperature - T0C) / OXYGEN_RELEASE_MODIFIER, 0))
 
 		var/thermal_power = THERMAL_RELEASE_MODIFIER * device_energy
 		if (debug)
@@ -274,7 +291,7 @@
 		env.merge(removed)
 
 	for(var/mob/living/carbon/human/l in view(src, min(7, round(sqrt(power/6))))) // If they can see it without mesons on.  Bad on them.
-		if(!istype(l.glasses, /obj/item/clothing/glasses/meson) && !l.is_diona() && !l.isSynthetic())
+		if(!istype(l.glasses, /obj/item/clothing/glasses/safety) && !l.is_diona() && !l.isSynthetic())
 			l.hallucination = max(0, min(200, l.hallucination + power * config_hallucination_power * sqrt( 1 / max(1,get_dist(l, src)) ) ) )
 			if(prob(15))
 				l.cure_all_traumas(cure_type = CURE_HYPNOSIS)
@@ -297,6 +314,7 @@
 
 	power -= (power/DECAY_FACTOR)**3		//energy losses due to radiation
 
+	animate(filters[1], size=max(0, power+1), offset=++filter_offset, time=1 SECONDS, easing=ELASTIC_EASING|EASE_IN|EASE_OUT)
 	return 1
 
 
@@ -322,10 +340,12 @@
 	return
 
 /obj/machinery/power/supermatter/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	ui_interact(user)
 
 /obj/machinery/power/supermatter/attack_hand(mob/user as mob)
-	user.visible_message("<span class=\"warning\">\The [user] reaches out and touches \the [src], inducing a resonance... \his body starts to glow and bursts into flames before flashing into ash.</span>",\
+	user.visible_message("<span class=\"warning\">\The [user] reaches out and touches \the [src], inducing a resonance... [user.get_pronoun("he")] body starts to glow and bursts into flames before flashing into ash.</span>",\
 		"<span class=\"danger\">You reach out and touch \the [src]. Everything starts burning and all you can hear is ringing. Your last thought is \"That was not a wise decision.\"</span>",\
 		"<span class=\"warning\">You hear an uneartly ringing, then what sounds like a shrilling kettle as you are washed with a wave of heat.</span>")
 
@@ -366,7 +386,7 @@
 	return
 */
 
-/obj/machinery/power/supermatter/attackby(obj/item/weapon/W as obj, mob/living/user as mob)
+/obj/machinery/power/supermatter/attackby(obj/item/W as obj, mob/living/user as mob)
 	user.visible_message("<span class=\"warning\">\The [user] touches \a [W] to \the [src] as a silence fills the room...</span>",\
 		"<span class=\"danger\">You touch \the [W] to \the [src] when everything suddenly goes silent.\"</span>\n<span class=\"notice\">\The [W] flashes into dust as you flinch away from \the [src].</span>",\
 		"<span class=\"warning\">Everything suddenly goes silent.</span>")
@@ -385,7 +405,7 @@
 	if(isprojectile(AM))
 		return
 	if(istype(AM, /mob/living))
-		AM.visible_message("<span class=\"warning\">\The [AM] slams into \the [src] inducing a resonance... \his body starts to glow and catch flame before flashing into ash.</span>",\
+		AM.visible_message("<span class=\"warning\">\The [AM] slams into \the [src] inducing a resonance... [AM.get_pronoun("his")] body starts to glow and catch flame before flashing into ash.</span>",\
 		"<span class=\"danger\">You slam into \the [src] as your ears are filled with unearthly ringing. Your last thought is \"Oh, fuck.\"</span>",\
 		"<span class=\"warning\">You hear an uneartly ringing, then what sounds like a shrilling kettle as you are washed with a wave of heat.</span>")
 	else if(!grav_pulling) //To prevent spam, detonating supermatter does not indicate non-mobs being destroyed
@@ -400,8 +420,8 @@
 		user.dust()
 		power += 200
 	else
-		if (istype(user, /obj/item/weapon/holder))
-			var/obj/item/weapon/holder/H = user
+		if (istype(user, /obj/item/holder))
+			var/obj/item/holder/H = user
 			Consume(H.contained)//If its a holder, eat the thing inside
 			qdel(H)
 			return
@@ -456,3 +476,4 @@
 	return
 
 #undef LIGHT_POWER_CALC
+#undef SPACED_DAMAGE_FACTOR

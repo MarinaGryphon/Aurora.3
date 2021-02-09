@@ -52,7 +52,7 @@
 
 /obj/item/integrated_circuit/input/numberpad/ask_for_input(mob/user)
 	var/new_input = input(user, "Enter a number, please.","Number pad") as null|num
-	if(isnum(new_input) && CanInteract(user, physical_state))
+	if(isnum(new_input) && assembly.check_interactivity(user))
 		set_pin_data(IC_OUTPUT, 1, new_input)
 		push_data()
 		activate_pin(1)
@@ -71,7 +71,7 @@
 
 /obj/item/integrated_circuit/input/textpad/ask_for_input(mob/user)
 	var/new_input = sanitize(input(user, "Enter some words, please.","Number pad") as null|text, MAX_MESSAGE_LEN, 1, 0, 1)
-	if(istext(new_input) && CanInteract(user, physical_state))
+	if(istext(new_input) && assembly.check_interactivity(user))
 		set_pin_data(IC_OUTPUT, 1, new_input)
 		push_data()
 		activate_pin(1)
@@ -90,7 +90,7 @@
 
 /obj/item/integrated_circuit/input/colorpad/ask_for_input(mob/user)
 	var/new_color = input(user, "Enter a color, please.", "Color pad", get_pin_data(IC_OUTPUT, 1)) as color|null
-	if(new_color && CanInteract(user, physical_state))
+	if(new_color && assembly.check_interactivity(user))
 		set_pin_data(IC_OUTPUT, 1, new_color)
 		push_data()
 		activate_pin(1)
@@ -345,7 +345,7 @@
 	var/datum/radio_frequency/radio_connection
 
 /obj/item/integrated_circuit/input/signaler/Initialize()
-	..()
+	. = ..()
 	set_frequency(frequency)
 	// Set the pins so when someone sees them, they won't show as null
 	set_pin_data(IC_INPUT, 1, frequency)
@@ -399,7 +399,7 @@
 	activate_pin(3)
 
 	for(var/mob/O in hearers(1, get_turf(src)))
-		O.show_message(text("\icon[] *beep* *beep*", src), 3, "*beep* *beep*", 2)
+		O.show_message(text("[icon2html(src, viewers(get_turf(src)))] *beep* *beep*"), 3, "*beep* *beep*", 2)
 
 //This circuit gives information on where the machine is.
 /obj/item/integrated_circuit/input/gps
@@ -497,18 +497,17 @@
 	spawn_flags = IC_SPAWN_DEFAULT|IC_SPAWN_RESEARCH
 	power_draw_per_use = 120
 
-/obj/item/integrated_circuit/input/sensor/proc/sense(var/atom/A, mob/user)
-	if(!user.Adjacent(A))
+/obj/item/integrated_circuit/input/sensor/proc/sense(var/atom/A, mob/user, proximity)
+	if(!proximity)
 		return FALSE
 	var/ignore_bags = get_pin_data(IC_INPUT, 1)
-	if(ignore_bags)
-		if(istype(A, /obj/item/weapon/storage))
-			return FALSE
+	if(ignore_bags && istype(A, /obj/item/storage))
+		return FALSE
 
 	set_pin_data(IC_OUTPUT, 1, A)
 	push_data()
 	activate_pin(1)
-	user.visible_message(span("notice", "[user] waves [assembly] around [A]."), span("notice", "You scan [A] with [assembly]."))
+	user.visible_message(SPAN_NOTICE("[user] waves [assembly] around [A]."), SPAN_NOTICE("You scan [A] with [assembly]."))
 	return TRUE
 
 /obj/item/integrated_circuit/input/atmo_scanner
@@ -521,10 +520,11 @@
 	outputs = list(
 		"pressure"       = IC_PINTYPE_NUMBER,
 		"temperature"    = IC_PINTYPE_NUMBER,
-		"oxygen"         = IC_PINTYPE_NUMBER,
-		"nitrogen"       = IC_PINTYPE_NUMBER,
-		"carbon dioxide" = IC_PINTYPE_NUMBER,
-		"phoron"         = IC_PINTYPE_NUMBER,
+		GAS_OXYGEN         = IC_PINTYPE_NUMBER,
+		GAS_NITROGEN       = IC_PINTYPE_NUMBER,
+		GAS_CO2 		   = IC_PINTYPE_NUMBER,
+		GAS_PHORON         = IC_PINTYPE_NUMBER,
+		GAS_HYDROGEN	   = IC_PINTYPE_NUMBER,
 		"other"          = IC_PINTYPE_NUMBER
 	)
 	activators = list("scan" = IC_PINTYPE_PULSE_IN, "on scanned" = IC_PINTYPE_PULSE_OUT)
@@ -592,11 +592,11 @@
 	if(AM)
 
 
-		var/obj/item/weapon/cell/cell = null
-		if(istype(AM, /obj/item/weapon/cell)) // Is this already a cell?
+		var/obj/item/cell/cell = null
+		if(istype(AM, /obj/item/cell)) // Is this already a cell?
 			cell = AM
 		else // If not, maybe there's a cell inside it?
-			for(var/obj/item/weapon/cell/C in AM.contents)
+			for(var/obj/item/cell/C in AM.contents)
 				if(C) // Find one cell to charge.
 					cell = C
 					break
@@ -621,10 +621,11 @@
 	var/total_moles = environment.total_moles
 
 	if (total_moles)
-		var/o2_level = environment.gas["oxygen"]/total_moles
-		var/n2_level = environment.gas["nitrogen"]/total_moles
-		var/co2_level = environment.gas["carbon_dioxide"]/total_moles
-		var/phoron_level = environment.gas["phoron"]/total_moles
+		var/o2_level = environment.gas[GAS_OXYGEN]/total_moles
+		var/n2_level = environment.gas[GAS_NITROGEN]/total_moles
+		var/co2_level = environment.gas[GAS_CO2]/total_moles
+		var/phoron_level = environment.gas[GAS_PHORON]/total_moles
+		var/hydrogen_level = environment.gas[GAS_HYDROGEN]/total_moles
 		var/unknown_level =  1-(o2_level+n2_level+co2_level+phoron_level)
 		set_pin_data(IC_OUTPUT, 1, pressure)
 		set_pin_data(IC_OUTPUT, 2, round(environment.temperature-T0C,0.1))
@@ -632,7 +633,8 @@
 		set_pin_data(IC_OUTPUT, 4, round(n2_level*100,0.1))
 		set_pin_data(IC_OUTPUT, 5, round(co2_level*100,0.1))
 		set_pin_data(IC_OUTPUT, 6, round(phoron_level*100,0.01))
-		set_pin_data(IC_OUTPUT, 7, round(unknown_level, 0.01))
+		set_pin_data(IC_OUTPUT, 7, round(hydrogen_level*100,0.01))
+		set_pin_data(IC_OUTPUT, 8, round(unknown_level, 0.01))
 	else
 		set_pin_data(IC_OUTPUT, 1, 0)
 		set_pin_data(IC_OUTPUT, 2, -273.15)
@@ -641,6 +643,7 @@
 		set_pin_data(IC_OUTPUT, 5, 0)
 		set_pin_data(IC_OUTPUT, 6, 0)
 		set_pin_data(IC_OUTPUT, 7, 0)
+		set_pin_data(IC_OUTPUT, 8, 0)
 	push_data()
 	activate_pin(2)
 
@@ -713,8 +716,8 @@
 	origin_tech = list(TECH_ENGINEERING = 3, TECH_DATA = 3)
 	power_draw_per_use = 20
 
-	var/gas_name = "oxygen"
-	var/gas_display_name = "oxygen"
+	var/gas_name = GAS_OXYGEN
+	var/gas_display_name = GAS_OXYGEN
 
 /obj/item/integrated_circuit/input/gas_sensor/Initialize()
 	name = "[gas_display_name] sensor"
@@ -742,16 +745,20 @@
 	activate_pin(2)
 
 /obj/item/integrated_circuit/input/gas_sensor/co2
-	gas_name = "carbon_dioxide"
+	gas_name = GAS_CO2
 	gas_display_name = "carbon dioxide"
 
 /obj/item/integrated_circuit/input/gas_sensor/nitrogen
-	gas_name = "nitrogen"
+	gas_name = GAS_NITROGEN
 	gas_display_name = "nitrogen"
 
 /obj/item/integrated_circuit/input/gas_sensor/phoron
-	gas_name = "phoron"
-	gas_display_name = "phoron"
+	gas_name = GAS_PHORON
+	gas_display_name = GAS_PHORON
+
+/obj/item/integrated_circuit/input/gas_sensor/hydrogen_level
+	gas_name = GAS_HYDROGEN
+	gas_display_name = GAS_HYDROGEN
 
 /obj/item/integrated_circuit/input/turfpoint
 	name = "tile pointer"
@@ -902,24 +909,18 @@
 	spawn_flags = IC_SPAWN_DEFAULT|IC_SPAWN_RESEARCH
 	power_draw_per_use = 120
 
-/obj/item/integrated_circuit/input/sensor/ranged/sense(atom/A, mob/user)
-	if(!user || (!istype(A)  && !isliving(A)))
+/obj/item/integrated_circuit/input/sensor/ranged/sense(atom/A, mob/user, proximity)
+	if(!user || !istype(A))
 		return FALSE
-	if(user.client)
-		if(!(A in view(user.client)))
-			return FALSE
-	else
-		if(!(A in view(user)))
-			return FALSE
 	if(!check_then_do_work())
 		return FALSE
 	var/ignore_bags = get_pin_data(IC_INPUT, 1)
 	if(ignore_bags)
-		if(istype(A, /obj/item/weapon/storage))
+		if(istype(A, /obj/item/storage))
 			return FALSE
 	set_pin_data(IC_OUTPUT, 1, A)
 	push_data()
-	user.visible_message(span("notice", "[user] points [assembly] at [A]."), span("notice", "You scan [A] with [assembly]."))
+	user.visible_message(SPAN_NOTICE("[user] points [assembly] at [A]."), SPAN_NOTICE("You scan [A] with [assembly]."))
 	activate_pin(1)
 	return TRUE
 
@@ -970,7 +971,7 @@
 	)
 
 /obj/item/integrated_circuit/input/card_reader/attackby_react(obj/item/I, mob/living/user, intent)
-	var/obj/item/weapon/card/id/card = I.GetID()
+	var/obj/item/card/id/card = I.GetID()
 	var/list/access = I.GetAccess()
 	if(!access)
 		return

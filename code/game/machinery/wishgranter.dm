@@ -45,14 +45,12 @@
 				if (!(HULK in user.mutations))
 					user.mutations.Add(HULK)
 					to_chat(user, "<span class='notice'>Your muscles hurt.</span>")
-				if (!(LASER in user.mutations))
-					user.mutations.Add(LASER)
+				if (!(LASER_EYES in user.mutations))
+					user.mutations.Add(LASER_EYES)
 					to_chat(user, "<span class='notice'>You feel pressure building behind your eyes.</span>")
 				if (!(COLD_RESISTANCE in user.mutations))
 					user.mutations.Add(COLD_RESISTANCE)
 					to_chat(user, "<span class='notice'>Your body feels warm.</span>")
-				if (!(TK in user.mutations))
-					user.mutations.Add(TK)
 				if(!(HEAL in user.mutations))
 					user.mutations.Add(HEAL)
 				if (!(XRAY in user.mutations))
@@ -60,19 +58,19 @@
 					user.sight |= (SEE_MOBS|SEE_OBJS|SEE_TURFS)
 					user.see_invisible = SEE_INVISIBLE_LEVEL_TWO
 					to_chat(user, "<span class='notice'>The walls suddenly disappear.</span>")
-					user.set_species("Shadow")
+					user.set_species(SPECIES_REVENANT)
 					user.mind.special_role = "Avatar of the Wish Granter"
 			if("I want to be rich")
 				to_chat(user, "<B>Your wish is granted, but at a terrible cost...</B>")
 				to_chat(user, "The Wish Granter punishes you for your greediness, claiming your soul and warping your body to match the darkness in your heart.")
 				new /obj/structure/closet/syndicate/resources/everything(loc)
-				user.set_species("Shadow")
+				user.set_species(SPECIES_REVENANT)
 				user.mind.special_role = "Avatar of the Wish Granter"
 			if("I want immortality")
 				to_chat(user, "<B>Your wish is granted, but at a terrible cost...</B>")
 				to_chat(user, "The Wish Granter punishes you for your selfishness, claiming your soul and warping your body to match the darkness in your heart.")
 				user.verbs += /mob/living/carbon/proc/immortality
-				user.set_species("Skeleton")
+				user.set_species(SPECIES_SKELETON)
 				user.mind.special_role = "Avatar of the Wish Granter"
 			if("The station is corrupt, it must be destroyed")
 				to_chat(user, "<B>Your wish is granted, but at a terrible cost...</B>")
@@ -80,7 +78,7 @@
 				user.mind.special_role = "Avatar of the Wish Granter"
 				user.hallucination += 10
 				user.adjustBrainLoss(30, 50) //shouldn't kill you
-				user.emote("screams!")
+				user.emote("scream")
 				playsound(user, 'sound/hallucinations/wail.ogg', 40, 1)
 				sleep(30)
 				to_chat(user, "<span class='warning'>Your mind is assaulted by endless horrors, your only desire is to end it, you must fulfill the Wish Granter's desires!</span>")

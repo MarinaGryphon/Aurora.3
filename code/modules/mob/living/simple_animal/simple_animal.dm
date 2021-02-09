@@ -1,3 +1,9 @@
+#define BLOOD_NONE "none"
+#define BLOOD_LIGHT "light"
+#define BLOOD_MEDIUM "medium"
+#define BLOOD_HEAVY "heavy"
+
+
 /mob/living/simple_animal
 	name = "animal"
 	icon = 'icons/mob/npc/animal.dmi'
@@ -14,6 +20,12 @@
 	var/icon_dead = ""
 	var/icon_gib = null	//We only try to show a gibbing animation if this exists.
 
+	appearance_flags = KEEP_TOGETHER
+	var/blood_type = "#A10808" //Blood colour for impact visuals.
+	var/blood_overlay_icon = 'icons/mob/npc/blood_overlay.dmi'
+	var/blood_state = BLOOD_NONE
+	var/image/blood_overlay
+
 	var/list/speak = list()
 	var/speak_chance = 0
 	var/list/emote_hear = list()	//Hearable emotes
@@ -26,6 +38,7 @@
 	universal_speak = 0		//No, just no.
 	var/meat_amount = 0
 	var/meat_type
+	var/stop_thinking = FALSE // prevents them from doing any AI stuff whatsoever
 	var/stop_automated_movement = 0 //Use this to temporarely stop random movement or to if you write special movement code for animals.
 	var/wander = 1	// Does the mob wander around when idle?
 	var/stop_automated_movement_when_pulled = 1 //When set to 1 this stops the animal from moving when someone is pulling it.
@@ -33,6 +46,7 @@
 	var/turns_since_scan = 0
 
 	//Interaction
+	var/list/organ_names = list("chest")
 	var/response_help   = "tries to help"
 	var/response_disarm = "tries to disarm"
 	var/response_harm   = "hurts"
@@ -54,6 +68,8 @@
 	var/max_co2 = 5
 	var/min_n2 = 0
 	var/max_n2 = 0
+	var/min_h2 = 0
+	var/max_h2 = 5
 	var/unsuitable_atoms_damage = 2	//This damage is taken when atmos doesn't fit all the requirements above
 	var/speed = 0 //LETS SEE IF I CAN SET SPEEDS FOR SIMPLE MOBS WITHOUT DESTROYING EVERYTHING. Higher speed is slower, negative speed is faster
 
@@ -65,6 +81,9 @@
 	var/friendly = "nuzzles"
 	var/environment_smash = 0
 	var/resistance		  = 0	// Damage reduction
+	var/resist_mod = 1 // a multiplier for the chance the animal has to break out
+
+	var/wizard_master
 
 	//Null rod stuff
 	var/supernatural = 0
@@ -79,24 +98,23 @@
 	var/bite_factor = 0.4
 	var/digest_factor = 0.2 //A multiplier on how quickly reagents are digested
 	var/stomach_size_mult = 5
+	var/list/forbidden_foods = list()	//Foods this animal should never eat
 
-	//Food behaviour vars
-	var/autoseek_food = 1//If 0. this animal will not automatically eat
-	var/beg_for_food = 1//If 0, this animal will not show interest in food held by a person
-	var/min_scan_interval = 1//Minimum and maximum number of procs between a foodscan. Animals will slow down if there's no food around for a while
+	//Seeking/Moving behaviour vars
+	var/min_scan_interval = 1//Minimum and maximum number of procs between a scan
 	var/max_scan_interval = 15
 	var/scan_interval = 5//current scan interval, clamped between min and max
 	//It gradually increases up to max when its left alone, to save performance
-	//It will drop back to 1 if it spies any food.
-		//This short time makes animals more responsive to interactions and more fun to play with
 
-	var/seek_speed = 2//How many tiles per second the animal will move towards food
+	var/seek_speed = 2//How many tiles per second the animal will move towards something
 	var/seek_move_delay
-	var/scan_range = 6//How far around the animal will look for food
-	var/foodtarget = 0
-	//Used to control how often ian scans for nearby food
+	var/scan_range = 6//How far around the animal will look for something
 
 	var/kitchen_tag = "animal" //Used for cooking with animals
+
+	//brushing
+	var/canbrush = FALSE //can we brush this beautiful creature?
+	var/brush = /obj/item/haircomb //What can we brush it with? Use a rag for things with scales/carapaces/etc
 
 	//Napping
 	var/can_nap = 0
@@ -108,24 +126,10 @@
 
 	var/has_udder = FALSE
 	var/datum/reagents/udder = null
-	var/milk_type = "milk"
+	var/milk_type = /decl/reagent/drink/milk
 
 	var/list/butchering_products	//if anything else is created when butchering this creature, like bones and leather
 
-/mob/living/simple_animal/proc/beg(var/atom/thing, var/atom/holder)
-	visible_emote("gazes longingly at [holder]'s [thing]",0)
-
-/mob/living/simple_animal/proc/steal_food(var/obj/item/weapon/reagent_containers/food/snacks/F, var/mob/living/carbon/human/H)
-	if(!F || !H)
-		return
-	H.visible_message(
-						span("warning", "\the [src] grabs \the [F] with its teeth and steals it from \the [H] hands. Taking a bite and dropping it on the floor."),
-						span("warning", "\the [src] grabs \the [F] with its teeth and steals it from your hands. Taking a bite and dropping it on the floor.")
-	)
-	H.drop_from_inventory(F)
-	UnarmedAttack(F)
-	if (get_turf(F) == loc)
-		set_dir(pick(NORTH, SOUTH, EAST, WEST, NORTH, NORTH))//Face a random direction when eating, but mostly upwards
 
 /mob/living/simple_animal/proc/update_nutrition_stats()
 	nutrition_step = mob_size * 0.03 * metabolic_factor
@@ -146,9 +150,6 @@
 		reagents = new/datum/reagents(20, src)
 	nutrition = max_nutrition
 
-	if (can_nap)
-		verbs += /mob/living/simple_animal/lay_down
-
 	if(has_udder)
 		udder = new(50)
 		udder.my_atom = src
@@ -165,7 +166,7 @@
 	turns_since_move = turns_per_move
 	..()
 
-/mob/living/simple_animal/Login()
+/mob/living/simple_animal/LateLogin()
 	if(src && src.client)
 		src.client.screen = null
 	..()
@@ -173,13 +174,6 @@
 /mob/living/simple_animal/examine(mob/user)
 	..()
 
-	if (hunger_enabled)
-		if (!nutrition)
-			to_chat(user, "<span class='danger'>It looks starving!</span>")
-		else if (nutrition < max_nutrition *0.5)
-			to_chat(user, "<span class='notice'>It looks hungry.</span>")
-		else if ((reagents.total_volume > 0 && nutrition > max_nutrition *0.75) || nutrition > max_nutrition *0.9)
-			to_chat(user, "It looks full and contented.")
 	if (stat == DEAD)
 		to_chat(user, "<span class='danger'>It looks dead.</span>")
 	if (health < maxHealth * 0.5)
@@ -187,6 +181,14 @@
 	else if (health < maxHealth)
 		to_chat(user, "<span class='warning'>It looks wounded.</span>")
 
+/mob/living/simple_animal/can_name(var/mob/living/M)
+	if(named)
+		to_chat(M, SPAN_NOTICE("\The [src] already has a name!"))
+		return FALSE
+	if(stat == DEAD)
+		to_chat(M, SPAN_WARNING("You can't name a corpse."))
+		return FALSE
+	return TRUE
 
 /mob/living/simple_animal/Life()
 	..()
@@ -199,19 +201,19 @@
 	if(health > maxHealth)
 		health = maxHealth
 
+	handle_blood_overlay()
 	handle_stunned()
 	handle_weakened()
 	handle_paralysed()
 	update_canmove()
 	handle_supernatural()
-	autoseek_food = nutrition / max_nutrition <= 0.05 ? TRUE : initial(autoseek_food)
 	process_food()
 
 	//Movement
 	turns_since_move++
 
 	//Atmos
-	var/atmos_suitable = 1
+	var/atmos_suitable = TRUE
 
 	if(isturf(loc))
 		var/turf/T = loc
@@ -222,22 +224,26 @@
 			if (abs(Environment.temperature - bodytemperature) > 40)
 				bodytemperature += ((Environment.temperature - bodytemperature) / 5)
 
-			if(min_oxy && Environment.gas["oxygen"] < min_oxy)
-				atmos_suitable = 0
-			else if(max_oxy && Environment.gas["oxygen"] > max_oxy)
-				atmos_suitable = 0
-			else if(min_tox && Environment.gas["phoron"] < min_tox)
-				atmos_suitable = 0
-			else if(max_tox && Environment.gas["phoron"] > max_tox)
-				atmos_suitable = 0
-			else if(min_n2 && Environment.gas["nitrogen"] < min_n2)
-				atmos_suitable = 0
-			else if(max_n2 && Environment.gas["nitrogen"] > max_n2)
-				atmos_suitable = 0
-			else if(min_co2 && Environment.gas["carbon_dioxide"] < min_co2)
-				atmos_suitable = 0
-			else if(max_co2 && Environment.gas["carbon_dioxide"] > max_co2)
-				atmos_suitable = 0
+			if(min_oxy && Environment.gas[GAS_OXYGEN] < min_oxy)
+				atmos_suitable = FALSE
+			else if(max_oxy && Environment.gas[GAS_OXYGEN] > max_oxy)
+				atmos_suitable = FALSE
+			else if(min_tox && Environment.gas[GAS_PHORON] < min_tox)
+				atmos_suitable = FALSE
+			else if(max_tox && Environment.gas[GAS_PHORON] > max_tox)
+				atmos_suitable = FALSE
+			else if(min_n2 && Environment.gas[GAS_NITROGEN] < min_n2)
+				atmos_suitable = FALSE
+			else if(max_n2 && Environment.gas[GAS_NITROGEN] > max_n2)
+				atmos_suitable = FALSE
+			else if(min_co2 && Environment.gas[GAS_CO2] < min_co2)
+				atmos_suitable = FALSE
+			else if(max_co2 && Environment.gas[GAS_CO2] > max_co2)
+				atmos_suitable = FALSE
+			else if(min_h2 && Environment.gas[GAS_HYDROGEN] < min_h2)
+				atmos_suitable = FALSE
+			else if(max_h2 && Environment.gas[GAS_HYDROGEN] > max_h2)
+				atmos_suitable = FALSE
 
 	//Atmos effect
 	if(bodytemperature < minbodytemp)
@@ -261,7 +267,10 @@
 
 /mob/living/simple_animal/think()
 	..()
-	handle_foodscanning()
+
+	if(stop_thinking)
+		return
+
 	if(!stop_automated_movement && wander && !anchored)
 		if(isturf(loc) && !resting && !buckled && canmove)		//This is so it only moves if it's not inside a closet, gentics machine, etc.
 			if(turns_since_move >= turns_per_move && !(stop_automated_movement_when_pulled && pulledby))	 //Some animals don't move when pulled
@@ -313,9 +322,51 @@
 			if (!stat || prob(0.5))
 				wake_up()
 
+	if(nutrition < max_nutrition / 3 && isturf(loc))	//If we're hungry enough (and not being held/in a bag), we'll check our tile for food.
+		handle_eating()
+
 /mob/living/simple_animal/proc/handle_supernatural()
 	if(purge)
 		purge -= 1
+
+/mob/living/simple_animal/proc/handle_blood_overlay(var/force_reset = FALSE)
+	if(!blood_overlay_icon)
+		return
+
+	var/current_blood_state = blood_state
+	var/blood_mod = health / maxHealth
+	if(blood_mod > 0.9)
+		blood_state = BLOOD_NONE
+	else if(blood_mod >= 0.7)
+		blood_state = BLOOD_LIGHT
+	else if(blood_mod >= 0.4)
+		blood_state = BLOOD_MEDIUM
+	else
+		blood_state = BLOOD_HEAVY
+
+	if(force_reset || current_blood_state != blood_state)
+		if(blood_overlay)
+			cut_overlay(blood_overlay)
+		if(blood_state == BLOOD_NONE)
+			return
+		var/blood_overlay_name = get_blood_overlay_name()
+		var/image/I = image(blood_overlay_icon, src, "[blood_overlay_name]-[blood_state]")
+		I.color = blood_type
+		I.blend_mode = BLEND_INSET_OVERLAY
+		blood_overlay = I
+		add_overlay(blood_overlay)
+
+/mob/living/simple_animal/proc/get_blood_overlay_name()
+	return "blood_overlay"
+
+/mob/living/simple_animal/proc/handle_eating()
+	var/list/food_choices = list()
+	for(var/obj/item/reagent_containers/food/snacks/S in get_turf(src))
+		if(locate(S) in forbidden_foods)
+			continue
+		food_choices += S
+	if(food_choices.len) //Only when sufficiently hungry
+		UnarmedAttack(pick(food_choices))
 
 //Simple reagent processing for simple animals
 //This allows animals to digest food, and only food
@@ -332,22 +383,23 @@
 		if (!reagents || !reagents.total_volume)
 			return
 
-		for(var/datum/reagent/current in reagents.reagent_list)
-			var/removed = min(current.metabolism*digest_factor, current.volume)
-			if (istype(current, /datum/reagent/nutriment))//If its food, it feeds us
-				var/datum/reagent/nutriment/N = current
+		for(var/_current in reagents.reagent_volumes)
+			var/decl/reagent/current = decls_repository.get_decl(_current)
+			var/removed = min(current.metabolism*digest_factor, REAGENT_VOLUME(reagents, _current))
+			if (_current == /decl/reagent/nutriment)//If its food, it feeds us
+				var/decl/reagent/nutriment/N = current
 				adjustNutritionLoss(-removed*N.nutriment_factor)
 				var/heal_amount = removed*N.regen_factor
-				if (bruteloss > 0)
-					var/n = min(heal_amount, bruteloss)
+				if (getBruteLoss() > 0)
+					var/n = min(heal_amount, getBruteLoss())
 					adjustBruteLoss(-n)
 					heal_amount -= n
-				if (fireloss && heal_amount)
-					var/n = min(heal_amount, fireloss)
+				if (getFireLoss() && heal_amount)
+					var/n = min(heal_amount, getFireLoss())
 					adjustFireLoss(-n)
 					heal_amount -= n
 				updatehealth()
-			current.remove_self(removed)//If its not food, it just does nothing. no fancy effects
+			current.remove_self(removed, reagents)//If its not food, it just does nothing. no fancy effects
 
 /mob/living/simple_animal/can_eat()
 	if (!hunger_enabled || nutrition > max_nutrition * 0.9)
@@ -369,11 +421,13 @@
 /mob/living/simple_animal/proc/speak_audio()
 	return
 
-/mob/living/simple_animal/proc/visible_emote(var/act_desc, var/log_emote=1)
-	custom_emote(1, act_desc, log_emote)
+/mob/living/simple_animal/proc/visible_emote(var/act_desc)
+	var/can_ghosts_hear = client ? GHOSTS_ALL_HEAR : ONLY_GHOSTS_IN_VIEW
+	custom_emote(VISIBLE_MESSAGE, act_desc, can_ghosts_hear)
 
 /mob/living/simple_animal/proc/audible_emote(var/act_desc)
-	custom_emote(2, act_desc)
+	var/can_ghosts_hear = client ? GHOSTS_ALL_HEAR : ONLY_GHOSTS_IN_VIEW
+	custom_emote(AUDIBLE_MESSAGE, act_desc, can_ghosts_hear)
 
 /*
 mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
@@ -390,11 +444,11 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 
 		if(I_HELP)
 			if (health > 0)
-				M.visible_message("<span class='notice'>[M] [response_help] \the [src]</span>")
+				M.visible_message("<b>\The [M]</b> [response_help] \the [src].")
 				poke()
 
 		if(I_DISARM)
-			M.visible_message("<span class='notice'>[M] [response_disarm] \the [src]</span>")
+			M.visible_message("<b>\The [M]</b> [response_disarm] \the [src]")
 			M.do_attack_animation(src)
 			poke(1)
 			//TODO: Push the mob away or something
@@ -408,7 +462,7 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 			if (!attempt_grab(M))
 				return
 
-			var/obj/item/weapon/grab/G = new /obj/item/weapon/grab(M, src)
+			var/obj/item/grab/G = new /obj/item/grab(M, src)
 
 			M.put_in_active_hand(G)
 
@@ -416,70 +470,92 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 			G.affecting = src
 			LAssailant = WEAKREF(M)
 
-			M.visible_message("<span class='warning'>[M] has grabbed [src] passively!</span>")
+			M.visible_message(SPAN_WARNING("\The [M] has grabbed \the [src] passively!"))
 			M.do_attack_animation(src)
 			poke(1)
 
 		if(I_HURT)
-			apply_damage(harm_intent_damage, BRUTE, used_weapon = "Attack by [M.name]")
-			M.visible_message("<span class='warning'>[M] [response_harm] \the [src]</span>")
-			M.do_attack_animation(src)
-			poke(1)
+			unarmed_harm_attack(M)
 
 	return
 
-/mob/living/simple_animal/attackby(var/obj/item/O, var/mob/user)
+/mob/living/simple_animal/proc/unarmed_harm_attack(var/mob/living/carbon/human/user)
+	apply_damage(harm_intent_damage, BRUTE, used_weapon = "Attack by [user.name]")
+	user.visible_message(SPAN_WARNING("<b>\The [user]</b> [response_harm] \the [src]!"), SPAN_WARNING("You [response_harm] \the [src]!"))
+	user.do_attack_animation(src)
+	poke(TRUE)
+
+/mob/living/simple_animal/attackby(obj/item/O, mob/user)
+	if(istype(O, /obj/item/reagent_containers/glass/rag)) //You can't milk an udder with a rag.
+		attacked_with_item(O, user)
+		return
 	if(has_udder)
-		var/obj/item/weapon/reagent_containers/glass/G = O
+		var/obj/item/reagent_containers/glass/G = O
 		if(stat == CONSCIOUS && istype(G) && G.is_open_container())
 			if(udder.total_volume <= 0)
-				to_chat(user, "<span class='warning'>The udder is dry.</span>")
+				to_chat(user, SPAN_WARNING("The udder is dry."))
 				return
 			if(G.reagents.total_volume >= G.volume)
-				to_chat(user, "<span class='warning'>The [O] is full.</span>")
+				to_chat(user, SPAN_WARNING("The [O] is full."))
 				return
-			user.visible_message("<span class='notice'>[user] milks [src] using \the [O].</span>")
-			udder.trans_id_to(G, milk_type , rand(5,10))
+			user.visible_message("<b>\The [user]</b> milks \the [src] using \the [O].")
+			udder.trans_type_to(G, milk_type, rand(5, 10))
 			return
 
-	if(istype(O, /obj/item/weapon/reagent_containers) || istype(O, /obj/item/stack/medical) || istype(O,/obj/item/weapon/gripper/))
+	if(istype(O, /obj/item/reagent_containers) || istype(O, /obj/item/stack/medical) || istype(O,/obj/item/gripper/))
 		..()
 		poke()
 
+	else if(istype(O, brush) && canbrush) //Brushing animals
+		visible_message("<b>\The [user]</b> gently brushes \the [src] with \the [O].")
+		if(prob(15) && !istype(src, /mob/living/simple_animal/hostile)) //Aggressive animals don't purr before biting your face off.
+			visible_message("<b>[capitalize_first_letters(src.name)]</b> [speak_emote.len ? pick(speak_emote) : "rumbles"].") //purring
+		return
+
 	else if(meat_type && (stat == DEAD))	//if the animal has a meat, and if it is dead.
-		if(istype(O, /obj/item/weapon/material/knife) || istype(O, /obj/item/weapon/material/kitchen/utensil/knife)|| istype(O, /obj/item/weapon/material/hatchet))
+		if(istype(O, /obj/item/material/knife) || istype(O, /obj/item/material/kitchen/utensil/knife)|| istype(O, /obj/item/material/hatchet))
 			harvest(user)
 	else
 		attacked_with_item(O, user)
 
 //TODO: refactor mob attackby(), attacked_by(), and friends.
-/mob/living/simple_animal/proc/attacked_with_item(var/obj/item/O, var/mob/user)
-	if(istype(O, /obj/item/weapon/trap/animal))
+/mob/living/simple_animal/proc/attacked_with_item(obj/item/O, mob/user, var/proximity)
+	if(istype(O, /obj/item/trap/animal) || istype(O, /obj/item/gun))
 		O.attack(src, user)
-		return
+		return TRUE
 	user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
+	if(istype(O, /obj/item/glass_jar))
+		return FALSE
 	if(!O.force)
-		visible_message("<span class='notice'>[user] gently taps [src] with \the [O].</span>")
+		visible_message(SPAN_NOTICE("<b>\The [user]</b> gently taps \the [src] with \the [O]."))
 		poke()
-		return 0
+		return FALSE
 
 	if(O.force > resistance)
 		var/damage = O.force
-		if (O.damtype == HALLOSS)
+		if (O.damtype == PAIN)
 			damage = 0
-		if(supernatural && istype(O,/obj/item/weapon/nullrod))
+		if(supernatural && istype(O,/obj/item/nullrod))
 			damage *= 2
 			purge = 3
 
 		apply_damage(damage, O.damtype, used_weapon = "[O.name]")
 		poke(1)
 	else
-		to_chat(usr, "<span class='danger'>This weapon is ineffective, it does no damage.</span>")
+		to_chat(user, SPAN_WARNING("This weapon is ineffective, it does no damage."))
 		poke()
 
-	visible_message("<span class='danger'>\The [src] has been attacked with the [O] by [user].</span>")
+	visible_message(SPAN_DANGER("\The [src] has been attacked with \the [O] by \the [user]."))
 	user.do_attack_animation(src)
+	return TRUE
 
+/mob/living/simple_animal/apply_damage(damage, damagetype, def_zone, blocked, used_weapon, damage_flags)
+	. = ..()
+	handle_blood_overlay()
+
+/mob/living/simple_animal/heal_organ_damage(var/brute, var/burn)
+	. = ..()
+	handle_blood_overlay()
 
 /mob/living/simple_animal/movement_delay()
 	var/tally = 0 //Incase I need to add stuff other than "speed" later
@@ -494,6 +570,20 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 		tally += 4
 
 	return tally+config.animal_delay
+
+/mob/living/simple_animal/cat/proc/handle_movement_target()
+	//if our target is neither inside a turf or inside a human(???), stop
+	if((movement_target) && !(isturf(movement_target.loc) || ishuman(movement_target.loc) ))
+		movement_target = null
+		stop_automated_movement = 0
+	//if we have no target or our current one is out of sight/too far away
+	if( !movement_target || !(movement_target.loc in oview(src, 4)) )
+		movement_target = null
+		stop_automated_movement = 0
+
+	if(movement_target)
+		stop_automated_movement = 1
+		walk_to(src, movement_target, 0, DS2TICKS(seek_move_delay))
 
 /mob/living/simple_animal/Stat()
 	..()
@@ -510,11 +600,11 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 /mob/living/simple_animal/death(gibbed, deathmessage = "dies!")
 	walk_to(src,0)
 	movement_target = null
-	icon_state = icon_dead
-	density = 0
+	density = FALSE
 	if (isopenturf(loc))
 		ADD_FALLING_ATOM(src)
-	return ..(gibbed,deathmessage)
+	. = ..(gibbed, deathmessage)
+	update_icon()
 
 /mob/living/simple_animal/ex_act(severity)
 	if(!blinded)
@@ -540,10 +630,6 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 		var/mob/living/L = target_mob
 		if(!L.stat)
 			return (0)
-	if (istype(target_mob, /obj/mecha))
-		var/obj/mecha/M = target_mob
-		if (M.occupant)
-			return (0)
 	if (istype(target_mob, /obj/machinery/bot))
 		var/obj/machinery/bot/B = target_mob
 		if(B.health > 0)
@@ -557,20 +643,47 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 	return 1
 
 /mob/living/simple_animal/proc/make_noise(var/make_sound = TRUE)
-	set name = "Resist"
+	set name = "Make Sound"
 	set category = "Abilities"
 
-	if((usr && usr.stat == DEAD) || !make_sound)
+	if(stat || !make_sound) //Can't make noise if there's no noise or if you're unconscious/dead
 		return
 
 	if(usr && !sound_time)
-		to_chat(usr, span("warning", "Ability on cooldown 2 seconds."))
+		to_chat(usr, SPAN_WARNING("Ability on cooldown 2 seconds."))
 		return
 
 	playsound(src, pick(emote_sounds), 75, 1)
 	if(client)
 		sound_time = FALSE
 		addtimer(CALLBACK(src, .proc/reset_sound_time), 2 SECONDS)
+
+/mob/living/simple_animal/verb/change_name()
+	set name = "Name Animal"
+	set desc = "Rename an animal."
+	set category = "IC"
+	set src in view(1)
+
+	var/mob/living/M = usr
+	if(!M)	
+		return
+
+	if(can_name(M))
+		var/input = sanitizeSafe(input("What do you want to name \the [src]?","Choose a name") as null|text, MAX_NAME_LEN)
+		if(!input)
+			return
+
+		//check for adjacent and dead in case something happened while naming.
+		if(in_range(M,src) && (stat != DEAD))
+			to_chat(M, SPAN_NOTICE("You rename \the [src] to [input]."))
+			name = "\proper [input]"
+			real_name = input
+			named = TRUE
+			do_nickname(M) //This is for commanded mobs who can have a short name, like guard dogs
+
+//This is for commanded mobs who can have a short name, like guard dogs. Does nothing for other mobs for now
+/mob/living/simple_animal/proc/do_nickname(var/mob/living/M)
+
 
 /mob/living/simple_animal/proc/reset_sound_time()
 	sound_time = TRUE
@@ -587,7 +700,11 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 			sound_chance = prob(50)
 		make_noise(sound_chance)
 
-	..(message, null, verb)
+	var/can_ghosts_hear = client ? GHOSTS_ALL_HEAR : ONLY_GHOSTS_IN_VIEW
+	..(message, null, verb, ghost_hearing = can_ghosts_hear)
+
+/mob/living/simple_animal/do_animate_chat(var/message, var/datum/language/language, var/small, var/list/show_to, var/duration, var/list/message_override)
+	INVOKE_ASYNC(src, /atom/movable/proc/animate_chat, pick(speak), language, small, show_to, duration)
 
 /mob/living/simple_animal/get_speech_ending(verb, var/ending)
 	return verb
@@ -610,80 +727,12 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 					new path(get_turf(src))
 
 		if(issmall(src))
-			user.visible_message("<span class='danger'>[user] chops up \the [src]!</span>")
+			user.visible_message("<b>\The [user]</b> chops up \the [src]!")
 			new/obj/effect/decal/cleanable/blood/splatter(get_turf(src))
 			qdel(src)
 		else
-			user.visible_message("<span class='danger'>[user] butchers \the [src] messily!</span>")
+			user.visible_message("<b>\The [user]</b> butchers \the [src] messily!")
 			gib()
-
-
-//Code to handle finding and nomming nearby food items
-/mob/living/simple_animal/proc/handle_foodscanning()
-	if (client || !hunger_enabled || !autoseek_food)
-		return 0
-
-	//Feeding, chasing food, FOOOOODDDD
-	if(!stat && !resting && !buckled)
-
-		turns_since_scan++
-		if(turns_since_scan >= scan_interval)
-			turns_since_scan = 0
-			if((movement_target) && (!(isturf(movement_target.loc) || ishuman(movement_target.loc))) || (foodtarget && !can_eat() ))
-				movement_target = null
-				foodtarget = 0
-				stop_automated_movement = 0
-			if( !movement_target || !(movement_target.loc in oview(src, 7)) )
-				walk_to(src,0)
-				movement_target = null
-				foodtarget = 0
-				stop_automated_movement = 0
-				if (can_eat())
-					for(var/obj/item/weapon/reagent_containers/food/snacks/S in oview(src,7))
-						if(isturf(S.loc) || ishuman(S.loc))
-							movement_target = S
-							foodtarget = 1
-							break
-
-					//Look for food in people's hand
-					if (!movement_target && beg_for_food)
-						var/obj/item/weapon/reagent_containers/food/snacks/F = null
-						for(var/mob/living/carbon/human/H in oview(src,scan_range))
-							if(istype(H.l_hand, /obj/item/weapon/reagent_containers/food/snacks))
-								F = H.l_hand
-
-							if(istype(H.r_hand, /obj/item/weapon/reagent_containers/food/snacks))
-								F = H.r_hand
-
-							if (F)
-								movement_target = F
-								foodtarget = 1
-								break
-
-			if(movement_target)
-				scan_interval = min_scan_interval
-				stop_automated_movement = 1
-
-				if (isturf(movement_target.loc))
-					walk_to(src, movement_target, 0, DS2TICKS(seek_move_delay))	//Stand ontop of food
-				else
-					walk_to(src, get_turf(movement_target), 1, DS2TICKS(seek_move_delay))	//Don't stand ontop of people
-
-				if (movement_target)
-					set_dir(get_dir(src, movement_target))
-
-					if(isturf(movement_target.loc) && Adjacent(get_turf(movement_target), src))
-						UnarmedAttack(movement_target)
-						if (get_turf(movement_target) == loc)
-							set_dir(pick(NORTH, SOUTH, EAST, WEST, NORTH, NORTH))//Face a random direction when eating, but mostly upwards
-					else if(ishuman(movement_target.loc) && Adjacent(get_turf(movement_target.loc)) && (prob(10) || nutrition / max_nutrition <= 0.25))
-						if(nutrition / max_nutrition <= 0.25)
-							steal_food(movement_target, movement_target.loc)
-						else
-							beg(movement_target, movement_target.loc)
-			else
-				scan_interval = max(min_scan_interval, min(scan_interval+1, max_scan_interval))//If nothing is happening, ian's scanning frequency slows down to save processing
-
 
 //For picking up small animals
 /mob/living/simple_animal/MouseDrop(atom/over_object)
@@ -714,8 +763,7 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 		wander = 0
 		walk_to(src,0)
 		movement_target = null
-		foodtarget = 0
-		update_icons()
+		update_icon()
 
 //Wakes the mob up from sleeping
 /mob/living/simple_animal/proc/wake_up()
@@ -724,9 +772,9 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 		resting = 0
 		canmove = 1
 		wander = 1
-		update_icons()
+		update_icon()
 
-/mob/living/simple_animal/update_icons()
+/mob/living/simple_animal/update_icon()
 	if (stat == DEAD)
 		icon_state = icon_dead
 	else if ((stat == UNCONSCIOUS || resting) && icon_rest)
@@ -743,16 +791,16 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 	else
 		fall_asleep()
 
-	to_chat(src, span("notice","You are now [resting ? "resting" : "getting up"]"))
+	to_chat(src, SPAN_NOTICE("You are now [resting ? "resting" : "getting up"]."))
 
-	update_icons()
+	update_icon()
 
 //Todo: add snowflakey shit to it.
 /mob/living/simple_animal/electrocute_act(var/shock_damage, var/obj/source, var/base_siemens_coeff = 1.0, var/def_zone = null, var/tesla_shock = 0, var/ground_zero)
 	apply_damage(shock_damage, BURN)
-	playsound(loc, "sparks", 50, 1, -1)
+	playsound(loc, /decl/sound_category/spark_sound, 50, 1, -1)
 	spark(loc, 5, alldirs)
-	visible_message("<span class='warning'>[src] was shocked by [source]!</span>", "<span class='danger'>You are shocked by [source]!</span>", "<span class='notice'>You hear an electrical crack.</span>")
+	visible_message(SPAN_WARNING("\The [src] was shocked by \the [source]!"), SPAN_WARNING("You are shocked by \the [source]!"), SPAN_WARNING("You hear an electrical crack!"))
 
 
 /mob/living/simple_animal/can_fall()
@@ -772,3 +820,52 @@ mob/living/simple_animal/bullet_act(var/obj/item/projectile/Proj)
 		return TRUE
 	else
 		return FALSE
+
+/mob/living/simple_animal/emp_act(severity)
+	if(!isSynthetic())
+		return
+
+	switch(severity)
+		if(1)
+			adjustFireLoss(rand(20, 25))
+		if(2)
+			adjustFireLoss(rand(10, 15))
+		if(3)
+			adjustFireLoss(rand(5, 10))
+		if(4)
+			adjustFireLoss(rand(3, 5))
+
+/mob/living/simple_animal/get_digestion_product()
+	return /decl/reagent/nutriment
+
+/mob/living/simple_animal/bullet_impact_visuals(var/obj/item/projectile/P, var/def_zone, var/damage)
+	..()
+	switch(get_bullet_impact_effect_type(def_zone))
+		if(BULLET_IMPACT_MEAT)
+			if(P.damage_type == BRUTE)
+				var/hit_dir = get_dir(P.starting, src)
+				var/obj/effect/decal/cleanable/blood/B = blood_splatter(get_step(src, hit_dir), src, 1, hit_dir)
+				B.icon_state = pick("dir_splatter_1","dir_splatter_2")
+				B.basecolor = blood_type
+				var/scale = min(1, round(mob_size / MOB_TINY, 0.1))
+				var/matrix/M = new()
+				B.transform = M.Scale(scale)
+				B.update_icon()
+
+/mob/living/simple_animal/get_resist_power()
+	return resist_mod
+
+
+/mob/living/simple_animal/get_gibs_type()
+	if(isSynthetic())
+		return /obj/effect/gibspawner/robot
+	else
+		return /obj/effect/gibspawner/generic
+
+/mob/living/simple_animal/set_respawn_time()
+	set_death_time(ANIMAL, world.time)
+
+#undef BLOOD_NONE
+#undef BLOOD_LIGHT
+#undef BLOOD_MEDIUM
+#undef BLOOD_HEAVY

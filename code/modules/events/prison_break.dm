@@ -12,11 +12,6 @@
 	var/list/areaType = list(/area/security/prison, /area/security/brig)	//Area types to include.
 	var/list/areaNotType = list()		//Area types to specifically exclude.
 
-/datum/event/prison_break/virology
-	eventDept = "Medical"
-	areaName = list("Virology")
-	areaType = list(/area/medical/virology, /area/medical/virologyaccess)
-
 /datum/event/prison_break/xenobiology
 	eventDept = "Science"
 	areaName = list("Xenobiology")
@@ -25,10 +20,15 @@
 
 /datum/event/prison_break/station
 	eventDept = "Station"
-	areaName = list("Brig","Virology","Xenobiology")
-	areaType = list(/area/security/prison, /area/security/brig, /area/medical/virology, /area/medical/virologyaccess, /area/rnd/xenobiology)
+	areaName = list("Brig","Xenobiology")
+	areaType = list(/area/security/prison, /area/security/brig, /area/rnd/xenobiology)
 	areaNotType = list(/area/rnd/xenobiology/xenoflora, /area/rnd/xenobiology/xenoflora_storage)
 
+/datum/event/prison_break/bridge
+	eventDept = "Bridge"
+	areaName = list("Bridge")
+	areaType = list(/area/bridge, /area/teleporter, /area/crew_quarters/heads/cryo, /area/maintenance/maintcentral)
+	areaNotType = list(/area/bridge/aibunker, /area/bridge/levela, /area/bridge/selfdestruct)
 
 /datum/event/prison_break/setup()
 	announceWhen = rand(75, 105)
@@ -57,7 +57,7 @@
 
 	else
 		world.log <<  "ERROR: Could not initate grey-tide. Unable to find suitable containment area."
-		kill()
+		kill(TRUE)
 
 
 /datum/event/prison_break/tick()

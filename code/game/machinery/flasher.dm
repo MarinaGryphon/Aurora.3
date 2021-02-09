@@ -5,11 +5,12 @@
 	desc = "A wall-mounted flashbulb device."
 	icon = 'icons/obj/stationobjs.dmi'
 	icon_state = "mflash1"
+	layer = OBJ_LAYER
 	var/id = null
 	var/range = 2 //this is roughly the size of brig cell
 	var/disable = 0
 	var/last_flash = 0 //Don't want it getting spammed like regular flashes
-	var/strength = 10 //How weakened targets are when flashed.
+	var/strength = 20 //How weakened targets are when flashed.
 	var/base_state = "mflash"
 	anchored = 1
 	use_power = 1
@@ -22,6 +23,7 @@
 	name = "portable flasher"
 	desc = "A portable flashing device. Wrench to activate and deactivate. Cannot detect slow movements."
 	icon_state = "pflash1"
+	layer = OBJ_LAYER - 0.01
 	strength = 8
 	anchored = 0
 	base_state = "pflash"
@@ -47,7 +49,7 @@
 //		src.sd_SetLuminosity(0)
 
 //Don't want to render prison breaks impossible
-/obj/machinery/flasher/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/flasher/attackby(obj/item/W as obj, mob/user as mob)
 	if (W.iswirecutter())
 		add_fingerprint(user)
 		src.disable = !src.disable
@@ -57,7 +59,9 @@
 			user.visible_message("<span class='warning'>[user] has connected the [src]'s flashbulb!</span>", "<span class='warning'>You connect the [src]'s flashbulb!</span>")
 
 //Let the AI trigger them directly.
-/obj/machinery/flasher/attack_ai()
+/obj/machinery/flasher/attack_ai(mob/user)
+	if(!ai_can_interact(user))
+		return
 	if (src.anchored)
 		return src.flash()
 	else
@@ -85,7 +89,7 @@
 			if(!H.eyecheck(TRUE) <= 0)
 				continue
 			flash_time *= H.species.flash_mod
-			var/obj/item/organ/eyes/E = H.get_eyes()
+			var/obj/item/organ/internal/eyes/E = H.get_eyes()
 			if(!E)
 				return
 
@@ -98,6 +102,7 @@
 			if(!O.blinded)
 				flick("flash", O:flash)
 		O.Weaken(flash_time)
+		O.flash_eyes()
 
 /obj/machinery/flasher/emp_act(severity)
 	if(stat & (BROKEN|NOPOWER))
@@ -114,7 +119,7 @@
 	if (src.anchored)
 		src.flash()
 
-/obj/machinery/flasher/portable/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/flasher/portable/attackby(obj/item/W as obj, mob/user as mob)
 	if (W.iswrench())
 		add_fingerprint(user)
 		src.anchored = !src.anchored

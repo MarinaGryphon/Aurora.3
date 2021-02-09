@@ -3,7 +3,7 @@
 		return FALSE
 	if(!reagents)
 		return FALSE
-	if(!reagents.get_free_space())
+	if(!REAGENTS_FREE_SPACE(reagents))
 		return FALSE
 	return TRUE
 
@@ -11,4 +11,4 @@
 	return is_open_container() && ..()
 
 /mob/living/can_be_injected_by(var/atom/injector)
-	return ..() && (can_inject(null, 0, "chest") || can_inject(null, 0, "groin"))
+	return ..() && (can_inject(null, 0, BP_CHEST) || can_inject(null, 0, BP_GROIN))

@@ -1,5 +1,4 @@
 /turf/simulated/wall/proc/update_material()
-
 	if(!material)
 		return
 
@@ -8,7 +7,7 @@
 	else
 		construction_stage = null
 	if(!material)
-		material = get_material_by_name(DEFAULT_WALL_MATERIAL)
+		material = SSmaterials.get_material_by_name(DEFAULT_WALL_MATERIAL)
 	if(material)
 		explosion_resistance = material.explosion_resistance
 		if (material.wall_icon)
@@ -19,15 +18,23 @@
 
 	if(reinf_material)
 		name = "reinforced [material.display_name] wall"
-		desc = "It seems to be a section of hull reinforced with [reinf_material.display_name] and plated with [material.display_name]."
+		if(material.display_name == reinf_material.display_name)
+			desc = "It seems to be a section of hull reinforced and plated with [material.display_name]."
+		else
+			desc = "It seems to be a section of hull reinforced with [reinf_material.display_name] and plated with [material.display_name]."
 	else
 		name = "[material.display_name] wall"
 		desc = "It seems to be a section of hull plated with [material.display_name]."
 
-	if(material.opacity > 0.5 && !opacity)
-		set_light(1)
-	else if(material.opacity < 0.5 && opacity)
-		set_light(0)
+	if(material.opacity < 0.5)
+		opacity = FALSE
+		alpha = 125
+
+	if(!opacity)
+		var/turf/under_floor = under_turf
+		var/image/under_image = image(initial(under_floor.icon), icon_state = initial(under_floor.icon_state))
+		under_image.alpha = 255
+		underlays += under_image
 
 	update_icon()
 
@@ -110,6 +117,8 @@
 		damage_overlays[i] = img
 
 /turf/simulated/wall/calculate_adjacencies()
+	if(use_standard_smoothing)
+		return ..()
 	. = 0
 	if (!loc || !material)
 		return

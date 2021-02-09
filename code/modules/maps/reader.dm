@@ -230,10 +230,13 @@ var/global/dmm_suite/preloader/_preloader = new
 
 			var/full_def = trim_text(copytext(model, old_position, dpos)) //full definition, e.g : /obj/foo/bar{variables=derp}
 			var/variables_start = findtext(full_def, "{")
-			var/atom_def = text2path(trim_text(copytext(full_def, 1, variables_start))) //path definition, e.g /obj/foo/bar
+
+			var/path_str = trim_text(copytext(full_def, 1, variables_start))
+			var/atom_def = text2path(path_str) //path definition, e.g /obj/foo/bar
 			old_position = dpos + 1
 
 			if(!atom_def) // Skip the item if the path does not exist.  Fix your crap, mappers!
+				crash_with("Invalid type in map. [path_str]")
 				continue
 
 			members += atom_def
@@ -297,7 +300,7 @@ var/global/dmm_suite/preloader/_preloader = new
 		if(use_preloader && instance)
 			_preloader.load(instance)
 
-	//then instance the /turf and, if multiple tiles are presents, simulates the DMM underlays piling effect
+	//then instance the /turf
 
 	var/first_turf_index = 1
 	while(!ispath(members[first_turf_index], /turf)) //find first /turf object in members
@@ -311,12 +314,9 @@ var/global/dmm_suite/preloader/_preloader = new
 		T = instance_atom(members[first_turf_index],members_attributes[first_turf_index],crds,no_changeturf)
 
 	if(T)
-		//if others /turf are presents, simulates the underlays piling effect
 		index = first_turf_index + 1
 		while(index <= members.len - 1) // Last item is an /area
-			var/underlay = T.appearance
-			T = instance_atom(members[index],members_attributes[index],crds,no_changeturf)//instance new turf
-			T.underlays += underlay
+			crash_with("Tried to load additional turf at [model_key].")
 			index++
 
 	//finally instance all remainings objects/mobs

@@ -1,5 +1,5 @@
 /datum/species/tajaran/zhan_khazan
-	name = "Zhan-Khazan Tajara"
+	name = SPECIES_TAJARA_ZHAN
 	name_plural = "Zhan-Khazan Tajaran"
 	blurb = "The Zhan-Khazan are a race of Tajara known for their dark fur and large bulky figures. \
 	They were at one point a race of cave-and-mountain dwelling Tajara that traditionally were \
@@ -9,7 +9,7 @@
 	from their fellow Tajara who cite their lackluster test scores, even among Tajara, and their higher \
 	crime rates."
 
-	secondary_langs = list(LANGUAGE_SIIK_MAAS, LANGUAGE_SIIK_TAJR, LANGUAGE_DELVAHII, LANGUAGE_SIIK_TAU)
+	secondary_langs = list(LANGUAGE_SIIK_MAAS, LANGUAGE_SIIK_TAJR, LANGUAGE_DELVAHII)
 
 	slowdown = -0.8 //As opposed to -1 for Base tajara
 	sprint_speed_factor = 0.55 // As opposed to 0.65
@@ -17,6 +17,8 @@
 	brute_mod = 1.1 // Less Brute Damage
 	ethanol_resistance = 1 // Default value
 	climb_coeff = 1.1
+
+	resist_mod = 2 // ZHAN POWERRRRRR
 
 	cold_level_1 = 160 //RaceDefault 200 Default 260
 	cold_level_2 = 100 //RaceDefault 140 Default 200
@@ -26,12 +28,19 @@
 	heat_level_2 = 360 //RaceDefault 380 Default 400
 	heat_level_3 = 700 //RaceDefault 800 Default 1000
 
-	primitive_form = "Zhan-Khazan Farwa"
+	allowed_accents = list(ACCENT_REPUBICLANSIIK, ACCENT_NAZIRASIIK, ACCENT_CREVAN, ACCENT_DASNRRASIIK, ACCENT_HIGHHARRSIIK, ACCENT_LOWHARRSIIK, ACCENT_AMOHDASIIK, ACCENT_NORTHRASNRR,
+							 ACCENT_RURALDELVAHHI, ACCENT_NOMADDELVAHHI)
 
-	num_alternate_languages = 1 // Only one Extra Language
+	stomach_capacity = 7
+
+	max_nutrition_factor = 1.3
+	max_hydration_factor = 1.3
+
+	nutrition_loss_factor = 0.7
+	hydration_loss_factor = 0.7
 
 /datum/species/tajaran/m_sai
-	name = "M'sai Tajara"
+	name = SPECIES_TAJARA_MSAI
 	name_plural = "M'sai Tajaran"
 	blurb = "The M'sai are a race of Tajara with slender lithe bodies and \
 	lightly covered fur which blends in with the snowy environments of Adhomai. \
@@ -53,6 +62,14 @@
 	heat_level_2 = 390 //RaceDefault 380 Default 400
 	heat_level_3 = 900 //RaceDefault 800 Default 1000
 
-	primitive_form = "M'sai Farwa"
 
-	secondary_langs = list(LANGUAGE_SIIK_MAAS, LANGUAGE_SIIK_TAJR, LANGUAGE_SIGN_TAJARA, LANGUAGE_SIIK_TAU)
+	default_h_style = "M'sai Ears"
+
+	secondary_langs = list(LANGUAGE_SIIK_MAAS, LANGUAGE_SIIK_TAJR, LANGUAGE_SIGN_TAJARA)
+	allowed_accents = list(ACCENT_REPUBICLANSIIK, ACCENT_NAZIRASIIK, ACCENT_CREVAN, ACCENT_DASNRRASIIK, ACCENT_HIGHHARRSIIK, ACCENT_LOWHARRSIIK, ACCENT_AMOHDASIIK, ACCENT_NORTHRASNRR)
+
+	max_nutrition_factor = 1.2
+	max_hydration_factor = 1.2
+
+	nutrition_loss_factor = 0.9
+	hydration_loss_factor = 0.9

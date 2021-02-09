@@ -1,4 +1,4 @@
-/obj/item/weapon/reagent_containers/extinguisher_refill
+/obj/item/reagent_containers/extinguisher_refill
 	name = "extinguisher refiller"
 	desc = "A one time use extinguisher refiller that allows fire extinguishers to be refilled with an aerosol mix. Just pour in the reagents and twist."
 	icon = 'icons/obj/chemical.dmi'
@@ -7,21 +7,21 @@
 	hitsound = 'sound/weapons/smash.ogg'
 	flags = CONDUCT | OPENCONTAINER
 	throwforce = 8
-	w_class = 4.0 // Don't want to give people free bluespace beakers.
+	w_class = ITEMSIZE_NORMAL
 	throw_speed = 2
 	throw_range = 10
 	force = 8
 	matter = list(DEFAULT_WALL_MATERIAL = 90)
 	attack_verb = list("slammed", "whacked", "bashed", "thunked", "battered", "bludgeoned", "thrashed")
-	amount_per_transfer_from_this = 300
+	amount_per_transfer_from_this = 150
 	possible_transfer_amounts = null
-	volume = 300
+	volume = 150
 	drop_sound = 'sound/items/drop/gascan.ogg'
+	pickup_sound = 'sound/items/pickup/gascan.ogg'
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/attackby(var/obj/O as obj, var/mob/user as mob)
-
-	if(istype(O,/obj/item/weapon/extinguisher))
-		var/obj/item/weapon/extinguisher/E = O
+/obj/item/reagent_containers/extinguisher_refill/attackby(var/obj/O as obj, var/mob/user as mob)
+	if(istype(O,/obj/item/extinguisher))
+		var/obj/item/extinguisher/E = O
 		if(src.is_open_container())
 			to_chat(user,"<span class='notice'>\The [src] needs to be secured first!</span>")
 		else if(src.reagents.total_volume <= 0)
@@ -36,9 +36,9 @@
 
 	. = ..()
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/attack_self(mob/user as mob) //Copied from inhalers.
+/obj/item/reagent_containers/extinguisher_refill/attack_self(mob/user as mob) //Copied from inhalers.
 	if(is_open_container())
-		if(reagents && reagents.reagent_list.len)
+		if(LAZYLEN(reagents.reagent_volumes))
 			to_chat(user,"<span class='notice'>With a quick twist of the cartridge's lid, you secure the reagents inside \the [src].</span>")
 			flags &= ~OPENCONTAINER
 		else
@@ -47,39 +47,38 @@
 		to_chat(user,"<span class='notice'>\The reagents inside [src] are already secured!</span>")
 	return
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/attackby(obj/item/weapon/W, mob/user)
+/obj/item/reagent_containers/extinguisher_refill/attackby(obj/item/W, mob/user)
 	if(W.isscrewdriver() && !is_open_container())
 		to_chat(user,"<span class='notice'>Using \the [W], you unsecure the extinguisher refill cartridge's lid.</span>") // it locks shut after being secured
 		flags |= OPENCONTAINER
 		return
 	. = ..()
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/examine(var/mob/user) //Copied from inhalers.
+/obj/item/reagent_containers/extinguisher_refill/examine(var/mob/user) //Copied from inhalers.
 	if(!..(user, 2))
 		return
 
 	if(is_open_container())
-		if(reagents && reagents.reagent_list.len)
+		if(LAZYLEN(reagents?.reagent_volumes))
 			to_chat(user,"<span class='notice'>It contains [round(reagents.total_volume, accuracy)] units of non-aerosol mix.</span>")
 		else
 			to_chat(user,"<span class='notice'>It is empty.</span>")
 	else
-		if(reagents && reagents.reagent_list.len)
+		if(LAZYLEN(reagents?.reagent_volumes))
 			to_chat(user,"<span class='notice'>The reagents are secured in the aerosol mix.</span>")
 		else
 			to_chat(user,"<span class='notice'>The cartridge seems spent.</span>")
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/filled
+/obj/item/reagent_containers/extinguisher_refill/filled
 	name = "extinguisher refiller (monoammonium phosphate)"
 	desc = "A one time use extinguisher refiller that allows fire extinguishers to be refilled with an aerosol mix. This one contains monoammonium phosphate."
 
-/obj/item/weapon/reagent_containers/extinguisher_refill/filled/Initialize()
-		. =..()
-		reagents.add_reagent("monoammoniumphosphate", volume)
-		flags &= ~OPENCONTAINER
-		return
+/obj/item/reagent_containers/extinguisher_refill/filled/Initialize()
+	. = ..()
+	reagents.add_reagent(/decl/reagent/toxin/fertilizer/monoammoniumphosphate, volume)
+	flags &= ~OPENCONTAINER
 
-/obj/item/weapon/extinguisher
+/obj/item/extinguisher
 	name = "fire extinguisher"
 	desc = "A traditional red fire extinguisher."
 	icon = 'icons/obj/chemical.dmi'
@@ -88,13 +87,14 @@
 	hitsound = 'sound/weapons/smash.ogg'
 	flags = CONDUCT
 	throwforce = 10
-	w_class = 3.0
+	w_class = ITEMSIZE_HUGE
 	throw_speed = 2
 	throw_range = 10
 	force = 10.0
 	matter = list(DEFAULT_WALL_MATERIAL = 90)
 	attack_verb = list("slammed", "whacked", "bashed", "thunked", "battered", "bludgeoned", "thrashed")
 	drop_sound = 'sound/items/drop/gascan.ogg'
+	pickup_sound = 'sound/items/pickup/gascan.ogg'
 
 	var/spray_particles = 3
 	var/spray_amount = 10	//units of liquid per particle
@@ -104,7 +104,7 @@
 	var/safety = 1
 	var/sprite_name = "fire_extinguisher"
 
-/obj/item/weapon/extinguisher/mini
+/obj/item/extinguisher/mini
 	name = "fire extinguisher"
 	desc = "A light and compact fibreglass-framed model fire extinguisher."
 	icon_state = "miniFE0"
@@ -112,7 +112,7 @@
 	hitsound = null	//it is much lighter, after all.
 	flags = OPENCONTAINER
 	throwforce = 2
-	w_class = 2.0
+	w_class = ITEMSIZE_SMALL
 	force = 2.0
 	max_water = 60
 	spray_amount = 10
@@ -120,28 +120,33 @@
 	spray_distance = 1
 	sprite_name = "miniFE"
 
-/obj/item/weapon/extinguisher/New()
+/obj/item/extinguisher/New()
 	create_reagents(max_water)
-	reagents.add_reagent("monoammoniumphosphate", max_water)
+	reagents.add_reagent(/decl/reagent/toxin/fertilizer/monoammoniumphosphate, max_water)
 	..()
 
-/obj/item/weapon/extinguisher/examine(mob/user)
+/obj/item/extinguisher/examine(mob/user)
 	if(..(user, 0))
 		to_chat(user,"\The [src] contains [src.reagents.total_volume] units of reagents.")
 		to_chat(user,"The safety is [safety ? "on" : "off"].")
 	return
 
-/obj/item/weapon/extinguisher/attack_self(mob/user as mob)
+/obj/item/extinguisher/attack(mob/living/M, mob/living/user, target_zone)
+	if(ismob(M) && user.a_intent != I_HURT)
+		return FALSE
+	return ..()
+
+/obj/item/extinguisher/attack_self(mob/user as mob)
 	safety = !safety
 	src.icon_state = "[sprite_name][!safety]"
 	src.desc = "The safety is [safety ? "on" : "off"]."
 	to_chat(user, "The safety is [safety ? "on" : "off"].")
 	return
 
-/obj/item/weapon/extinguisher/attackby(var/obj/O as obj, var/mob/user as mob)
+/obj/item/extinguisher/attackby(var/obj/O as obj, var/mob/user as mob)
 
-	if(istype(O,/obj/item/weapon/reagent_containers/extinguisher_refill))
-		var/obj/item/weapon/reagent_containers/extinguisher_refill/ER = O
+	if(istype(O,/obj/item/reagent_containers/extinguisher_refill))
+		var/obj/item/reagent_containers/extinguisher_refill/ER = O
 		if(ER.is_open_container())
 			to_chat(user,"<span class='notice'>\The [ER] needs to be secured first!</span>")
 		else if(ER.reagents.total_volume <= 0)
@@ -156,7 +161,7 @@
 
 	. = ..()
 
-/obj/item/weapon/extinguisher/proc/propel_object(var/obj/O, mob/user, movementdirection)
+/obj/item/extinguisher/proc/propel_object(var/obj/O, mob/user, movementdirection)
 	if(O.anchored) return
 
 	var/obj/structure/bed/chair/C
@@ -174,17 +179,16 @@
 		O.Move(get_step(user,movementdirection), movementdirection)
 		sleep(3)
 
-/obj/item/weapon/extinguisher/afterattack(var/atom/target, var/mob/user, var/flag)
-
-	if (!safety)
-		if (src.reagents.total_volume < 1)
-			to_chat(usr, "<span class='notice'>\The [src] is empty.</span>")
+/obj/item/extinguisher/afterattack(var/atom/target, var/mob/user, var/flag)
+	if(!safety)
+		if(reagents.total_volume < 1)
+			to_chat(user, SPAN_WARNING("\The [src] is empty."))
 			return
 
-		if (world.time < src.last_use + 20)
+		if(world.time < last_use + 20)
 			return
 
-		src.last_use = world.time
+		last_use = world.time
 
 		playsound(src.loc, 'sound/effects/extinguish.ogg', 75, 1, -3)
 
@@ -202,14 +206,16 @@
 
 		for(var/a = 1 to spray_particles)
 			spawn(0)
-				if(!src || !reagents.total_volume) return
+				if(!src || !reagents.total_volume)
+					return
 
-				var/obj/effect/effect/water/W = new(get_turf(src))
 				var/turf/my_target
 				if(a <= the_targets.len)
 					my_target = the_targets[a]
 				else
 					my_target = pick(the_targets)
+
+				var/obj/effect/effect/water/W = new(get_turf(src))
 				W.create_reagents(spray_amount)
 				reagents.trans_to_obj(W, spray_amount)
 				W.set_color()

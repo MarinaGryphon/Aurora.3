@@ -93,11 +93,9 @@
 "ax" = (
 /obj/machinery/shieldgen,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 8
 	},
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 1
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -106,11 +104,9 @@
 "ay" = (
 /obj/machinery/shieldgen,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 4
 	},
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 1
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -119,11 +115,9 @@
 "az" = (
 /obj/machinery/portable_atmospherics/canister/air,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 8
 	},
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 1
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -132,11 +126,9 @@
 "aA" = (
 /obj/machinery/portable_atmospherics/canister/air,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 4
 	},
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 1
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -145,33 +137,23 @@
 "aB" = (
 /obj/structure/table/reinforced,
 /obj/machinery/light{
-	icon_state = "tube1";
-	dir = 1
+	dir = 1;
+	icon_state = "tube1"
 	},
 /obj/item/stack/material/steel{
-	amount = 50;
-	pixel_x = 0;
-	pixel_y = 0
+	amount = 50
 	},
 /obj/item/stack/material/steel{
-	amount = 50;
-	pixel_x = 0;
-	pixel_y = 0
+	amount = 50
 	},
 /obj/item/stack/material/steel{
-	amount = 50;
-	pixel_x = 0;
-	pixel_y = 0
+	amount = 50
 	},
 /obj/item/stack/material/steel{
-	amount = 50;
-	pixel_x = 0;
-	pixel_y = 0
+	amount = 50
 	},
 /obj/item/stack/material/steel{
-	amount = 50;
-	pixel_x = 0;
-	pixel_y = 0
+	amount = 50
 	},
 /obj/random/tech_supply,
 /turf/simulated/floor/tiled/dark,
@@ -217,7 +199,6 @@
 "aF" = (
 /obj/machinery/shieldgen,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 8
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -226,7 +207,6 @@
 "aG" = (
 /obj/machinery/shieldgen,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 4
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -235,7 +215,6 @@
 "aH" = (
 /obj/machinery/portable_atmospherics/canister/air,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 8
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -244,7 +223,6 @@
 "aI" = (
 /obj/machinery/portable_atmospherics/canister/air,
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 4
 	},
 /obj/effect/floor_decal/industrial/outline/yellow,
@@ -259,7 +237,7 @@
 /obj/item/clothing/suit/space/void/engineering,
 /obj/item/clothing/glasses/meson,
 /obj/item/clothing/head/helmet/space/void/engineering,
-/obj/item/weapon/tank/oxygen,
+/obj/item/tank/oxygen,
 /obj/random/tech_supply,
 /obj/random/tech_supply,
 /obj/random/tech_supply,
@@ -279,7 +257,6 @@
 /obj/machinery/access_button/airlock_exterior{
 	master_tag = "constructionsite_airlock";
 	pixel_x = 20;
-	pixel_y = 0;
 	req_access = list(10)
 	},
 /turf/simulated/floor/airless,
@@ -290,17 +267,14 @@
 	icon_state = "space";
 	layer = 4;
 	name = "VACUUM";
-	pixel_x = -32;
-	pixel_y = 0
+	pixel_x = -32
 	},
 /obj/machinery/access_button/airlock_interior{
 	master_tag = "constructionsite_airlock";
 	pixel_x = -20;
-	pixel_y = 0;
 	req_access = list(10)
 	},
 /obj/effect/floor_decal/industrial/warning/corner{
-	icon_state = "warningcorner";
 	dir = 1
 	},
 /turf/simulated/floor/tiled/dark,
@@ -341,7 +315,6 @@
 	id_tag = "constructionsite_vent"
 	},
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 9
 	},
 /turf/simulated/floor,
@@ -355,7 +328,6 @@
 	c_tag = "Construction Site Teleporter Airlock"
 	},
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 5
 	},
 /turf/simulated/floor,
@@ -372,7 +344,6 @@
 /area/constructionsite/teleporter)
 "aW" = (
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 8
 	},
 /turf/simulated/floor/tiled,
@@ -390,14 +361,11 @@
 /area/constructionsite/storage)
 "aZ" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/blue{
-	icon_state = "intact";
 	dir = 5
 	},
 /obj/machinery/light/small,
 /obj/machinery/embedded_controller/radio/airlock/airlock_controller{
-	frequency = 1379;
 	id_tag = "constructionsite_airlock";
-	pixel_x = 0;
 	pixel_y = -25;
 	req_access = list(10);
 	tag_airpump = "constructionsite_vent";
@@ -406,7 +374,6 @@
 	tag_interior_door = "constructionsite_inner"
 	},
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 10
 	},
 /turf/simulated/floor,
@@ -414,20 +381,16 @@
 "ba" = (
 /obj/machinery/atmospherics/pipe/manifold/hidden/blue,
 /obj/machinery/airlock_sensor{
-	frequency = 1379;
 	id_tag = "constructionsite_sensor";
-	pixel_x = 0;
 	pixel_y = -25
 	},
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 6
 	},
 /turf/simulated/floor,
 /area/constructionsite/teleporter)
 "bb" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/blue{
-	icon_state = "intact";
 	dir = 4
 	},
 /obj/machinery/door/airlock/external{
@@ -441,18 +404,15 @@
 /area/constructionsite/teleporter)
 "bc" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/blue{
-	icon_state = "intact";
 	dir = 4
 	},
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 8
 	},
 /turf/simulated/floor/tiled,
 /area/constructionsite/teleporter)
 "bd" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/blue{
-	icon_state = "intact";
 	dir = 10
 	},
 /turf/simulated/floor/tiled,
@@ -489,23 +449,19 @@
 /area/constructionsite/teleporter)
 "bi" = (
 /obj/structure/window/basic{
-	icon_state = "window";
 	dir = 1
 	},
 /obj/machinery/portable_atmospherics/canister/air/airlock,
 /obj/machinery/atmospherics/portables_connector{
-	icon_state = "map_connector";
 	dir = 4
 	},
 /obj/effect/floor_decal/industrial/warning/corner{
-	icon_state = "warningcorner";
 	dir = 4
 	},
 /turf/simulated/floor/tiled/dark,
 /area/constructionsite/teleporter)
 "bj" = (
 /obj/machinery/atmospherics/pipe/manifold/hidden/blue{
-	icon_state = "map";
 	dir = 4
 	},
 /turf/simulated/floor/tiled,
@@ -553,14 +509,12 @@
 /obj/structure/window/basic,
 /obj/machinery/portable_atmospherics/canister/air/airlock,
 /obj/machinery/atmospherics/portables_connector{
-	icon_state = "map_connector";
 	dir = 4
 	},
 /turf/simulated/floor/tiled/dark,
 /area/constructionsite/teleporter)
 "bp" = (
 /obj/machinery/atmospherics/pipe/simple/hidden/blue{
-	icon_state = "intact";
 	dir = 9
 	},
 /turf/simulated/floor/tiled/dark,
@@ -569,11 +523,9 @@
 /obj/structure/cable/blue,
 /obj/machinery/alarm{
 	dir = 8;
-	icon_state = "alarm0";
 	pixel_x = 24
 	},
 /obj/machinery/power/apc/high/inactive{
-	dir = 2;
 	name = "south bump";
 	pixel_y = -24
 	},
@@ -604,9 +556,7 @@
 /turf/simulated/floor/tiled/dark,
 /area/constructionsite/teleporter)
 "bw" = (
-/obj/machinery/computer/teleporter,
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 9
 	},
 /turf/simulated/floor/tiled/dark,
@@ -614,15 +564,13 @@
 "bx" = (
 /obj/machinery/teleport/station,
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 1
 	},
 /turf/simulated/floor/tiled/dark,
 /area/constructionsite/teleporter)
 "by" = (
-/obj/machinery/teleport/hub,
+/obj/machinery/teleport/pad,
 /obj/effect/floor_decal/industrial/warning{
-	icon_state = "warning";
 	dir = 1
 	},
 /turf/simulated/floor/tiled/dark,
@@ -646,8 +594,6 @@
 /area/solar/constructionsite)
 "bE" = (
 /obj/machinery/door/airlock/highsecurity{
-	icon_state = "door_closed";
-	locked = 0;
 	name = "AI Upload Access";
 	req_access = list(16)
 	},
@@ -664,8 +610,6 @@
 /area/constructionsite/ai)
 "bI" = (
 /obj/machinery/door/airlock/highsecurity{
-	icon_state = "door_closed";
-	locked = 0;
 	name = "AI Upload";
 	req_access = list(16)
 	},
@@ -761,8 +705,6 @@
 /area/constructionsite/hallway/aft)
 "cb" = (
 /obj/machinery/door/airlock/highsecurity{
-	icon_state = "door_closed";
-	locked = 0;
 	name = "AI Upload Access";
 	req_access = list(16)
 	},
@@ -824,11 +766,11 @@
 /area/constructionsite/atmospherics)
 "cq" = (
 /obj/machinery/computer/general_air_control/large_tank_control{
+	default_pressure_setting = 2000;
 	frequency = 1443;
 	input_tag = "d_air_in";
 	name = "Mixed Air Supply Control";
 	output_tag = "d_air_out";
-	default_pressure_setting = 2000;
 	sensors = list("d_air_sensor" = "Tank")
 	},
 /obj/machinery/atmospherics/pipe/simple/visible{
@@ -864,10 +806,10 @@
 	id_tag = "d_air_out";
 	internal_pressure_bound = 2000;
 	internal_pressure_bound_default = 2000;
-	use_power = 1;
 	pressure_checks = 2;
 	pressure_checks_default = 2;
-	pump_direction = 0
+	pump_direction = 0;
+	use_power = 1
 	},
 /turf/simulated/floor/reinforced/airmix,
 /area/constructionsite/atmospherics)
@@ -884,15 +826,13 @@
 /area/constructionsite/atmospherics)
 "cu" = (
 /obj/machinery/atmospherics/pipe/simple/visible{
-	icon_state = "intact";
 	dir = 6
 	},
 /turf/simulated/floor/airless,
 /area/constructionsite/atmospherics)
 "cv" = (
 /obj/machinery/atmospherics/pipe/simple/hidden{
-	dir = 4;
-	icon_state = "intact"
+	dir = 4
 	},
 /turf/simulated/wall,
 /area/constructionsite/atmospherics)
@@ -900,7 +840,6 @@
 /obj/machinery/atmospherics/unary/outlet_injector{
 	dir = 8;
 	frequency = 1443;
-	icon_state = "map_injector";
 	id = "d_air_in";
 	use_power = 1
 	},
@@ -919,7 +858,6 @@
 /area/constructionsite/hallway/aft)
 "cz" = (
 /obj/machinery/computer/general_air_control/large_tank_control{
-	frequency = 1441;
 	input_tag = "d_o2_in";
 	name = "Oxygen Supply Control";
 	output_tag = "d_o2_out";
@@ -941,10 +879,10 @@
 	initialize_directions = 1;
 	internal_pressure_bound = 4000;
 	internal_pressure_bound_default = 4000;
-	use_power = 1;
 	pressure_checks = 2;
 	pressure_checks_default = 2;
-	pump_direction = 0
+	pump_direction = 0;
+	use_power = 1
 	},
 /turf/simulated/floor/reinforced/oxygen,
 /area/constructionsite/atmospherics)
@@ -962,7 +900,6 @@
 /obj/machinery/atmospherics/unary/outlet_injector{
 	dir = 8;
 	frequency = 1441;
-	icon_state = "map_injector";
 	id = "d_o2_in";
 	use_power = 1
 	},
@@ -996,7 +933,6 @@
 /area/constructionsite/atmospherics)
 "cI" = (
 /obj/machinery/computer/general_air_control/large_tank_control{
-	frequency = 1441;
 	input_tag = "d_n2_in";
 	name = "Nitrogen Supply Control";
 	output_tag = "d_n2_out";
@@ -1018,10 +954,10 @@
 	initialize_directions = 1;
 	internal_pressure_bound = 4000;
 	internal_pressure_bound_default = 4000;
-	use_power = 1;
 	pressure_checks = 2;
 	pressure_checks_default = 2;
-	pump_direction = 0
+	pump_direction = 0;
+	use_power = 1
 	},
 /turf/simulated/floor/reinforced/nitrogen,
 /area/constructionsite/atmospherics)
@@ -1045,7 +981,6 @@
 "cN" = (
 /obj/structure/cable/blue,
 /obj/machinery/power/apc/high/inactive{
-	dir = 2;
 	name = "south bump";
 	pixel_y = -24
 	},
@@ -1053,7 +988,6 @@
 /area/constructionsite/atmospherics)
 "cO" = (
 /obj/machinery/atmospherics/pipe/simple/visible{
-	icon_state = "intact";
 	dir = 5
 	},
 /turf/simulated/floor/airless,
@@ -1062,7 +996,6 @@
 /obj/machinery/atmospherics/unary/outlet_injector{
 	dir = 8;
 	frequency = 1441;
-	icon_state = "map_injector";
 	id = "d_n2_in";
 	use_power = 1
 	},
@@ -1084,8 +1017,6 @@
 /area/constructionsite/engineering)
 "cU" = (
 /obj/machinery/door/airlock/maintenance_hatch{
-	icon_state = "door_closed";
-	locked = 0;
 	name = "Engine Access";
 	req_one_access = list(11,24)
 	},

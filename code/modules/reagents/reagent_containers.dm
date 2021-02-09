@@ -1,17 +1,17 @@
-#define CELLS 8
-#define CELLSIZE (32/CELLS)
-
-/obj/item/weapon/reagent_containers
+/obj/item/reagent_containers
 	name = "Container"
 	desc = "..."
 	icon = 'icons/obj/chemical.dmi'
 	icon_state = null
-	w_class = 2
-	var/list/center_of_mass = list("x" = 16,"y" = 16)
+	w_class = ITEMSIZE_SMALL
+	recyclable = TRUE
 	var/amount_per_transfer_from_this = 5
 	var/possible_transfer_amounts = list(5,10,15,25,30)
 	var/volume = 30
 	var/accuracy = 1
+	var/fragile = 0        // If nonzero, above what force do we shatter?
+	var/shatter_sound = /decl/sound_category/glass_break_sound
+	var/material/shatter_material = MATERIAL_GLASS //slight typecasting abuse here, gets converted to a material in initializee
 	var/can_be_placed_into = list(
 		/obj/machinery/chem_master,
 		/obj/machinery/chem_heater,
@@ -21,29 +21,26 @@
 		/obj/structure/table,
 		/obj/structure/closet,
 		/obj/structure/sink,
-		/obj/item/weapon/storage,
+		/obj/item/storage,
 		/obj/machinery/atmospherics/unary/cryo_cell,
 		/obj/machinery/dna_scannernew,
-		/obj/item/weapon/grenade/chem_grenade,
+		/obj/item/grenade/chem_grenade,
 		/mob/living/bot/medbot,
-		/obj/machinery/computer/pandemic,
-		/obj/item/weapon/storage/secure/safe,
+		/obj/item/storage/secure/safe,
 		/obj/machinery/iv_drip,
-		/obj/machinery/disease2/incubator,
 		/obj/machinery/disposal,
 		/mob/living/simple_animal/cow,
 		/mob/living/simple_animal/hostile/retaliate/goat,
-		/obj/machinery/computer/centrifuge,
 		/obj/machinery/sleeper,
 		/obj/machinery/smartfridge,
 		/obj/machinery/biogenerator,
 		/obj/machinery/constructable_frame,
 		/obj/machinery/radiocarbon_spectrometer,
-		/obj/item/weapon/storage/part_replacer
+		/obj/item/storage/part_replacer
 	)
 	//The above list a misnomer. This basically means that anything in this list has their own way of handling reagent transfers and should be ignored in afterattack.
 
-/obj/item/weapon/reagent_containers/verb/set_APTFT() //set amount_per_transfer_from_this
+/obj/item/reagent_containers/verb/set_APTFT() //set amount_per_transfer_from_this
 	set name = "Set transfer amount"
 	set category = "Object"
 	set src in range(0)
@@ -51,35 +48,52 @@
 	if(N)
 		amount_per_transfer_from_this = N
 
-/obj/item/weapon/reagent_containers/Initialize()
+/obj/item/reagent_containers/Initialize()
 	. = ..()
 	if(!possible_transfer_amounts)
-		src.verbs -= /obj/item/weapon/reagent_containers/verb/set_APTFT
+		src.verbs -= /obj/item/reagent_containers/verb/set_APTFT
 	create_reagents(volume)
+	shatter_material = SSmaterials.get_material_by_name(shatter_material)
 
-/obj/item/weapon/reagent_containers/attack_self(mob/user as mob)
+/obj/item/reagent_containers/attack_self(mob/user)
 	return
 
-/obj/item/weapon/reagent_containers/attack(mob/M as mob, mob/user as mob, def_zone)
+/obj/item/reagent_containers/throw_impact(atom/hit_atom, var/speed)
+	. = ..()
+	if(ismob(loc))
+		return
+	if(fragile && (speed >= fragile))
+		shatter()
+	if(flags && NOREACT)
+		return
+	if(!reagents)
+		return
+	reagents.apply_force(speed)
+
+/obj/item/reagent_containers/proc/shatter(var/obj/item/W, var/mob/user)
+	if(reagents.total_volume)
+		reagents.splash(src.loc, reagents.total_volume) // splashes the mob holding it or the turf it's on
+	audible_message(SPAN_WARNING("\The [src] shatters with a resounding crash!"), SPAN_WARNING("\The [src] breaks."))
+	playsound(src, shatter_sound, 70, 1)
+	shatter_material.place_shard(loc)
+	qdel(src)
+
+/obj/item/reagent_containers/attackby(var/obj/item/W, var/mob/user)
+	if(!(W.flags & NOBLUDGEON) && (user.a_intent == I_HURT) && fragile && (W.force > fragile))
+		if(do_after(user, 10))
+			if(!QDELETED(src))
+				visible_message(SPAN_WARNING("[user] smashes [src] with \a [W]!"))
+				user.do_attack_animation(src)
+				shatter(W, user)
+	..()
+
+/obj/item/reagent_containers/attack(mob/M, mob/user, def_zone)
 	if(can_operate(M) && do_surgery(M, user, src))
 		return
+	if(!reagents.total_volume && user.a_intent == I_HURT)
+		return ..()
 
-/obj/item/weapon/reagent_containers/afterattack(var/atom/target, var/mob/user, var/proximity, var/params)
-
-	if(proximity && params && istype(target, /obj/structure/table) && center_of_mass && center_of_mass.len)
-		//Places the item on a grid
-		var/list/mouse_control = mouse_safe_xy(params)
-
-		var/mouse_x = mouse_control["icon-x"]
-		var/mouse_y = mouse_control["icon-y"]
-
-		if(isnum(mouse_x) && isnum(mouse_y))
-			var/cell_x = max(0, min(CELLS-1, round(mouse_x/CELLSIZE)))
-			var/cell_y = max(0, min(CELLS-1, round(mouse_y/CELLSIZE)))
-
-			pixel_x = (CELLSIZE * (0.5 + cell_x)) - center_of_mass["x"]
-			pixel_y = (CELLSIZE * (0.5 + cell_y)) - center_of_mass["y"]
-
+/obj/item/reagent_containers/afterattack(var/atom/target, var/mob/user, var/proximity, var/params)
 	if(!proximity || !is_open_container())
 		return
 	if(is_type_in_list(target,can_be_placed_into))
@@ -89,22 +103,24 @@
 	if(standard_splash_mob(user, target))
 		return
 	if(standard_pour_into(user, target))
+		SSvueui.check_uis_for_change(target)
 		return
 	if(standard_splash_obj(user, target))
 		return
 
+	if(istype(target, /obj/))
+		var/obj/O = target
+		if(!(O.flags & NOBLUDGEON) && reagents)
+			reagents.apply_force(O.force)
+	return ..()
 
-/obj/item/weapon/reagent_containers/proc/get_temperature()
-	if(reagents)
-		return reagents.get_temperature()
-	return T0C + 20
+/obj/item/reagent_containers/proc/get_temperature()
+	return reagents.get_temperature()
 
-/obj/item/weapon/reagent_containers/proc/reagentlist() // For attack logs
-	if(reagents)
-		return reagents.get_reagents()
-	return "No reagent holder"
+/obj/item/reagent_containers/proc/reagentlist() // For attack logs
+	return reagents.get_reagents()
 
-/obj/item/weapon/reagent_containers/proc/standard_dispenser_refill(var/mob/user, var/obj/structure/reagent_dispensers/target)
+/obj/item/reagent_containers/proc/standard_dispenser_refill(var/mob/user, var/obj/structure/reagent_dispensers/target)
 	if(!istype(target))
 		return 0
 
@@ -112,7 +128,7 @@
 		to_chat(user, "<span class='notice'>[target] is empty.</span>")
 		return 1
 
-	if(reagents && !reagents.get_free_space())
+	if(!REAGENTS_FREE_SPACE(reagents))
 		to_chat(user, "<span class='notice'>[src] is full.</span>")
 		return 1
 
@@ -120,12 +136,12 @@
 	to_chat(user, "<span class='notice'>You fill [src] with [trans] units of the contents of [target].</span>")
 	return 1
 
-/obj/item/weapon/reagent_containers/proc/standard_splash_obj(var/mob/user, var/target)
+/obj/item/reagent_containers/proc/standard_splash_obj(var/mob/user, var/target)
 
 	if(user.a_intent != I_HURT)
 		return
 
-	if(!reagents || !reagents.total_volume)
+	if(!reagents.total_volume)
 		return
 
 	user.visible_message("<span class='danger'>\The [target] has been splashed with something by \the [user]!</span>", "<span class = 'warning'>You splash the solution onto \the [target].</span>")
@@ -133,18 +149,18 @@
 	return
 
 // This goes into afterattack
-/obj/item/weapon/reagent_containers/proc/standard_splash_mob(var/mob/user, var/mob/target)
+/obj/item/reagent_containers/proc/standard_splash_mob(var/mob/user, var/mob/target)
 	if(!istype(target))
 		return
 
 	if(user.a_intent != I_HURT)
 		return 0
 
-	if(!reagents || !reagents.total_volume)
+	if(!reagents.total_volume)
 		to_chat(user, "<span class='notice'>[src] is empty.</span>")
 		return 1
 
-	if(target.reagents && !target.reagents.get_free_space())
+	if(target.reagents && !REAGENTS_FREE_SPACE(target.reagents))
 		to_chat(user, "<span class='notice'>[target] is full.</span>")
 		return 1
 
@@ -152,7 +168,7 @@
 	var/temperature = reagents.get_temperature()
 	var/temperature_text = "Temperature: ([temperature]K/[temperature]C)"
 	target.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been splashed with [name] by [user.name] ([user.ckey]). Reagents: [contained] [temperature_text].</font>")
-	user.attack_log += text("\[[time_stamp()]\] <font color='red'>Used the [name] to splash [target.name] ([target.key]). Reagents: [contained] [temperature_text].</font>")
+	user.attack_log += text("\[[time_stamp()]\] <span class='warning'>Used the [name] to splash [target.name] ([target.key]). Reagents: [contained] [temperature_text].</span>")
 	msg_admin_attack("[user.name] ([user.ckey]) splashed [target.name] ([target.key]) with [name]. Reagents: [contained] (INTENT: [uppertext(user.a_intent)]) (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>)",ckey=key_name(user),ckey_target=key_name(target))
 
 	user.visible_message("<span class='danger'>\The [target] has been splashed with something by \the [user]!</span>", "<span class = 'warning'>You splash the solution onto \the [target].</span>")
@@ -164,19 +180,19 @@
 
 	return 1
 
-/obj/item/weapon/reagent_containers/proc/self_feed_message(var/mob/user)
-	user.visible_message("<span class='notice'>\The [user] drinks from \the [src]</span>","<span class='notice'>You drink from \the [src]</span>")
+/obj/item/reagent_containers/proc/self_feed_message(var/mob/user)
+	user.visible_message("<b>[user]</b> drinks from \the [src].</span>","<span class='notice'>You drink from \the [src].")
 
-/obj/item/weapon/reagent_containers/proc/other_feed_message_start(var/mob/user, var/mob/target)
+/obj/item/reagent_containers/proc/other_feed_message_start(var/mob/user, var/mob/target)
 	user.visible_message("<span class='warning'>[user] is trying to feed [target] \the [src]!</span>")
 
-/obj/item/weapon/reagent_containers/proc/other_feed_message_finish(var/mob/user, var/mob/target)
+/obj/item/reagent_containers/proc/other_feed_message_finish(var/mob/user, var/mob/target)
 	user.visible_message("<span class='warning'>[user] has fed [target] \the [src]!</span>")
 
-/obj/item/weapon/reagent_containers/proc/feed_sound(var/mob/user)
+/obj/item/reagent_containers/proc/feed_sound(var/mob/user)
 	playsound(user.loc, 'sound/items/drink.ogg', rand(10, 50), 1)
 
-/obj/item/weapon/reagent_containers/proc/standard_feed_mob(var/mob/user, var/mob/target) // This goes into attack
+/obj/item/reagent_containers/proc/standard_feed_mob(var/mob/user, var/mob/living/target) // This goes into attack
 
 	if(!istype(target))
 		return 0
@@ -184,9 +200,12 @@
 	if(user.a_intent == I_HURT)
 		return 0
 
-	if(!reagents || !reagents.total_volume)
+	if(!reagents.total_volume)
 		to_chat(user, "<span class='notice'>\The [src] is empty.</span>")
 		return 1
+
+	if(target.isSynthetic() && !isipc(target))
+		return FALSE
 
 	//var/types = target.find_type()
 
@@ -221,6 +240,11 @@
 				to_chat(user, "<span class='warning'>\The [blocked] is in the way!</span>")
 				return
 
+		if(isanimal(target))
+			var/mob/living/simple_animal/C = target
+			if(C.has_udder)
+				return
+
 		other_feed_message_start(user, target)
 
 		user.setClickCooldown(DEFAULT_ATTACK_COOLDOWN)
@@ -231,30 +255,32 @@
 
 		var/contained = reagentlist()
 		target.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been fed [name] by [user.name] ([user.ckey]). Reagents: [contained]</font>")
-		user.attack_log += text("\[[time_stamp()]\] <font color='red'>Fed [name] by [target.name] ([target.ckey]). Reagents: [contained]</font>")
+		user.attack_log += text("\[[time_stamp()]\] <span class='warning'>Fed [name] by [target.name] ([target.ckey]). Reagents: [contained]</span>")
 		msg_admin_attack("[key_name(user)] fed [key_name(target)] with [name]. Reagents: [contained] (INTENT: [uppertext(user.a_intent)]) (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[user.x];Y=[user.y];Z=[user.z]'>JMP</a>)",ckey=key_name(user),ckey_target=key_name(target))
 
 		reagents.trans_to_mob(target, amount_per_transfer_from_this, CHEM_INGEST)
 		feed_sound(user)
 		return 1
 
-/obj/item/weapon/reagent_containers/proc/standard_pour_into(var/mob/user, var/atom/target) // This goes into afterattack and yes, it's atom-level
+/obj/item/reagent_containers/proc/standard_pour_into(var/mob/user, var/atom/target) // This goes into afterattack and yes, it's atom-level
 	if(!target.reagents)
 		return 0
 
 	// Ensure we don't splash beakers and similar containers.
-	if(!target.is_open_container() && istype(target, /obj/item/weapon/reagent_containers))
+	if(!target.is_open_container() && istype(target, /obj/item/reagent_containers))
 		to_chat(user, "<span class='notice'>\The [target] is closed.</span>")
 		return 1
 	// Otherwise don't care about splashing.
 	else if(!target.is_open_container())
 		return 0
 
-	if(!reagents || !reagents.total_volume)
+	if(!reagents.total_volume)
+		if(force) // bash people!
+			return 0
 		to_chat(user, "<span class='notice'>[src] is empty.</span>")
 		return 1
 
-	if(!target.reagents.get_free_space())
+	if(!REAGENTS_FREE_SPACE(target.reagents))
 		to_chat(user, "<span class='notice'>[target] is full.</span>")
 		return 1
 
@@ -262,6 +288,3 @@
 	playsound(src, 'sound/effects/pour.ogg', 25, 1)
 	to_chat(user, "<span class='notice'>You transfer [trans] units of the solution to [target].</span>")
 	return 1
-
-#undef CELLS
-#undef CELLSIZE

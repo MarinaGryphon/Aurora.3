@@ -30,7 +30,7 @@
 		// radio
 		if (0)
 			var/obj/item/assembly/r_i_ptank/R = new /obj/item/assembly/r_i_ptank(src.loc)
-			var/obj/item/weapon/tank/phoron/p3 = new /obj/item/weapon/tank/phoron(R)
+			var/obj/item/tank/phoron/p3 = new /obj/item/tank/phoron(R)
 			var/obj/item/device/radio/signaler/p1 = new /obj/item/device/radio/signaler(R)
 			var/obj/item/device/igniter/p2 = new /obj/item/device/igniter(R)
 			R.part1 = p1
@@ -47,7 +47,7 @@
 		// proximity
 		if (1)
 			var/obj/item/assembly/m_i_ptank/R = new /obj/item/assembly/m_i_ptank(src.loc)
-			var/obj/item/weapon/tank/phoron/p3 = new /obj/item/weapon/tank/phoron(R)
+			var/obj/item/tank/phoron/p3 = new /obj/item/tank/phoron(R)
 			var/obj/item/device/prox_sensor/p1 = new /obj/item/device/prox_sensor(R)
 			var/obj/item/device/igniter/p2 = new /obj/item/device/igniter(R)
 			R.part1 = p1
@@ -69,7 +69,7 @@
 		// timer
 		if (2)
 			var/obj/item/assembly/t_i_ptank/R = new /obj/item/assembly/t_i_ptank(src.loc)
-			var/obj/item/weapon/tank/phoron/p3 = new /obj/item/weapon/tank/phoron(R)
+			var/obj/item/tank/phoron/p3 = new /obj/item/tank/phoron(R)
 			var/obj/item/device/timer/p1 = new /obj/item/device/timer(R)
 			var/obj/item/device/igniter/p2 = new /obj/item/device/igniter(R)
 			R.part1 = p1
@@ -85,7 +85,7 @@
 		//bombvest
 		if(3)
 			var/obj/item/clothing/suit/armor/a_i_a_ptank/R = new /obj/item/clothing/suit/armor/a_i_a_ptank(src.loc)
-			var/obj/item/weapon/tank/phoron/p4 = new /obj/item/weapon/tank/phoron(R)
+			var/obj/item/tank/phoron/p4 = new /obj/item/tank/phoron(R)
 			var/obj/item/device/healthanalyzer/p1 = new /obj/item/device/healthanalyzer(R)
 			var/obj/item/device/igniter/p2 = new /obj/item/device/igniter(R)
 			var/obj/item/clothing/suit/armor/vest/p3 = new /obj/item/clothing/suit/armor/vest(R)
@@ -161,8 +161,8 @@
 	. = ..()
 
 	var/obj/item/device/transfer_valve/V = new(src.loc)
-	var/obj/item/weapon/tank/phoron/PT = new(V)
-	var/obj/item/weapon/tank/oxygen/OT = new(V)
+	var/obj/item/tank/phoron/PT = new(V)
+	var/obj/item/tank/oxygen/OT = new(V)
 
 	V.tank_one = PT
 	V.tank_two = OT
@@ -171,12 +171,12 @@
 	OT.master = V
 
 	PT.air_contents.temperature = PHORON_FLASHPOINT
-	PT.air_contents.gas["phoron"] = phoron_amt
-	PT.air_contents.gas["carbon_dioxide"] = carbon_amt
+	PT.air_contents.gas[GAS_PHORON] = phoron_amt
+	PT.air_contents.gas[GAS_CO2] = carbon_amt
 	PT.air_contents.update_values()
 
 	OT.air_contents.temperature = PHORON_FLASHPOINT
-	OT.air_contents.gas["oxygen"] = oxygen_amt
+	OT.air_contents.gas[GAS_OXYGEN] = oxygen_amt
 	OT.air_contents.update_values()
 
 	var/obj/item/device/assembly/S = new assembly_type(V)

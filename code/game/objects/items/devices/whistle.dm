@@ -3,7 +3,7 @@
 	desc = "Used by obese officers to save their breath for running."
 	icon_state = "voice0"
 	item_state = "flashbang"	//looks exactly like a flash (and nothing like a flashbang)
-	w_class = 1.0
+	w_class = ITEMSIZE_TINY
 	flags = CONDUCT
 
 	var/use_message = "Halt! Security!"
@@ -26,8 +26,8 @@
 		use_message = capitalize(copytext(sanitize(new_message), 1, MAX_MESSAGE_LEN))
 
 	to_chat(usr, "You configure the hailer to shout \"[use_message]\".")
-/
-obj/item/device/hailer/attack_self(mob/living/carbon/user as mob)
+
+/obj/item/device/hailer/attack_self(mob/living/carbon/user as mob)
 	if (spamcheck)
 		return
 

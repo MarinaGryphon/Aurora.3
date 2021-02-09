@@ -18,16 +18,25 @@ calculate text size per text.
 	var/minimum_percent = 15
 	if(ishuman(taster))
 		var/mob/living/carbon/human/H = taster
-		minimum_percent = round(15/ (H.isSynthetic() ? TASTE_DULL : H.species.taste_sensitivity))
+		var/total_taste_sensitivity
+
+		var/obj/item/organ/internal/augment/taste_booster/booster = H.internal_organs_by_name[BP_AUG_TASTE_BOOSTER]
+		if(booster && !booster.is_broken())
+			total_taste_sensitivity = booster.new_taste
+		else
+			total_taste_sensitivity = H.species.taste_sensitivity
+
+		minimum_percent = round(15 / (H.isSynthetic() ? TASTE_DULL : total_taste_sensitivity))
 
 	var/list/out = list()
 	var/list/tastes = list() //descriptor = strength
 	if(minimum_percent <= 100)
-		for(var/datum/reagent/R in reagent_list)
+		for(var/_R in reagent_volumes)
+			var/decl/reagent/R = decls_repository.get_decl(_R)
 			if(!R.taste_mult)
 				continue
-			if(R.id == "nutriment" || R.id == "synnutriment") //this is ugly but apparently only nutriment (not subtypes) has taste data TODO figure out why
-				var/list/taste_data = R.get_data()
+			if(R.type == /decl/reagent/nutriment)
+				var/list/taste_data = REAGENT_DATA(src, R.type)
 				for(var/taste in taste_data)
 					if(taste in tastes)
 						tastes[taste] += taste_data[taste]
@@ -35,7 +44,7 @@ calculate text size per text.
 						tastes[taste] = taste_data[taste]
 			else
 				var/taste_desc = R.taste_description
-				var/taste_amount = get_reagent_amount(R.id) * R.taste_mult
+				var/taste_amount = REAGENT_VOLUME(src, R.type) * R.taste_mult
 				if(R.taste_description in tastes)
 					tastes[taste_desc] += taste_amount
 				else
@@ -71,17 +80,18 @@ calculate text size per text.
 			temp_text = "cold"
 		if(T0C to T0C + 15)
 			temp_text = "cool"
-		if(T0C + 15 to T0C + 25)
-			temp_text = "lukewarm"
 		if(T0C + 25 to T0C + 40)
 			temp_text = "warm"
 		if(T0C + 40 to T0C + 100)
 			temp_text = "hot"
 		if(T0C + 100 to T0C + 120)
-			temp_text = "scolding hot"
+			temp_text = "scalding hot"
 		if(T0C + 120 to T0C + 200)
 			temp_text = "molten hot"
 		if(T0C + 200 to INFINITY)
 			temp_text = "lethally hot"
 
-	return "[temp_text] [english_list(out, "something indescribable")]."
+	return "[temp_text][temp_text ? " " : ""][english_list(out, "something indescribable")]."
+
+/mob/living/carbon/proc/get_fullness()
+	return nutrition + (REAGENT_VOLUME(reagents, /decl/reagent/nutriment) * 25)

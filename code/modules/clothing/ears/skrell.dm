@@ -1,10 +1,11 @@
 /obj/item/clothing/ears/skrell
 	name = "skrell tentacle wear"
 	desc = "Some stuff worn by skrell to adorn their head tentacles."
-	icon = 'icons/obj/clothing/ears.dmi'
-	w_class = 1
-	slot_flags = SLOT_EARS
-	species_restricted = list("Skrell")
+	icon = 'icons/obj/skrell_items.dmi'
+	contained_sprite = TRUE
+	w_class = ITEMSIZE_TINY
+	slot_flags = SLOT_HEAD | SLOT_EARS
+	species_restricted = list(SPECIES_SKRELL)
 
 /obj/item/clothing/ears/skrell/chain
 	name = "gold headtail chains"
@@ -12,6 +13,7 @@
 	icon_state = "skrell_chain"
 	item_state = "skrell_chain"
 	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
 
 /obj/item/clothing/ears/skrell/chain/silver
 	name = "silver headtail chains"
@@ -127,6 +129,7 @@
 	icon_state = "skrell_band"
 	item_state = "skrell_band"
 	drop_sound = 'sound/items/drop/accessory.ogg'
+	pickup_sound = 'sound/items/pickup/accessory.ogg'
 
 /obj/item/clothing/ears/skrell/band/silver
 	name = "silver headtail bands"
@@ -219,3 +222,27 @@
 	desc = "A purple cloth band worn by skrell around their head tails."
 	icon_state = "skrell_cloth_purple_male"
 	item_state = "skrell_cloth_purple_male"
+
+/obj/item/clothing/ears/skrell/goop
+	name = "glowing algae"
+	desc = "A mixture of glowing algae applied by skrell on their head tails."
+	icon_state = "skrell_dots"
+	item_state = "skrell_dots"
+
+/obj/item/clothing/ears/skrell/goop/update_icon()
+	..()
+	if(color)
+		set_light(1.5,1.5,color)
+		filters = filter(type="drop_shadow", color = color + "F0", size = 2, offset = 1, x = 0, y = 0)
+
+/obj/item/clothing/ears/skrell/goop/Initialize()
+	. = ..()
+	update_icon()
+
+/obj/item/clothing/ears/skrell/goop/stripes
+	icon_state = "skrell_stripes"
+	item_state = "skrell_stripes"
+
+/obj/item/clothing/ears/skrell/goop/circles
+	icon_state = "skrell_circles"
+	item_state = "skrell_circles"

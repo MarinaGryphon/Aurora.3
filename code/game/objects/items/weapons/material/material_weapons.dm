@@ -1,16 +1,18 @@
 // SEE code/modules/materials/materials.dm FOR DETAILS ON INHERITED DATUM.
 // This class of weapons takes force and appearance data from a material datum.
 // They are also fragile based on material data and many can break/smash apart.
-/obj/item/weapon/material
+/obj/item/material
 	health = 10
-	hitsound = 'sound/weapons/bladeslice.ogg'
 	gender = NEUTER
 	throw_speed = 3
 	throw_range = 7
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	sharp = 0
 	edge = 0
+	icon = 'icons/obj/weapons.dmi'
 
+	var/use_material_name = TRUE // Does the finished item put the material name in front of it?
+	var/use_material_sound = TRUE
 	var/applies_material_colour = 1
 	var/unbreakable
 	var/force_divisor = 0.5
@@ -19,7 +21,7 @@
 	var/material/material
 	var/drops_debris = 1
 
-/obj/item/weapon/material/New(var/newloc, var/material_key)
+/obj/item/material/New(var/newloc, var/material_key)
 	..(newloc)
 	if(!material_key)
 		material_key = default_material
@@ -34,10 +36,10 @@
 			if(!isnull(matter[material_type]))
 				matter[material_type] *= force_divisor // May require a new var instead.
 
-/obj/item/weapon/material/get_material()
+/obj/item/material/get_material()
 	return material
 
-/obj/item/weapon/material/proc/update_force()
+/obj/item/material/proc/update_force()
 	if(edge || sharp)
 		force = material.get_edge_damage()
 	else
@@ -45,12 +47,20 @@
 	force = round(force*force_divisor)
 	throwforce = round(material.get_blunt_damage()*thrown_force_divisor)
 
-/obj/item/weapon/material/proc/set_material(var/new_material)
-	material = get_material_by_name(new_material)
+/obj/item/material/proc/set_material(var/new_material)
+	material = SSmaterials.get_material_by_name(new_material)
 	if(!material)
 		qdel(src)
 	else
-		name = "[material.display_name] [initial(name)]"
+		if(use_material_name)
+			name = "[material.display_name] [initial(name)]"
+		if(use_material_sound)
+			if(sharp && !material.weapon_hitsound == 'sound/weapons/metalhit.ogg' || !sharp)
+				// wooden swords don't sound like metal swords.
+				// metalhit check is so swords when metal use their regular slice sfx.
+				hitsound = material.weapon_hitsound
+				drop_sound = material.weapon_drop_sound
+				pickup_sound = material.weapon_pickup_sound
 		health = round(material.integrity/10)
 		if(applies_material_colour)
 			color = material.icon_colour
@@ -58,11 +68,11 @@
 			START_PROCESSING(SSprocessing, src)
 		update_force()
 
-/obj/item/weapon/material/Destroy()
+/obj/item/material/Destroy()
 	STOP_PROCESSING(SSprocessing, src)
 	return ..()
 
-/obj/item/weapon/material/apply_hit_effect()
+/obj/item/material/apply_hit_effect()
 	. = ..()
 	if(!unbreakable)
 		if(material.is_brittle())
@@ -71,17 +81,17 @@
 			health--
 		check_health()
 
-/obj/item/weapon/material/proc/check_health(var/consumed)
+/obj/item/material/proc/check_health(var/consumed)
 	if(health<=0)
 		shatter(consumed)
 
-/obj/item/weapon/material/proc/shatter(var/consumed)
+/obj/item/material/proc/shatter(var/consumed)
 	var/turf/T = get_turf(src)
 	T.visible_message("<span class='danger'>\The [src] [material.destruction_desc]!</span>")
 	if(istype(loc, /mob/living))
 		var/mob/living/M = loc
 		M.drop_from_inventory(src)
-	playsound(src, "shatter", 70, 1)
+	playsound(src, material.shatter_sound, 70, 1)
 	if(!consumed && drops_debris) material.place_shard(T)
 	qdel(src)
 

@@ -5,9 +5,6 @@
 	if(load && istype(load,/mob/living))
 		return load
 
-/obj/mecha/get_mob()
-	return occupant
-
 /obj/vehicle/train/get_mob()
 	return buckled_mob
 
@@ -26,7 +23,7 @@
 
 		. += AM.get_mob()
 
-proc/random_hair_style(gender, species = "Human")
+/proc/random_hair_style(gender, species = SPECIES_HUMAN)
 	var/h_style = "Bald"
 
 	var/list/valid_hairstyles = list()
@@ -45,7 +42,7 @@ proc/random_hair_style(gender, species = "Human")
 
 	return h_style
 
-proc/random_facial_hair_style(gender, species = "Human")
+/proc/random_facial_hair_style(gender, species = SPECIES_HUMAN)
 	var/f_style = "Shaved"
 
 	var/list/valid_facialhairstyles = list()
@@ -65,15 +62,14 @@ proc/random_facial_hair_style(gender, species = "Human")
 
 		return f_style
 
-proc/sanitize_name(name, species = "Human")
+/proc/sanitize_name(name, species = SPECIES_HUMAN)
 	var/datum/species/current_species
 	if(species)
 		current_species = all_species[species]
 
 	return current_species ? current_species.sanitize_name(name) : sanitizeName(name)
 
-proc/random_name(gender, species = "Human")
-
+/proc/random_name(gender, species = SPECIES_HUMAN)
 	var/datum/species/current_species
 	if(species)
 		current_species = all_species[species]
@@ -86,7 +82,7 @@ proc/random_name(gender, species = "Human")
 	else
 		return current_species.get_random_name(gender)
 
-proc/random_skin_tone()
+/proc/random_skin_tone()
 	switch(pick(60;"caucasian", 15;"afroamerican", 10;"african", 10;"latino", 5;"albino"))
 		if("caucasian")		. = -10
 		if("afroamerican")	. = -115
@@ -96,7 +92,7 @@ proc/random_skin_tone()
 		else				. = rand(-185,34)
 	return min(max( .+rand(-25, 25), -185),34)
 
-proc/skintone2racedescription(tone)
+/proc/skintone2racedescription(tone)
 	switch (tone)
 		if(30 to INFINITY)		return "albino"
 		if(20 to 30)			return "pale"
@@ -108,7 +104,7 @@ proc/skintone2racedescription(tone)
 		if(-INFINITY to -65)	return "black"
 		else					return "unknown"
 
-proc/age2agedescription(age)
+/proc/age2agedescription(age)
 	switch(age)
 		if(0 to 1)			return "infant"
 		if(1 to 3)			return "toddler"
@@ -121,7 +117,7 @@ proc/age2agedescription(age)
 		if(70 to INFINITY)	return "elderly"
 		else				return "unknown"
 
-proc/RoundHealth(health)
+/proc/RoundHealth(health)
 	switch(health)
 		if(100 to INFINITY)
 			return "health100"
@@ -143,7 +139,6 @@ proc/RoundHealth(health)
 			return "health0"
 		else
 			return "health-100"
-	return "0"
 
 /*
 Proc for attack log creation, because really why not
@@ -157,25 +152,27 @@ Proc for attack log creation, because really why not
 
 /proc/add_logs(mob/user, mob/target, what_done, var/admin=1, var/object=null, var/addition=null)
 	if(user && ismob(user))
-		user.attack_log += text("\[[time_stamp()]\] <font color='red'>Has [what_done] [target ? "[target.name][(ismob(target) && target.ckey) ? "([target.ckey])" : ""]" : "NON-EXISTANT SUBJECT"][object ? " with [object]" : " "][addition]</font>")
+		user.attack_log += text("\[[time_stamp()]\] <span class='warning'>Has [what_done] [target ? "[target.name][(ismob(target) && target.ckey) ? "([target.ckey])" : ""]" : "NON-EXISTANT SUBJECT"][object ? " with [object]" : " "][addition]</span>")
 	if(target && ismob(target))
 		target.attack_log += text("\[[time_stamp()]\] <font color='orange'>Has been [what_done] by [user ? "[user.name][(ismob(user) && user.ckey) ? "([user.ckey])" : ""]" : "NON-EXISTANT SUBJECT"][object ? " with [object]" : " "][addition]</font>")
 	if(admin)
-		log_attack("<font color='red'>[user ? "[user.name][(ismob(user) && user.ckey) ? "([user.ckey])" : ""]" : "NON-EXISTANT SUBJECT"] [what_done] [target ? "[target.name][(ismob(target) && target.ckey)? "([target.ckey])" : ""]" : "NON-EXISTANT SUBJECT"][object ? " with [object]" : " "][addition]</font>",ckey=key_name(user),ckey_target=key_name(target))
+		log_attack("<span class='warning'>[user ? "[user.name][(ismob(user) && user.ckey) ? "([user.ckey])" : ""]" : "NON-EXISTANT SUBJECT"] [what_done] [target ? "[target.name][(ismob(target) && target.ckey)? "([target.ckey])" : ""]" : "NON-EXISTANT SUBJECT"][object ? " with [object]" : " "][addition]</span>",ckey=key_name(user),ckey_target=key_name(target))
 
 //checks whether this item is a module of the robot it is located in.
 /proc/is_robot_module(var/obj/item/thing)
-	if (!thing || !istype(thing.loc, /mob/living/silicon/robot))
-		return 0
-	var/mob/living/silicon/robot/R = thing.loc
-	return (thing in R.module.modules)
+	if(!thing)
+		return FALSE
+	if(istype(thing.loc, /mob/living/heavy_vehicle))
+		return FALSE
+	if(!istype(thing.loc, /mob/living/silicon/robot))
+		return FALSE
 
 /proc/get_exposed_defense_zone(var/atom/movable/target)
-	var/obj/item/weapon/grab/G = locate() in target
+	var/obj/item/grab/G = locate() in target
 	if(G && G.state >= GRAB_NECK) //works because mobs are currently not allowed to upgrade to NECK if they are grabbing two people.
-		return pick("head", "l_hand", "r_hand", "l_foot", "r_foot", "l_arm", "r_arm", "l_leg", "r_leg")
+		return pick(BP_HEAD, BP_L_HAND, BP_R_HAND, BP_L_FOOT, BP_R_FOOT, BP_L_ARM, BP_R_ARM, BP_L_LEG, BP_R_LEG)
 	else
-		return pick("chest", "groin")
+		return pick(BP_CHEST, BP_GROIN)
 
 
 // Returns true if M was not already in the dead mob list
@@ -213,3 +210,81 @@ Proc for attack log creation, because really why not
 // Returns true if the mob was removed form the dead list
 /mob/proc/remove_from_dead_mob_list()
 	return dead_mob_list.Remove(src)
+
+// This will update a mob's name, real_name, mind.name, SSrecords records, pda and id
+// Calling this proc without an oldname will only update the mob and skip updating the pda, id and records
+/mob/proc/fully_replace_character_name(var/oldname,var/newname)
+	if(!newname)	return 0
+	real_name = newname
+	name = newname
+	if(mind)
+		mind.name = newname
+	if(dna)
+		dna.real_name = real_name
+
+	if(oldname)
+		//update the datacore records! This is goig to be a bit costly.
+		for(var/datum/record/general/R in list(SSrecords.records, SSrecords.records_locked))
+			if(R.name == oldname)
+				R.name = newname
+				break
+
+		//update our pda and id if we have them on our person
+		var/list/searching = GetAllContents(searchDepth = 3)
+		var/search_id = 1
+		var/search_pda = 1
+
+		for(var/A in searching)
+			if( search_id && istype(A,/obj/item/card/id) )
+				var/obj/item/card/id/ID = A
+				if(ID.registered_name == oldname)
+					ID.registered_name = newname
+					ID.name = "[newname]'s ID Card ([ID.assignment])"
+					if(!search_pda)	break
+					search_id = 0
+
+			else if(search_pda && istype(A,/obj/item/modular_computer))
+				var/obj/item/modular_computer/PDA = A
+				if(!PDA.registered_id)
+					continue
+				if(PDA.registered_id.name == oldname)
+					PDA.name = "PDA-[newname] ([PDA.registered_id.assignment])"
+					if(!search_id)	break
+					search_pda = 0
+	return 1
+
+// Generalised helper proc for letting mobs rename themselves
+/mob/proc/rename_self(var/role, var/allow_numbers=0)
+	set waitfor = FALSE
+	var/oldname = real_name
+
+	var/time_passed = world.time
+	var/newname
+
+	for(var/i=1,i<=3,i++)	//we get 3 attempts to pick a suitable name.
+		newname = input(src,"You are \a [role]. Would you like to change your name to something else?", "Name change",oldname) as text
+		if((world.time-time_passed)>3000)
+			return	//took too long
+		newname = sanitizeName(newname, ,allow_numbers)	//returns null if the name doesn't meet some basic requirements. Tidies up a few other things like bad-characters.
+
+		for(var/mob/living/M in player_list)
+			if(M == src)
+				continue
+			if(!newname || M.real_name == newname)
+				newname = null
+				break
+		if(newname)
+			break	//That's a suitable name!
+		to_chat(src, "Sorry, that [role]-name wasn't appropriate, please try another. It's possibly too long/short, has bad characters or is already taken.")
+
+	if(!newname)	//we'll stick with the oldname then
+		return
+
+	if(cmptext("ai",role))
+		if(isAI(src))
+			var/mob/living/silicon/ai/A = src
+			oldname = null//don't bother with the records update crap
+			// Set eyeobj name
+			A.SetName(newname)
+
+	fully_replace_character_name(oldname,newname)

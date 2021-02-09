@@ -59,7 +59,11 @@
 
 // Returns true if val is from min to max, inclusive.
 /proc/IsInRange(val, min, max)
-	return (val >= min) && (val <= max)
+	return (min <= val && val <= max)
+
+// Same as above, exclusive.
+/proc/IsInRange_Ex(val, min, max)
+	return (min < val && val < max)
 
 /proc/IsInteger(x)
 	return Floor(x) == x
@@ -135,3 +139,26 @@
 	for (var/i = 0, i < iterations, i++)
 		. = (1/3) * (num/(.**2)+2*.)
 
+
+// Old scripting functions used by all over place.
+// Round down
+/proc/n_floor(var/num)
+	if(isnum(num))
+		return round(num)
+
+// Round up
+/proc/n_ceil(var/num)
+	if(isnum(num))
+		return round(num)+1
+
+// Round to nearest integer
+/proc/n_round(var/num)
+	if(isnum(num))
+		if(num-round(num)<0.5)
+			return round(num)
+		return n_ceil(num)
+
+// Returns 1 if N is inbetween Min and Max
+/proc/n_inrange(var/num, var/min=-1, var/max=1)
+	if(isnum(num)&&isnum(min)&&isnum(max))
+		return ((min <= num) && (num <= max))

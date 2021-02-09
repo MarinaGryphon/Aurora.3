@@ -10,7 +10,6 @@
 /datum/brain_trauma/special/imaginary_friend/on_gain()
 	..()
 	make_friend()
-	get_ghost()
 
 /datum/brain_trauma/special/imaginary_friend/on_life()
 	if(get_dist(owner, friend) > 9)
@@ -24,12 +23,7 @@
 
 /datum/brain_trauma/special/imaginary_friend/proc/make_friend()
 	friend = new(get_turf(src), src)
-
-/datum/brain_trauma/special/imaginary_friend/proc/get_ghost()
-	set waitfor = FALSE
-	var/datum/ghosttrap/G = get_ghost_trap("friend")
-	G.request_player(friend, "Would you like to play as [owner]'s imaginary friend?", 60 SECONDS)
-	addtimer(CALLBACK(src, .proc/reset_search), 60 SECONDS)
+	SSghostroles.add_spawn_atom("imaginary_friend", friend)
 
 /datum/brain_trauma/special/imaginary_friend/proc/reset_search()
 	if(src.friend && src.friend.key)
@@ -39,7 +33,7 @@
 
 /mob/abstract/mental
 	universal_understand = 1
-	incorporeal_move = 1
+	incorporeal_move = INCORPOREAL_GHOST
 	density = 0
 
 /mob/abstract/mental/friend
@@ -53,7 +47,7 @@
 	var/mob/living/carbon/owner
 	var/datum/brain_trauma/special/imaginary_friend/trauma
 
-/mob/abstract/mental/friend/Login()
+/mob/abstract/mental/friend/LateLogin()
 	..()
 	to_chat(src, "<span class='notice'><b>You are the imaginary friend of [owner]!</b></span>")
 	to_chat(src, "<span class='notice'>You are absolutely loyal to your friend, no matter what.</span>")
@@ -91,6 +85,7 @@
 		owner.client.images.Remove(human_image)
 	if(client)
 		client.images.Remove(human_image)
+	SSghostroles.remove_spawn_atom("imaginary_friend", src)
 	return ..()
 
 /mob/abstract/mental/friend/proc/yank()

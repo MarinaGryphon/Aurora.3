@@ -1,55 +1,39 @@
 //syndicate cyborgs, they aren't fully linked to the station, also are more combat oriented, for now only the regular assault module - alberyk
 
 /mob/living/silicon/robot/syndicate
-	lawupdate = 0
-	scrambledcodes = 1
-	modtype = "Syndicate"
-	icon = 'icons/mob/robots.dmi'
-	icon_state = "syndie_bloodhound"
-	lawchannel = "State"
-	lawpreset = /datum/ai_laws/syndicate_override
-	idcard_type = /obj/item/weapon/card/id/syndicate
-	spawn_module = /obj/item/weapon/robot_module/syndicate
-	key_type = /obj/item/device/encryptionkey/syndicate
-	spawn_sound = 'sound/mecha/nominalsyndi.ogg'
-	pitch_toggle = 0
-	cell_type = /obj/item/weapon/cell/super
-	req_access = list(access_syndicate)
-	faction = "syndicate"
-	braintype = "Cyborg"
-	no_pda = TRUE
+	// Laws and Interaction
+	law_channel = "State"
+	law_preset = /datum/ai_laws/syndicate_override
+	law_update = FALSE
+	scrambled_codes = TRUE
 
-/mob/living/silicon/robot/syndicate/init()
-	..()
-	if(!jetpack)
-		jetpack = new /obj/item/weapon/tank/jetpack/carbondioxide/synthetic(src)
+	// Modules
+	mod_type = "Syndicate"
+	spawn_module = /obj/item/robot_module/syndicate
+	cell_type = /obj/item/cell/super
+	has_pda = FALSE
+	has_jetpack = TRUE
+	flash_resistant = TRUE
+
+	// Look and feel
+	icon_state = "syndie_bloodhound"
+	spawn_sound = 'sound/mecha/nominalsyndi.ogg'
+	pitch_toggle = FALSE
+	braintype = "Cyborg"
+
+	// ID and Access
+	req_access = list(access_syndicate)
+	id_card_type = /obj/item/card/id/syndicate
+	key_type = /obj/item/device/encryptionkey/syndicate
+	var/datum/antagonist/assigned_antagonist
 
 /mob/living/silicon/robot/syndicate/Initialize()
 	. = ..()
 	verbs += /mob/living/silicon/robot/proc/choose_icon
-
-/mob/living/silicon/robot/syndicate/updateicon() //because this was the only way I found out how to make their eyes and etc works
-	cut_overlays()
-	if(stat == 0)
-		add_overlay("eyes-[icon_state]")
-
-	if(opened)
-		var/panelprefix = custom_sprite ? src.ckey : "ov"
-		if(wiresexposed)
-			add_overlay("[panelprefix]-openpanel +w")
-		else if(cell)
-			add_overlay("[panelprefix]-openpanel +c")
-		else
-			add_overlay("[panelprefix]-openpanel -c")
-
-	if(module_active && istype(module_active,/obj/item/borg/combat/shield))
-		add_overlay("[icon_state]-shield")
-
-	if(modtype == "Combat")
-		if(module_active && istype(module_active,/obj/item/borg/combat/mobility))
-			icon_state = "[icon_state]-roll"
-		else
-			icon_state = module_sprites[icontype]
+	var/datum/robot_component/C = components["surge"]
+	C.installed = TRUE
+	C.wrapped = new C.external_type
+	setup_icon_cache()
 
 /mob/living/silicon/robot/syndicate/death()
 	..()
@@ -58,9 +42,21 @@
 	explosion(get_turf(src), 1, 2, 3, 5)
 	qdel(src)
 
+/mob/living/silicon/robot/syndicate/assign_player(var/mob/user)
+	if(src.ckey)
+		return
+	src.ckey = user.ckey
+	if(assigned_antagonist)
+		assigned_antagonist.add_antagonist_mind(src.mind, TRUE)
+		if(assigned_antagonist.get_antag_radio())
+			module.channels[assigned_antagonist.get_antag_radio()] = TRUE
+			radio.recalculateChannels()
+	say("Boot sequence complete!")
+	return src
+
 //syndicate borg gear
 
-/obj/item/weapon/gun/energy/mountedsmg
+/obj/item/gun/energy/mountedsmg
 	name = "mounted submachine gun"
 	desc = "A cyborg mounted submachine gun, it can print more bullets over time."
 	icon = 'icons/obj/robot_items.dmi'
@@ -81,40 +77,45 @@
 		list(mode_name="3-round bursts", burst=3, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1),       dispersion=list(0, 15, 15)),
 		list(mode_name="short bursts",   burst=5, fire_delay=null, move_delay=4,    burst_accuracy=list(0,-1,-1,-2,-2), dispersion=list(0, 15, 15, 18, 18, 20))
 		)
+	has_safety = FALSE
 
-/obj/item/weapon/gun/energy/crossbow/cyborg
+/obj/item/gun/energy/crossbow/cyborg
 	name = "mounted energy-crossbow"
 	desc = "A weapon favored by mercenary infiltration teams, this one is suited to be used by cyborgs."
 	max_shots = 4
 	charge_cost = 200
 	use_external_power = 1
 
-/obj/item/weapon/gun/launcher/grenade/cyborg
+/obj/item/gun/launcher/grenade/cyborg
 	name = "grenade launcher"
-	desc = "A bulky pump-action grenade launcher. Loaded with 3 frag grenades."
+	desc = "A bulky pump-action grenade launcher. Can be loaded with more grenades."
+	has_safety = FALSE
+	blacklisted_grenades = list()
 
-/obj/item/weapon/gun/launcher/grenade/cyborg/Initialize()
+/obj/item/gun/launcher/grenade/cyborg/Initialize()
 	. = ..()
 
 	grenades = list(
-		new /obj/item/weapon/grenade/frag(src),
-		new /obj/item/weapon/grenade/frag(src),
-		new /obj/item/weapon/grenade/frag(src)
+		new /obj/item/grenade/frag(src),
+		new /obj/item/grenade/frag(src)
 	)
+	chambered = new /obj/item/grenade/frag(src)
+	update_maptext()
 
-/obj/item/weapon/robot_emag
-	desc = "It's a card with a magnetic strip attached to some circuitry, this one is modified to be used by a cyborg."
+/obj/item/robot_emag
 	name = "cryptographic sequencer"
+	desc = "It's a card with a magnetic strip attached to some circuitry, this one is modified to be used by a cyborg."
+	desc_antag = "This emag has an unlimited number of uses, however, each use will drain a little bit of your power cell."
 	icon = 'icons/obj/card.dmi'
 	icon_state = "emag"
 
-/obj/item/weapon/robot_emag/afterattack(var/atom/target, var/mob/living/user, proximity) //possible spaghetti code, but should work
+/obj/item/robot_emag/afterattack(var/atom/target, var/mob/living/user, proximity) //possible spaghetti code, but should work
 	if(!target)
 		return
 	if(!proximity)
 		return
 
-	else if(istype(target,/obj/))
+	else if(isobj(target))
 		var/obj/O = target
 		O.add_fingerprint(user)
 		O.emag_act(1,user,src)
@@ -123,6 +124,5 @@
 			var/mob/living/silicon/robot/R = user
 			if(R.cell)
 				R.cell.use(350)
-		return 1
-
-	return 0
+		return TRUE
+	return FALSE

@@ -11,6 +11,7 @@ var/list/global_huds
 /datum/hud/var/obj/screen/help_intent
 
 /datum/global_hud
+	var/obj/screen/vr_control
 	var/obj/screen/druggy
 	var/obj/screen/blurry
 	var/list/vimpaired
@@ -21,13 +22,15 @@ var/list/global_huds
 	var/obj/screen/science
 	var/obj/screen/holomap
 
-/datum/global_hud/proc/setup_overlay(var/icon_state)
+/datum/global_hud/proc/setup_overlay(var/icon_state, var/color)
 	var/obj/screen/screen = new /obj/screen()
-	screen.screen_loc = "1,1"
-	screen.icon = 'icons/obj/hud_full.dmi'
+	screen.alpha = 25 // Adjust this if you want goggle overlays to be thinner or thicker.
+	screen.screen_loc = "SOUTHWEST to NORTHEAST" // Will tile up to the whole screen, scaling beyond 15x15 if needed.
+	screen.icon = 'icons/obj/hud_tiled.dmi'
 	screen.icon_state = icon_state
 	screen.layer = SCREEN_LAYER
 	screen.mouse_opacity = 0
+	screen.color = color
 
 	return screen
 
@@ -38,6 +41,8 @@ var/list/global_huds
 	druggy.icon_state = "druggy"
 	druggy.layer = 17
 	druggy.mouse_opacity = 0
+	druggy.alpha = 127
+	druggy.blend_mode = BLEND_MULTIPLY
 
 	//that white blurry effect you get when you eyes are damaged
 	blurry = new /obj/screen()
@@ -45,11 +50,19 @@ var/list/global_huds
 	blurry.icon_state = "blurry"
 	blurry.layer = 17
 	blurry.mouse_opacity = 0
+	blurry.alpha = 100
 
-	nvg = setup_overlay("nvg_hud")
-	thermal = setup_overlay("thermal_hud")
-	meson = setup_overlay("meson_hud")
-	science = setup_overlay("science_hud")
+	vr_control = new /obj/screen()
+	vr_control.icon = 'icons/mob/screen/full.dmi'
+	vr_control.icon_state = "vr_control"
+	vr_control.screen_loc = "1,1"
+	vr_control.mouse_opacity = 0
+	vr_control.alpha = 120
+
+	nvg = setup_overlay("scanline", "#06ff00")
+	thermal = setup_overlay("scanline", "#ff0000")
+	meson = setup_overlay("scanline", "#9fd800")
+	science = setup_overlay("scanline", "#d600d6")
 
 	// The holomap screen object is actually totally invisible.
 	// Station maps work by setting it as an images location before sending to client, not
@@ -174,44 +187,67 @@ datum/hud/New(mob/owner)
 			if(inventory_shown && hud_shown)
 				switch(hud_data["slot"])
 					if(slot_head)
-						if(H.head)      H.head.screen_loc =      hud_data["loc"]
+						if(H.head)
+							H.head.screen_loc =	hud_data["loc"]
 					if(slot_shoes)
-						if(H.shoes)     H.shoes.screen_loc =     hud_data["loc"]
+						if(H.shoes)
+							H.shoes.screen_loc = hud_data["loc"]
 					if(slot_l_ear)
-						if(H.l_ear)     H.l_ear.screen_loc =     hud_data["loc"]
+						if(H.l_ear)
+							H.l_ear.screen_loc = hud_data["loc"]
 					if(slot_r_ear)
-						if(H.r_ear)     H.r_ear.screen_loc =     hud_data["loc"]
+						if(H.r_ear)
+							H.r_ear.screen_loc = hud_data["loc"]
 					if(slot_gloves)
-						if(H.gloves)    H.gloves.screen_loc =    hud_data["loc"]
+						if(H.gloves)
+							H.gloves.screen_loc = hud_data["loc"]
 					if(slot_glasses)
-						if(H.glasses)   H.glasses.screen_loc =   hud_data["loc"]
+						if(H.glasses)
+							H.glasses.screen_loc = hud_data["loc"]
 					if(slot_w_uniform)
-						if(H.w_uniform) H.w_uniform.screen_loc = hud_data["loc"]
+						if(H.w_uniform)
+							H.w_uniform.screen_loc = hud_data["loc"]
 					if(slot_wear_suit)
-						if(H.wear_suit) H.wear_suit.screen_loc = hud_data["loc"]
+						if(H.wear_suit)
+							H.wear_suit.screen_loc =hud_data["loc"]
 					if(slot_wear_mask)
-						if(H.wear_mask) H.wear_mask.screen_loc = hud_data["loc"]
+						if(H.wear_mask)
+							H.wear_mask.screen_loc =hud_data["loc"]
+					if(slot_wrists)
+						if(H.wrists)
+							H.wrists.screen_loc =	hud_data["loc"]
 			else
 				switch(hud_data["slot"])
 					if(slot_head)
-						if(H.head)      H.head.screen_loc =      null
+						if(H.head)
+							H.head.screen_loc =	null
 					if(slot_shoes)
-						if(H.shoes)     H.shoes.screen_loc =     null
+						if(H.shoes)
+							H.shoes.screen_loc = null
 					if(slot_l_ear)
-						if(H.l_ear)     H.l_ear.screen_loc =     null
+						if(H.l_ear)
+							H.l_ear.screen_loc = null
 					if(slot_r_ear)
-						if(H.r_ear)     H.r_ear.screen_loc =     null
+						if(H.r_ear)
+							H.r_ear.screen_loc = null
 					if(slot_gloves)
-						if(H.gloves)    H.gloves.screen_loc =    null
+						if(H.gloves)
+							H.gloves.screen_loc = null
 					if(slot_glasses)
-						if(H.glasses)   H.glasses.screen_loc =   null
+						if(H.glasses)
+							H.glasses.screen_loc = null
 					if(slot_w_uniform)
-						if(H.w_uniform) H.w_uniform.screen_loc = null
+						if(H.w_uniform)
+							H.w_uniform.screen_loc =null
 					if(slot_wear_suit)
-						if(H.wear_suit) H.wear_suit.screen_loc = null
+						if(H.wear_suit)
+							H.wear_suit.screen_loc = null
 					if(slot_wear_mask)
-						if(H.wear_mask) H.wear_mask.screen_loc = null
-
+						if(H.wear_mask)
+							H.wear_mask.screen_loc =null
+					if(slot_wrists)
+						if(H.wrists)
+							H.wrists.screen_loc =	null
 
 /datum/hud/proc/persistant_inventory_update()
 	if(!mymob)
@@ -224,31 +260,43 @@ datum/hud/New(mob/owner)
 			if(hud_shown)
 				switch(hud_data["slot"])
 					if(slot_s_store)
-						if(H.s_store) H.s_store.screen_loc = hud_data["loc"]
+						if(H.s_store)
+							H.s_store.screen_loc = hud_data["loc"]
 					if(slot_wear_id)
-						if(H.wear_id) H.wear_id.screen_loc = hud_data["loc"]
+						if(H.wear_id)
+							H.wear_id.screen_loc = hud_data["loc"]
 					if(slot_belt)
-						if(H.belt)    H.belt.screen_loc =    hud_data["loc"]
+						if(H.belt)
+							H.belt.screen_loc = hud_data["loc"]
 					if(slot_back)
-						if(H.back)    H.back.screen_loc =    hud_data["loc"]
+						if(H.back)
+							H.back.screen_loc = hud_data["loc"]
 					if(slot_l_store)
-						if(H.l_store) H.l_store.screen_loc = hud_data["loc"]
+						if(H.l_store)
+							H.l_store.screen_loc = hud_data["loc"]
 					if(slot_r_store)
-						if(H.r_store) H.r_store.screen_loc = hud_data["loc"]
+						if(H.r_store)
+							H.r_store.screen_loc = hud_data["loc"]
 			else
 				switch(hud_data["slot"])
 					if(slot_s_store)
-						if(H.s_store) H.s_store.screen_loc = null
+						if(H.s_store)
+							H.s_store.screen_loc = null
 					if(slot_wear_id)
-						if(H.wear_id) H.wear_id.screen_loc = null
+						if(H.wear_id)
+							H.wear_id.screen_loc = null
 					if(slot_belt)
-						if(H.belt)    H.belt.screen_loc =    null
+						if(H.belt)
+							H.belt.screen_loc =    null
 					if(slot_back)
-						if(H.back)    H.back.screen_loc =    null
+						if(H.back)
+							H.back.screen_loc =    null
 					if(slot_l_store)
-						if(H.l_store) H.l_store.screen_loc = null
+						if(H.l_store)
+							H.l_store.screen_loc = null
 					if(slot_r_store)
-						if(H.r_store) H.r_store.screen_loc = null
+						if(H.r_store)
+							H.r_store.screen_loc = null
 
 
 /datum/hud/proc/instantiate()
@@ -363,3 +411,9 @@ datum/hud/New(mob/owner)
 	hud_used.hidden_inventory_update()
 	hud_used.persistant_inventory_update()
 	update_action_buttons()
+
+/mob/proc/add_click_catcher()
+	client.screen |= click_catchers
+
+/mob/abstract/new_player/add_click_catcher()
+	return

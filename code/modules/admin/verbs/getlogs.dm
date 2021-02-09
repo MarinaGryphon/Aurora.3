@@ -24,16 +24,16 @@
 	set category = null
 
 	if(!src.holder)
-		to_chat(src, "<font color='red'>Only Admins may use this command.</font>")
+		to_chat(src, "<span class='warning'>Only Admins may use this command.</span>")
 		return
 
 	var/client/target = input(src,"Choose somebody to grant access to the server's runtime logs (permissions expire at the end of each round):","Grant Permissions",null) as null|anything in clients
 	if(!istype(target,/client))
-		to_chat(src, "<font color='red'>Error: giveruntimelog(): Client not found.</font>")
+		to_chat(src, "<span class='warning'>Error: giveruntimelog(): Client not found.</span>")
 		return
 
 	target.verbs |= /client/proc/getruntimelog
-	to_chat(target, "<font color='red'>You have been granted access to runtime logs. Please use them responsibly or risk being banned.</font>")
+	to_chat(target, "<span class='warning'>You have been granted access to runtime logs. Please use them responsibly or risk being banned.</span>")
 	return
 
 
@@ -79,33 +79,15 @@
 
 //Other log stuff put here for the sake of organisation
 
-//Shows today's server log
-/datum/admins/proc/view_txt_log()
+/client/proc/view_signal_log()
+	set name = "View Signaler Log"
+	set desc = "Use this to view who sent signaler signals to things."
 	set category = "Admin"
-	set name = "Show Server Log"
-	set desc = "Shows today's server log."
 
-	var/path = "data/logs/[time2text(world.realtime,"YYYY/MM-Month/DD-Day")].log"
-	if( fexists(path) )
-		src << run( file(path) )
-	else
-		to_chat(src, "<font color='red'>Error: view_txt_log(): File not found/Invalid path([path]).</font>")
-		return
-	feedback_add_details("admin_verb","VTL") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
-	return
+	var/text_signal_log = ""
+	for(var/log in signal_log)
+		text_signal_log += "[log]<br>"
 
-//Shows today's attack log
-/datum/admins/proc/view_atk_log()
-	set category = "Admin"
-	set name = "Show Server Attack Log"
-	set desc = "Shows today's server attack log."
-
-	var/path = "data/logs/[time2text(world.realtime,"YYYY/MM-Month/DD-Day")] Attack.log"
-	if( fexists(path) )
-		src << run( file(path) )
-	else
-		to_chat(src, "<font color='red'>Error: view_atk_log(): File not found/Invalid path([path]).</font>")
-		return
-	usr << run( file(path) )
-	feedback_add_details("admin_verb","SSAL") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
-	return
+	var/datum/browser/signal_win = new(usr, "signallog", "Signal Log", 550, 500)
+	signal_win.set_content(text_signal_log)
+	signal_win.open()

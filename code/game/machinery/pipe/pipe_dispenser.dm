@@ -1,6 +1,8 @@
 /obj/machinery/pipedispenser
-	name = "Pipe Dispenser"
+	name = "pipe dispenser"
 	icon = 'icons/obj/stationobjs.dmi'
+	desc_info = "This can be moved by using a wrench.  You will need to wrench it again when you want to use it.  You can put \
+	excess (atmospheric) pipes into the dispenser, as well.  The dispenser requires electricity to function."
 	icon_state = "pipe_d"
 	density = 1
 	anchored = 1
@@ -68,9 +70,9 @@
 ///// Z-Level stuff
 //What number the make points to is in the define # at the top of construction.dm in same folder
 
-	user << browse("<HEAD><TITLE>[src]</TITLE></HEAD><TT>[dat]</TT>", "window=pipedispenser")
-	onclose(user, "pipedispenser")
-	return
+	var/datum/browser/pipedispenser_win = new(user, "pipedispenser", capitalize_first_letters(name), 220, 500)
+	pipedispenser_win.set_content(dat)
+	pipedispenser_win.open()
 
 /obj/machinery/pipedispenser/Topic(href, href_list)
 	if(..())
@@ -99,7 +101,8 @@
 	return
 
 /obj/machinery/pipedispenser/attackby(var/obj/item/W as obj, var/mob/user as mob)
-	src.add_fingerprint(usr)
+	if(!istype(W, /obj/item/forensics))
+		src.add_fingerprint(usr)
 	if (istype(W, /obj/item/pipe) || istype(W, /obj/item/pipe_meter))
 		to_chat(usr, "<span class='notice'>You put [W] back to [src].</span>")
 		user.drop_from_inventory(W,get_turf(src))
@@ -107,9 +110,9 @@
 		return
 	else if (W.iswrench())
 		if (unwrenched==0)
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
+			playsound(src.loc, W.usesound, 50, 1)
 			to_chat(user, "<span class='notice'>You begin to unfasten \the [src] from the floor...</span>")
-			if (do_after(user, 40))
+			if (do_after(user, 40/W.toolspeed))
 				user.visible_message( \
 					"<span class='notice'>[user] unfastens \the [src].</span>", \
 					"<span class='notice'>You have unfastened \the [src]. Now it can be pulled somewhere else.</span>", \
@@ -120,9 +123,9 @@
 				if (usr.machine==src)
 					usr << browse(null, "window=pipedispenser")
 		else /*if (unwrenched==1)*/
-			playsound(src.loc, 'sound/items/Ratchet.ogg', 50, 1)
+			playsound(src.loc, W.usesound, 50, 1)
 			to_chat(user, "<span class='notice'>You begin to fasten \the [src] to the floor...</span>")
-			if (do_after(user, 20))
+			if (do_after(user, 20/W.toolspeed))
 				user.visible_message( \
 					"<span class='notice'>[user] fastens \the [src].</span>", \
 					"<span class='notice'>You have fastened \the [src]. Now it can dispense pipes.</span>", \
@@ -175,6 +178,7 @@ Nah
 <A href='?src=\ref[src];dmake=3'>Y-Junction</A><BR>
 <A href='?src=\ref[src];dmake=4'>Trunk</A><BR>
 <A href='?src=\ref[src];dmake=5'>Bin</A><BR>
+<A href='?src=\ref[src];dmake=13'>Bin (Small)</A><BR>
 <A href='?src=\ref[src];dmake=6'>Outlet</A><BR>
 <A href='?src=\ref[src];dmake=7'>Chute</A><BR>
 <A href='?src=\ref[src];dmake=21'>Upwards</A><BR>
@@ -238,6 +242,8 @@ Nah
 					C.ptype = 13
 				if(12)
 					C.ptype = 14
+				if(13)
+					C.ptype = 15
 ///// Z-Level stuff
 				if(21)
 					C.ptype = 11

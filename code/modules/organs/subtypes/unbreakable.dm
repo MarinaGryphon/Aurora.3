@@ -1,54 +1,49 @@
 // Slime limbs.
 /obj/item/organ/external/chest/unbreakable
-	cannot_break = 1
 	dislocated = -1
+	limb_flags = 0
 
 /obj/item/organ/external/groin/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE
 
 /obj/item/organ/external/arm/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/arm/right/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/leg/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE
 
 /obj/item/organ/external/leg/right/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE
 
 /obj/item/organ/external/foot/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_STAND
 
 /obj/item/organ/external/foot/right/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_STAND
 
 /obj/item/organ/external/hand/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/hand/right/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/head/unbreakable
-	cannot_break = 1
 	dislocated = -1
-	can_be_maimed = FALSE
+	limb_flags = ORGAN_CAN_AMPUTATE
+
+/obj/item/organ/external/head/unbreakable/revenant/get_additional_images(var/mob/living/carbon/human/H)
+	var/image/return_image = image(H.species.eyes_icons, H, "[H.species.eyes]_glow", EFFECTS_ABOVE_LIGHTING_LAYER)
+	return_image.appearance_flags = KEEP_APART
+	return list(return_image)

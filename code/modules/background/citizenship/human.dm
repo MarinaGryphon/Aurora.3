@@ -6,6 +6,13 @@
 	unrest and gridlock undermine the government, and the aggressive attitude of the Sol Alliance against its former system has made many worried for the future of the Republic."
 	consular_outfit = /datum/outfit/job/representative/consular/ceti
 
+	job_species_blacklist = list(
+		"Consular Officer" = list(
+			SPECIES_VAURCA_WORKER,
+			SPECIES_VAURCA_WARRIOR
+		)
+	)
+
 /datum/citizenship/tau_ceti/get_objectives(mission_level, var/mob/living/carbon/human/H)
 	var/rep_objectives
 
@@ -30,9 +37,10 @@
 	uniform = /obj/item/clothing/under/lawyer/blue
 	accessory = /obj/item/clothing/accessory/tc_pin
 	backpack_contents = list(
-		/obj/item/weapon/storage/box/ceti_visa = 1,
-		/obj/item/weapon/storage/box/tcfl_pamphlet = 1,
-		/obj/item/weapon/gun/energy/pistol = 1
+		/obj/item/storage/box/ceti_visa = 1,
+		/obj/item/storage/box/tcfl_pamphlet = 1,
+		/obj/item/stamp/biesel = 1,
+		/obj/item/gun/energy/pistol = 1
 	)
 
 
@@ -43,6 +51,29 @@
 	colonies and its control over the Sol system and Earth. In recent times, however, Sol Alliance has been failing to hold its grip, and many believe it to be in a state of decline. \
 	It is generally authoritarian, and many aliens here find themselves discriminated against."
 	consular_outfit = /datum/outfit/job/representative/consular/sol
+
+	job_species_blacklist = list(
+		"Consular Officer" = list(
+			SPECIES_HUMAN,
+			SPECIES_HUMAN_OFFWORLD,
+			SPECIES_IPC,
+			SPECIES_IPC_BISHOP,
+			SPECIES_IPC_G1,
+			SPECIES_IPC_G2,
+			SPECIES_IPC_SHELL,
+			SPECIES_IPC_UNBRANDED,
+			SPECIES_IPC_XION,
+			SPECIES_IPC_ZENGHU,
+			SPECIES_DIONA,
+			SPECIES_SKRELL,
+			SPECIES_TAJARA,
+			SPECIES_TAJARA_MSAI,
+			SPECIES_TAJARA_ZHAN,
+			SPECIES_UNATHI,
+			SPECIES_VAURCA_WORKER,
+			SPECIES_VAURCA_WARRIOR
+		)
+	)
 
 /datum/citizenship/sol_alliance/get_objectives(mission_level, var/mob/living/carbon/human/H)
 	var/rep_objectives
@@ -66,9 +97,10 @@
 
 	accessory = /obj/item/clothing/accessory/sol_pin
 	backpack_contents = list(
-		/obj/item/weapon/storage/box/sol_visa = 1,
+		/obj/item/storage/box/sol_visa = 1,
+		/obj/item/stamp/sol = 1,
 		/obj/item/device/camera = 1,
-		/obj/item/weapon/gun/projectile/pistol/sol = 1
+		/obj/item/gun/projectile/pistol/sol = 1
 	)
 
 /datum/citizenship/sol_alliance/eridani
@@ -78,12 +110,23 @@
 	and poor, yet free-willed and provocative Dregs. The Federation is controlled by several megacorporations, and although NanoTrasen is not one of them, it is a common former \
 	workplace of various contractors on board NSS Aurora."
 
-/datum/citizenship/frontier
-	name = CITIZENSHIP_FRONTIER
-	description = "Rising from the former Coalition of Colonies, the Frontier Alliance is a loose confederation of united \"entities\" within the human frontier. These entities range \
+/datum/citizenship/coalition
+	name = CITIZENSHIP_COALITION
+	description = "The Coalition of Colonies is a loose confederation of united \"entities\" within the human frontier. These entities range \
 	from whole colonial systems to travelling super ships to mining and farming outposts. Most communities here are, although not as developed as many galactic powers, very \
 	tightly-knit. Almost anything and anyone can be found in these wild, mostly uncharted lands. "
 	demonym = "frontiersman"
+
+	job_species_blacklist = list(
+		"Consular Officer" = list(
+			SPECIES_TAJARA,
+			SPECIES_TAJARA_MSAI,
+			SPECIES_TAJARA_ZHAN,
+			SPECIES_UNATHI,
+			SPECIES_VAURCA_WORKER,
+			SPECIES_VAURCA_WARRIOR
+		)
+	)
 
 /datum/citizenship/elyra
 	name = CITIZENSHIP_ELYRA
@@ -101,6 +144,24 @@
 	known as the Mor'iz'al. All citizens are born with the Mor'iz'al debt in exchange for the privileges of citizenship, a debt that takes a lifetime or more to pay off. \
 	Indebted citizens are known as Ma'zals, forming the massive underclass in Dominia. Many in the Empire follow a strict code of honor."
 	consular_outfit = /datum/outfit/job/representative/consular/dominia
+
+	job_species_blacklist = list(
+		"Consular Officer" = list(
+			SPECIES_IPC,
+			SPECIES_IPC_BISHOP,
+			SPECIES_IPC_G1,
+			SPECIES_IPC_G2,
+			SPECIES_IPC_SHELL,
+			SPECIES_IPC_UNBRANDED,
+			SPECIES_IPC_XION,
+			SPECIES_IPC_ZENGHU,
+			SPECIES_TAJARA,
+			SPECIES_TAJARA_MSAI,
+			SPECIES_TAJARA_ZHAN,
+			SPECIES_VAURCA_WORKER,
+			SPECIES_VAURCA_WARRIOR
+		)
+	)
 
 /datum/citizenship/dominia/get_objectives(mission_level, var/mob/living/carbon/human/H)
 	var/rep_objectives
@@ -123,6 +184,6 @@
 	name = "Empire of Dominia Consular Officer"
 
 	backpack_contents = list(
-		/obj/item/weapon/storage/box/dominia_honor = 1,
-		/obj/item/weapon/gun/energy/pistol = 1
+		/obj/item/storage/box/dominia_honor = 1,
+		/obj/item/gun/energy/pistol = 1
 	)

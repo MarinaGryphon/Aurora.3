@@ -1,5 +1,5 @@
 #define PAINFUL_PALM "DDH"
-#define LEG_SWEEP "DHD"
+#define SKRELL_LEG_SWEEP "DHD"
 #define DISLOCATING_STRIKE "HDDD"
 
 /datum/martial_art/karak_virul
@@ -7,15 +7,15 @@
 	help_verb = /datum/martial_art/karak_virul/proc/karak_virul_help
 
 /datum/martial_art/karak_virul/proc/check_streak(var/mob/living/carbon/human/A, var/mob/living/carbon/human/D)
-	if(findtext(streak,PAINFUL_PALM))
+	if(findtext(streak, PAINFUL_PALM))
 		streak = ""
 		painful_palm(A,D)
 		return 1
-	if(findtext(streak,LEG_SWEEP))
+	if(findtext(streak, SKRELL_LEG_SWEEP))
 		streak = ""
 		leg_sweep(A,D)
 		return 1
-	if(findtext(streak,DISLOCATING_STRIKE))
+	if(findtext(streak, DISLOCATING_STRIKE))
 		streak = ""
 		dislocating_strike(A,D)
 		return 1
@@ -26,7 +26,7 @@
 	if(D.stat || D.weakened)
 		return 0
 	D.visible_message("<span class='warning'>[A] leg sweeps [D]!</span>")
-	playsound(get_turf(A), "swing_hit", 50, 1, -1)
+	playsound(get_turf(A), /decl/sound_category/swing_hit_sound, 50, 1, -1)
 	D.apply_damage(5, BRUTE)
 	D.Weaken(2)
 	return 1
@@ -34,10 +34,10 @@
 /datum/martial_art/karak_virul/proc/painful_palm(var/mob/living/carbon/human/A, var/mob/living/carbon/human/D)//is actually lung punch
 	A.do_attack_animation(D)
 	A.visible_message("<span class='warning'>[A] strikes [D] with their open palm!</span>")
-	playsound(get_turf(A), "punch", 50, 1, -1)
+	playsound(get_turf(A), /decl/sound_category/punch_sound, 50, 1, -1)
 	var/obj/item/organ/external/affecting = D.get_organ(ran_zone(A.zone_sel.selecting))
 	var/armor_block = D.run_armor_check(affecting, "melee")
-	D.apply_damage(25, HALLOSS, affecting, armor_block)
+	D.apply_damage(25, PAIN, affecting, armor_block)
 	return 1
 
 /datum/martial_art/karak_virul/proc/dislocating_strike(var/mob/living/carbon/human/A, var/mob/living/carbon/human/D)
@@ -50,10 +50,10 @@
 		A.visible_message("<span class='warning'>[A] strikes [D]'s [organ.name] with their closed fist!</span>")
 		D.visible_message("<span class='danger'>[D]'s [organ.joint] [pick("gives way","caves in","crumbles","collapses")]!</span>")
 		admin_attack_log(A, D, "dislocated [organ.joint].", "had his [organ.joint] dislocated.", "dislocated [organ.joint] of")
-		playsound(get_turf(A), "punch", 50, 1, -1)
+		playsound(get_turf(A), /decl/sound_category/punch_sound, 50, 1, -1)
 		return 1
 	else
-		playsound(get_turf(A), "punch", 50, 1, -1)
+		playsound(get_turf(A), /decl/sound_category/punch_sound, 50, 1, -1)
 		D.apply_damage(5, BRUTE)
 		A.visible_message("<span class='warning'>[A] strikes [D] with their closed fist!</span>")
 	return 1
@@ -79,9 +79,9 @@ datum/martial_art/karak_virul/grab_act(var/mob/living/carbon/human/A, var/mob/li
 	return 1
 
 /datum/martial_art/karak_virul/proc/karak_virul_help()
-	set name = "Recall Teachings"
+	set name = "Recall Karak Virul"
 	set desc = "Remember the martial techniques of the Karak Virul."
-	set category = "Karak Virul"
+	set category = "Abilities"
 
 	to_chat(usr, "<b><i>You warble deeply and recall the teachings...</i></b>")
 	to_chat(usr, "<span class='notice'>Painful Palm</span>: Disarm Harm Harm. Strikes your target with a painful hit, causing some pain.")
@@ -92,3 +92,7 @@ datum/martial_art/karak_virul/grab_act(var/mob/living/carbon/human/A, var/mob/li
 	name = "karak virul manual"
 	desc = "A manual designated to teach the user about the skrellian martial art of Karak Virul."
 	martial_art = /datum/martial_art/karak_virul
+
+#undef PAINFUL_PALM
+#undef SKRELL_LEG_SWEEP
+#undef DISLOCATING_STRIKE

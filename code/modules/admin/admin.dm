@@ -11,6 +11,13 @@ var/global/enabled_spooking = 0
 		if((R_ADMIN|R_MOD) & C.holder.rights)
 			to_chat(C, msg)
 
+/proc/message_cciaa(var/msg)
+	msg = "<span class=\"log_message\"><span class=\"prefix\">CCIA LOG:</span> <span class=\"message\">[msg]</span></span>"
+	for(var/s in staff)
+		var/client/C = s
+		if(R_CCIAA & C.holder.rights)
+			to_chat(C, msg)
+
 /proc/msg_admin_attack(var/text,var/ckey="",var/ckey_target="") //Toggleable Attack Messages
 	log_attack(text,ckey=ckey,ckey_target=ckey_target)
 	var/rendered = "<span class=\"log_message\"><span class=\"prefix\">ATTACK:</span> <span class=\"message\">[text]</span></span>"
@@ -71,7 +78,8 @@ proc/admin_notice(var/message, var/rights)
 
 	if(M.client)
 		body += "| <A HREF='?src=\ref[src];sendtoprison=\ref[M]'>Prison</A> | "
-		body += "<a href='?src=\ref[src];admin_wind_player=\ref[M]'>Wind</a>"
+		body += "<a href='?src=\ref[src];admin_wind_player=\ref[M]'>Wind</a> | "
+		body += "\ <A HREF='?src=\ref[src];sendbacktolobby=\ref[M]]'>Send back to Lobby</A>"
 		var/muted = M.client.prefs.muted
 		body += {"<br><b>Mute: </b>
 			\[<A href='?src=\ref[src];mute=\ref[M];mute_type=[MUTE_IC]'><font color='[(muted & MUTE_IC)?"red":"blue"]'>IC</font></a> |
@@ -92,6 +100,26 @@ proc/admin_notice(var/message, var/rights)
 		<A href='?src=\ref[src];narrateto=\ref[M]'>Narrate to</A> |
 		<A href='?src=\ref[src];subtlemessage=\ref[M]'>Subtle message</A>
 	"}
+
+	body += "<br><br>"
+	body += "<b>Psionics:</b><br/>"
+	if(isliving(M))
+		var/mob/living/psyker = M
+		if(psyker.psi)
+			body += "<a href='?src=\ref[src];remove_psionics=\ref[psyker.psi]'>Remove psionics.</a><br/><br/>"
+			body += "<a href='?src=\ref[src];trigger_psi_latencies\ref[psyker.psi]'>Trigger latencies.</a><br/>"
+		body += "<table width = '100%'>"
+		for(var/faculty in list(PSI_COERCION, PSI_PSYCHOKINESIS, PSI_REDACTION, PSI_ENERGISTICS))
+			var/datum/psionic_faculty/faculty_decl = SSpsi.get_faculty(faculty)
+			var/faculty_rank = psyker.psi ? psyker.psi.get_rank(faculty) : 0
+			body += "<tr><td><b>[faculty_decl.name]</b></td>"
+			for(var/i = 1 to LAZYLEN(psychic_ranks_to_strings))
+				var/psi_title = psychic_ranks_to_strings[i]
+				if(i == faculty_rank)
+					psi_title = "<b>[psi_title]</b>"
+				body += "<td><a href='?src=\ref[psyker.mind];set_psi_faculty_rank=[i];set_psi_faculty=[faculty]'>[psi_title]</a></td>"
+			body += "</tr>"
+		body += "</table>"
 
 	if (M.client)
 		if(!istype(M, /mob/abstract/new_player))
@@ -159,7 +187,7 @@ proc/admin_notice(var/message, var/rights)
 				<A href='?src=\ref[src];simplemake=ian;mob=\ref[M]'>Ian</A> |
 				<A href='?src=\ref[src];simplemake=crab;mob=\ref[M]'>Crab</A> |
 				<A href='?src=\ref[src];simplemake=coffee;mob=\ref[M]'>Coffee</A> |
-				\[ Construct: <A href='?src=\ref[src];simplemake=constructarmoured;mob=\ref[M]'>Armoured</A> ,
+				\[ Construct: <A href='?src=\ref[src];simplemake=constructarmored;mob=\ref[M]'>Armored</A> ,
 				<A href='?src=\ref[src];simplemake=constructbuilder;mob=\ref[M]'>Builder</A> ,
 				<A href='?src=\ref[src];simplemake=constructwraith;mob=\ref[M]'>Wraith</A> \]
 				<A href='?src=\ref[src];simplemake=shade;mob=\ref[M]'>Shade</A>
@@ -332,7 +360,7 @@ proc/admin_notice(var/message, var/rights)
 	if (!admincaster_signature)
 		update_newscaster_sig()
 	var/dat
-	dat = "<HEAD><TITLE>Admin Newscaster</TITLE></HEAD><H3>Admin Newscaster Unit</H3>"
+	dat = "<H3>Admin Newscaster Unit</H3>"
 
 	switch(admincaster_screen)
 		if(0)
@@ -369,7 +397,7 @@ proc/admin_notice(var/message, var/rights)
 					if(FC.is_admin_channel)
 						dat+="<B><FONT style='BACKGROUND-COLOR: LightGreen'><A href='?src=\ref[src];ac_show_channel=\ref[FC]'>[FC.channel_name]</A></FONT></B><BR>"
 					else
-						dat+="<B><A href='?src=\ref[src];ac_show_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR></B>"
+						dat+="<B><A href='?src=\ref[src];ac_show_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<span class='warning'>***</span>") : null]<BR></B>"
 			dat+={"<BR><HR><A href='?src=\ref[src];ac_refresh=1'>Refresh</A>
 				<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Back</A>
 			"}
@@ -424,7 +452,7 @@ proc/admin_notice(var/message, var/rights)
 			dat+="<B>[src.admincaster_feed_channel.channel_name]: </B><FONT SIZE=1>\[created by: <FONT COLOR='maroon'>[src.admincaster_feed_channel.author]</FONT>\]</FONT><HR>"
 			if(src.admincaster_feed_channel.censored)
 				dat+={"
-					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
+					<span class='warning'><B>ATTENTION: </B></span>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
 					No further feed story additions are allowed while the D-Notice is in effect.<BR><BR>
 				"}
 			else
@@ -436,7 +464,7 @@ proc/admin_notice(var/message, var/rights)
 						i++
 						dat+="<BLOCKQUOTE style=\"padding:4px;border-left:4px #797979 solid\">[MESSAGE.body] <FONT SIZE=1>\[Likes: <A href='?src=\ref[src];ac_setlikes=1;'><FONT COLOR='DarkGreen'>[MESSAGE.likes]</FONT></A> Dislikes: <A href='?src=\ref[src];ac_setdislikes=1;'><FONT COLOR='maroon'>[MESSAGE.dislikes]</FONT></A>\]</FONT><BR>"
 						if(MESSAGE.img)
-							to_chat(usr, browse_rsc(MESSAGE.img, "tmp_photo[i].png"))
+							send_rsc(usr, MESSAGE.img, "tmp_photo[i].png")
 							dat+="<img src='tmp_photo[i].png' width = '180'><BR><BR>"
 						dat+="<FONT SIZE=1><A href='?src=\ref[src];ac_view_comments=1;ac_story=\ref[MESSAGE]'>View Comments</A> <A href='?src=\ref[src];ac_add_comment=1;ac_story=\ref[MESSAGE]'>Add Comment</A> <A href='?src=\ref[src];ac_like=1;ac_story=\ref[MESSAGE]'>Like Story</A> <A href='?src=\ref[src];ac_dislike=1;ac_story=\ref[MESSAGE]'>Dislike Story</A></FONT><BR>"
 						dat+="<FONT SIZE=1>\[Story by <FONT COLOR='maroon'>[MESSAGE.author] - [MESSAGE.time_stamp]</FONT>\]</FONT></BLOCKQUOTE><BR>"
@@ -456,7 +484,7 @@ proc/admin_notice(var/message, var/rights)
 			else
 				for(var/channel in SSnews.network_channels)
 					var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
-					dat+="<A href='?src=\ref[src];ac_pick_censor_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
+					dat+="<A href='?src=\ref[src];ac_pick_censor_channel=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<span class='warning'>***</span>") : null]<BR>"
 			dat+="<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Cancel</A>"
 		if(11)
 			dat+={"
@@ -470,7 +498,7 @@ proc/admin_notice(var/message, var/rights)
 			else
 				for(var/channel in SSnews.network_channels)
 					var/datum/feed_channel/FC = SSnews.GetFeedChannel(channel)
-					dat+="<A href='?src=\ref[src];ac_pick_d_notice=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<FONT COLOR='red'>***</FONT>") : ()]<BR>"
+					dat+="<A href='?src=\ref[src];ac_pick_d_notice=\ref[FC]'>[FC.channel_name]</A> [(FC.censored) ? ("<span class='warning'>***</span>") : null]<BR>"
 
 			dat+="<BR><A href='?src=\ref[src];ac_setScreen=[0]'>Back</A>"
 		if(12)
@@ -494,7 +522,7 @@ proc/admin_notice(var/message, var/rights)
 			"}
 			if(src.admincaster_feed_channel.censored)
 				dat+={"
-					<FONT COLOR='red'><B>ATTENTION: </B></FONT>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
+					<span class='warning'><B>ATTENTION: </B></span>This channel has been deemed as threatening to the welfare of the station, and marked with a [current_map.company_name] D-Notice.<BR>
 					No further feed story additions are allowed while the D-Notice is in effect.<BR><BR>
 				"}
 			else
@@ -552,7 +580,7 @@ proc/admin_notice(var/message, var/rights)
 				<B>Photo:</B>:
 			"}
 			if(SSnews.wanted_issue.img)
-				to_chat(usr, browse_rsc(SSnews.wanted_issue.img, "tmp_photow.png"))
+				send_rsc(usr, SSnews.wanted_issue.img, "tmp_photow.png")
 				dat+="<BR><img src='tmp_photow.png' width = '180'>"
 			else
 				dat+="None"
@@ -573,7 +601,8 @@ proc/admin_notice(var/message, var/rights)
 		else
 			dat+="Please report this on GitHub, along with what you did to make this appear."
 
-	usr << browse(dat, "window=admincaster_main;size=400x600")
+	send_theme_resources(usr)
+	usr << browse(enable_ui_theme(usr, dat), "window=admincaster_main;size=400x600")
 	onclose(usr, "admincaster_main")
 
 
@@ -788,11 +817,11 @@ proc/admin_notice(var/message, var/rights)
 	if(SSticker.current_state == GAME_STATE_PREGAME)
 		SSticker.current_state = GAME_STATE_SETTING_UP
 		log_admin("[usr.key] has started the game.")
-		message_admins("<font color='blue'>[usr.key] has started the game.</font>")
+		message_admins("<span class='notice'>[usr.key] has started the game.</span>")
 		feedback_add_details("admin_verb","SN") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 		return 1
 	else
-		to_chat(usr, "<font color='red'>Error: Start Now: Game has already started.</font>")
+		to_chat(usr, "<span class='warning'>Error: Start Now: Game has already started.</span>")
 		return 0
 
 /datum/admins/proc/toggleenter()
@@ -981,27 +1010,6 @@ proc/admin_notice(var/message, var/rights)
 
 	item_to_spawn.spawn_item(get_turf(usr))
 
-/datum/admins/proc/check_custom_items()
-
-	set category = "Debug"
-	set desc = "Check the custom item list."
-	set name = "Check Custom Items"
-
-	if(!check_rights(R_SPAWN))	return
-
-	if(!custom_items)
-		to_chat(usr, "Custom item list is null.")
-		return
-
-	if(!custom_items.len)
-		to_chat(usr, "Custom item list not populated.")
-		return
-
-	for(var/assoc_key in custom_items)
-		to_chat(usr, "[assoc_key] has:")
-		var/list/current_items = custom_items[assoc_key]
-		for(var/datum/custom_item/item in current_items)
-			to_chat(usr, "- name: [item.name] icon: [item.item_icon] path: [item.item_path] desc: [item.item_desc]")
 
 /datum/admins/proc/spawn_plant(seedtype in SSplants.seeds)
 	set category = "Debug"
@@ -1125,7 +1133,7 @@ proc/admin_notice(var/message, var/rights)
 		out += "<b>Autotraitor <a href='?src=\ref[SSticker.mode];toggle=autotraitor'>disabled</a></b>.<br/>"
 
 	out += "<b>All antag ids:</b>"
-	if(LAZYLEN(SSticker.mode.antag_templates)).
+	if(LAZYLEN(SSticker.mode.antag_templates))
 		for(var/datum/antagonist/antag in SSticker.mode.antag_templates)
 			antag.update_current_antag_max()
 			out += " <a href='?src=\ref[SSticker.mode];debug_antag=[antag.id]'>[antag.id]</a>"
@@ -1238,15 +1246,15 @@ proc/admin_notice(var/message, var/rights)
 
 		if(2)	//Admins
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=holder;adminmoreinfo=[ref_mob]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)]) (<A HREF='?_src_=holder;check_antagonist=1'>CA</A>)</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=holder;adminmoreinfo=[ref_mob]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M)]) (<A HREF='?_src_=holder;check_antagonist=1'>CA</A>)</b>"
 
 		if(3)	//Devs
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>)([admin_jump_link(M, src)])</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)](<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>)([admin_jump_link(M)])</b>"
 
 		if(4)	//Mentors
 			var/ref_mob = "\ref[M]"
-			return "<b>[key_name(C, link, name, highlight_special, ticket)] (<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M, src)])</b>"
+			return "<b>[key_name(C, link, name, highlight_special, ticket)] (<A HREF='?_src_=holder;adminmoreinfo=\ref[M]'>?</A>) (<A HREF='?_src_=holder;adminplayeropts=[ref_mob]'>PP</A>) (<A HREF='?_src_=vars;Vars=[ref_mob]'>VV</A>) (<A HREF='?_src_=holder;subtlemessage=[ref_mob]'>SM</A>) ([admin_jump_link(M)])</b>"
 
 //
 //ALL DONE
@@ -1334,7 +1342,7 @@ proc/admin_notice(var/message, var/rights)
 	if(check_rights(R_ADMIN|R_MOD))
 		if (H.paralysis == 0)
 			msg = "has paralyzed [key_name_admin(H)]."
-			H.visible_message("<font color='#002eb8'><b>OOC Information:</b></font> <font color='red'>[H] has been winded by a member of staff! Please freeze all roleplay involving their character until the matter is resolved! Adminhelp if you have further questions.</font>", "<font color='red'><b>You have been winded by a member of staff! Please stand by until they contact you!</b></font>")
+			H.visible_message("<font color='#002eb8'><b>OOC Information:</b></font> <span class='warning'>[H] has been winded by a member of staff! Please freeze all roleplay involving their character until the matter is resolved! Adminhelp if you have further questions.</span>", "<span class='warning'><b>You have been winded by a member of staff! Please stand by until they contact you!</b></span>")
 			H.paralysis = 8000
 		else
 			if (alert("The player is currently winded. Do you want to unwind him?", "Unwind player?", "Yes", "No") == "No")
@@ -1342,7 +1350,7 @@ proc/admin_notice(var/message, var/rights)
 
 			H.paralysis = 0
 			msg = "has unparalyzed [key_name_admin(H)]."
-			H.visible_message("<font color='#002eb8'><b>OOC Information:</b></font> <font color='green'>[H] has been unwinded by a member of staff!</font>", "<font color='red'><b>You have been unwinded by a member of staff!</b></font>")
+			H.visible_message("<font color='#002eb8'><b>OOC Information:</b></font> <font color='green'>[H] has been unwinded by a member of staff!</font>", "<span class='warning'><b>You have been unwinded by a member of staff!</b></span>")
 		log_and_message_admins(msg)
 		feedback_add_details("admin_verb", "WIND")
 
@@ -1355,3 +1363,40 @@ proc/admin_notice(var/message, var/rights)
 	log_admin("[key_name(usr)] toggled the round spookyness to [enabled_spooking].")
 	message_admins("[key_name_admin(usr)] toggled the round spookyness [enabled_spooking ? "on" : "off"].", 1)
 	feedback_add_details("admin_verb","SPOOKY") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
+
+/datum/admins/proc/ccannoucment()
+	set category = "Special Verbs"
+	set name = "Custom sound Command Announcment"
+	set desc = "Emulate announcement that looks and sounds like the real one"
+	if(!check_rights(R_FUN))
+		return
+
+	var/title = input("Announcement TITLE:", "CAnnounce", null, null) as text
+	if(!title)
+		return
+	if(!check_rights(R_SERVER,0))
+		title = sanitize(title, 255, extra = 0)
+	var/message = input("Announcement content:", "CAnnounce", null, null) as message
+	if(!message)
+		return
+	if(!check_rights(R_SERVER,0))
+		message = sanitize(message, 500, extra = 0)
+
+
+	var/list/sounds = file2list("sound/serversound_list.txt");
+	sounds += "--CANCEL--"
+	sounds += "--LOCAL--"
+	sounds += sounds_cache
+
+	var/melody = input("Select a sound from the server to play", "Server sound list", "--CANCEL--") in sounds
+
+	if(melody == "--CANCEL--")
+		return
+	if(melody == "--LOCAL--")
+		melody = input("Select a sound to play", "Sound select") as sound
+		if(!melody)
+			return
+
+	command_announcement.Announce(message, title, new_sound = melody)
+	log_and_message_admins("made custom announcement with custom sound", usr)
+	feedback_add_details("admin_verb","ACS") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!

@@ -1,28 +1,30 @@
 //Inhalers
 //Just like hypopsray code
-/obj/item/weapon/reagent_containers/inhaler
+/obj/item/reagent_containers/inhaler
 	name = "autoinhaler"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel."
 	icon = 'icons/obj/syringe.dmi'
 	item_state = "autoinjector"
 	icon_state = "inhaler1"
+	center_of_mass = list("x" = 16,"y" = 11)
 	var/empty_state = "inhaler0"
 	unacidable = 1
 	amount_per_transfer_from_this = 5
 	volume = 5
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	possible_transfer_amounts = null
 	flags = OPENCONTAINER
 	slot_flags = SLOT_BELT
 	center_of_mass = null
 	var/used = FALSE
+	matter = list(MATERIAL_GLASS = 400, DEFAULT_WALL_MATERIAL = 200)
 
-/obj/item/weapon/reagent_containers/inhaler/Initialize()
+/obj/item/reagent_containers/inhaler/Initialize()
 	. =..()
 	icon_state = empty_state
 	update_icon()
 
-/obj/item/weapon/reagent_containers/inhaler/afterattack(var/mob/living/carbon/human/H, var/mob/user, var/proximity)
+/obj/item/reagent_containers/inhaler/afterattack(var/mob/living/carbon/human/H, var/mob/user, var/proximity)
 
 	if (!istype(H))
 		return ..()
@@ -70,7 +72,7 @@
 			to_chat(user,"<span class='notice'>You and the target need to be standing still in order to inject \the [src].</span>")
 			return
 
-		user.visible_message("<span class='notice'>\The [user] injects \the [H] with \the [src].</span>","<span class='notice'>You stick \the [src] in \the [H]'s mouth and press the injection button.</span>")
+		user.visible_message("<span class='notice'>\The [user] injects \the [H] with \a [src].</span>","<span class='notice'>You stick \the [src] in \the [H]'s mouth and press the injection button.</span>")
 
 	if(H.reagents)
 		var/contained = reagentlist()
@@ -85,15 +87,15 @@
 
 	return TRUE
 
-/obj/item/weapon/reagent_containers/inhaler/attack(mob/M as mob, mob/user as mob)
+/obj/item/reagent_containers/inhaler/attack(mob/M as mob, mob/user as mob)
 	if(is_open_container())
 		to_chat(user,"<span class='notice'>You must secure the reagents inside \the [src] before using it!</span>")
 		return FALSE
 	. = ..()
 
-/obj/item/weapon/reagent_containers/inhaler/attack_self(mob/user as mob)
+/obj/item/reagent_containers/inhaler/attack_self(mob/user as mob)
 	if(is_open_container())
-		if(reagents && reagents.reagent_list.len)
+		if(LAZYLEN(reagents.reagent_volumes))
 			to_chat(user,"<span class='notice'>With a quick twist of \the [src]'s lid, you secure the reagents inside.</span>")
 			flags &= ~OPENCONTAINER
 			update_icon()
@@ -103,7 +105,7 @@
 		to_chat(user,"<span class='notice'>The reagents inside \the [src] are already secured.</span>")
 	return
 
-/obj/item/weapon/reagent_containers/inhaler/attackby(obj/item/weapon/W, mob/user)
+/obj/item/reagent_containers/inhaler/attackby(obj/item/W, mob/user)
 	if(W.isscrewdriver() && !is_open_container())
 		to_chat(user,"<span class='notice'>Using \the [W], you unsecure the inhaler's lid.</span>") // it locks shut after being secured
 		flags |= OPENCONTAINER
@@ -111,60 +113,60 @@
 		return
 	. = ..()
 
-/obj/item/weapon/reagent_containers/inhaler/update_icon()
+/obj/item/reagent_containers/inhaler/update_icon()
 	if(reagents.total_volume > 0 && !is_open_container())
 		icon_state = initial(icon_state)
 	else
 		icon_state = empty_state
 
-/obj/item/weapon/reagent_containers/inhaler/examine(mob/user)
+/obj/item/reagent_containers/inhaler/examine(mob/user)
 	..(user)
-	if(reagents && reagents.reagent_list.len)
+	if(LAZYLEN(reagents.reagent_volumes))
 		to_chat(user, "<span class='notice'>It is currently loaded.</span>")
 	else
 		to_chat(user, "<span class='notice'>It is spent.</span>")
 
-/obj/item/weapon/reagent_containers/inhaler/dexalin
+/obj/item/reagent_containers/inhaler/dexalin
 	name = "autoinhaler (dexalin)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains dexalin."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("dexalin", volume)
+		reagents.add_reagent(/decl/reagent/dexalin, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/peridaxon
+/obj/item/reagent_containers/inhaler/peridaxon
 	name = "autoinhaler (peridaxon)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains peridaxon."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("peridaxon", volume)
+		reagents.add_reagent(/decl/reagent/peridaxon, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/hyperzine
+/obj/item/reagent_containers/inhaler/hyperzine
 	name = "autoinhaler (hyperzine)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains hyperzine."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("hyperzine", volume)
+		reagents.add_reagent(/decl/reagent/hyperzine, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/phoron
+/obj/item/reagent_containers/inhaler/phoron
 	name = "autoinhaler (phoron)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains phoron."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("phoron", volume)
+		reagents.add_reagent(/decl/reagent/toxin/phoron, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/phoron_special
+/obj/item/reagent_containers/inhaler/phoron_special
 	name = "vaurca autoinhaler (phoron)"
 	desc = "A strange device that contains some sort of heavy-duty bag and mouthpiece combo."
 	icon_state = "anthaler1"
@@ -172,11 +174,11 @@
 	volume = 10
 	Initialize()
 		. =..()
-		reagents.add_reagent("phoron", volume)
+		reagents.add_reagent(/decl/reagent/toxin/phoron, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/soporific
+/obj/item/reagent_containers/inhaler/soporific
 	name = "autoinhaler (soporific)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains soporific."
 	icon_state = "so_inhaler1"
@@ -185,41 +187,49 @@
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("stoxin", volume)
+		reagents.add_reagent(/decl/reagent/soporific, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/space_drugs
+/obj/item/reagent_containers/inhaler/space_drugs
 	name = "autoinhaler (space drugs)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains space drugs."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("space_drugs", volume)
+		reagents.add_reagent(/decl/reagent/space_drugs, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/ammonia
+/obj/item/reagent_containers/inhaler/ammonia
 	name = "autoinhaler (ammonia)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains ammonia."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("ammonia", volume)
+		reagents.add_reagent(/decl/reagent/ammonia, volume)
 		update_icon()
 		return
 
-/obj/item/weapon/reagent_containers/inhaler/pulmodeiectionem
+/obj/item/reagent_containers/inhaler/pulmodeiectionem
 	name = "autoinhaler (pulmodeiectionem)"
 	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains pulmodeiectionem."
 
 	Initialize()
 		. =..()
-		reagents.add_reagent("pulmodeiectionem", volume)
+		reagents.add_reagent(/decl/reagent/pulmodeiectionem, volume)
 		update_icon()
 		return
 
+/obj/item/reagent_containers/inhaler/pneumalin
+	name = "autoinhaler (pneumalin)"
+	desc = "A rapid and safe way to administer small amounts of drugs into the lungs by untrained or trained personnel. This one contains pneumalin."
+	icon_state = "so_inhaler1"
+	empty_state = "so_inhaler0"
+	volume = 10
 
-
-
-
+	Initialize()
+		. =..()
+		reagents.add_reagent(/decl/reagent/pneumalin, volume)
+		update_icon()
+		return

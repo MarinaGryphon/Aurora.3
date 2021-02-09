@@ -15,7 +15,7 @@
 	icon_state = "officer_standard"
 	worn_state = "officer_standard"
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
-	siemens_coefficient = 0.7
+	siemens_coefficient = 0.75
 
 /obj/item/clothing/under/rank/security/corp
 	icon_state = "officer_corporate"
@@ -31,35 +31,44 @@
 	icon_state = "cadet_standard"
 	worn_state = "cadet_standard"
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
-	siemens_coefficient = 0.7
+	siemens_coefficient = 0.75
 
 /obj/item/clothing/under/rank/warden
-	desc = "It's made of a slightly sturdier material than standard jumpsuits, to allow for more robust protection. It has the word \"Warden\" written on the shoulders."
 	name = "warden's uniform"
+	desc = "It's made of a slightly sturdier material than standard jumpsuits, to allow for more robust protection. It has the word \"Warden\" written on the shoulders."
 	icon_state = "warden_standard"
 	worn_state = "warden_standard"
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
-	siemens_coefficient = 0.7
+	siemens_coefficient = 0.75
 
 /obj/item/clothing/under/rank/warden/corp
 	icon_state = "warden_corporate"
 	worn_state = "warden_corporate"
 
-/obj/item/clothing/under/rank/warden/dark_blue
-	icon_state = "warden_darkblue"
-	worn_state = "warden_darkblue"
+/obj/item/clothing/under/rank/warden/blue
+	icon_state = "warden_blue"
+	worn_state = "warden_blue"
+
+/obj/item/clothing/under/rank/warden/remote
+	name = "remote warden's uniform"
+	desc = "It's made of a slightly sturdier material than standard jumpsuits. It has the words \"Remote Warden\" written on the shoulders and it's bolted straight onto the chassis."
+	canremove = FALSE
+
+/obj/item/clothing/under/rank/warden/remote/Initialize()
+	. = ..()
+	sensor_mode = 0
 
 /*
  * Detective / Forensics
  */
 
 /obj/item/clothing/under/det
-	name = "detective's uniform"
+	name = "tan investigator's uniform"
 	desc = "Someone who wears this means business."
 	icon_state = "detective_standard"
 	worn_state = "detective_standard"
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
-	siemens_coefficient = 0.7
+	siemens_coefficient = 0.75
 
 /obj/item/clothing/under/det/black
 	name = "hard-worn suit"
@@ -72,7 +81,7 @@
 	worn_state = "detective_classic"
 
 /obj/item/clothing/under/det/forensics
-	name = "forensics technician's uniform"
+	name = "grey investigator's uniform"
 	icon_state = "forensic_standard"
 	worn_state = "forensic_standard"
 
@@ -85,7 +94,7 @@
 	icon_state = "hos_standard"
 	worn_state = "hos_standard"
 	armor = list(melee = 10, bullet = 0, laser = 0,energy = 0, bomb = 0, bio = 0, rad = 0)
-	siemens_coefficient = 0.7
+	siemens_coefficient = 0.75
 
 /obj/item/clothing/under/rank/head_of_security/corp
 	icon_state = "hos_corporate"
@@ -95,21 +104,21 @@
  * Contractors
  */
 
-/obj/item/clothing/under/rank/security/necropolis
-	name = "Necropolis Industries security uniform"
-	desc = "A uniform worn by Necropolis Industries security forces."
+/obj/item/clothing/under/rank/security/zavodskoi
+	name = "Zavodskoi Interstellar security uniform"
+	desc = "A uniform worn by Zavodskoi Interstellar security forces."
 	icon_state = "necro_sec"
 	worn_state = "necro_sec"
+
+/obj/item/clothing/under/rank/security/zavodskoi/alt
+	icon_state = "necro_sec_alt"
+	worn_state = "necro_sec_alt"
 
 /obj/item/clothing/under/rank/security/idris
 	name = "Idris Incorporated security uniform"
 	desc = "A uniform worn by Idris Incorporated employees and contractors."
 	icon_state = "idris_sec"
 	worn_state = "idris_sec"
-
-/obj/item/clothing/under/rank/security/idris/alt
-	icon_state = "idris_alt"
-	worn_state = "idris_alt"
 
 /obj/item/clothing/under/rank/security/eridani
 	name = "Eridani PMC uniform"

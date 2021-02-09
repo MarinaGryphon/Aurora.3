@@ -79,7 +79,7 @@ datum/objective/anti_revolution/execute
 	find_target()
 		..()
 		if(target && target.current)
-			explanation_text = "[target.current.real_name], the [target.assigned_role] has extracted confidential information above their clearance. Execute \him[target.current]."
+			explanation_text = "[target.current.real_name], the [target.assigned_role] has extracted confidential information above their clearance. Execute [target.current.get_pronoun("him")]."
 		else
 			explanation_text = "Free Objective"
 		return target
@@ -88,7 +88,7 @@ datum/objective/anti_revolution/execute
 	find_target_by_role(role, role_type=0)
 		..(role, role_type)
 		if(target && target.current)
-			explanation_text = "[target.current.real_name], the [!role_type ? target.assigned_role : target.special_role] has extracted confidential information above their clearance. Execute \him[target.current]."
+			explanation_text = "[target.current.real_name], the [!role_type ? target.assigned_role : target.special_role] has extracted confidential information above their clearance. Execute [target.current.get_pronoun("him")]."
 		else
 			explanation_text = "Free Objective"
 		return target
@@ -137,7 +137,7 @@ datum/objective/anti_revolution/demote
 	find_target()
 		..()
 		if(target && target.current)
-			explanation_text = "[target.current.real_name], the [target.assigned_role]  has been classified as harmful to [current_map.company_name]'s goals. Demote \him[target.current] to assistant."
+			explanation_text = "[target.current.real_name], the [target.assigned_role]  has been classified as harmful to [current_map.company_name]'s goals. Demote [target.current.get_pronoun("him")] to assistant."
 		else
 			explanation_text = "Free Objective"
 		return target
@@ -145,17 +145,15 @@ datum/objective/anti_revolution/demote
 	find_target_by_role(role, role_type=0)
 		..(role, role_type)
 		if(target && target.current)
-			explanation_text = "[target.current.real_name], the [!role_type ? target.assigned_role : target.special_role] has been classified as harmful to [current_map.company_name]'s goals. Demote \him[target.current] to assistant."
+			explanation_text = "[target.current.real_name], the [!role_type ? target.assigned_role : target.special_role] has been classified as harmful to [current_map.company_name]'s goals. Demote [target.current.get_pronoun("him")] to assistant."
 		else
 			explanation_text = "Free Objective"
 		return target
 
 	check_completion()
-		if(target && target.current && istype(target,/mob/living/carbon/human))
-			var/obj/item/weapon/card/id/I = target.current:wear_id
-			if(istype(I, /obj/item/device/pda))
-				var/obj/item/device/pda/P = I
-				I = P.id
+		if(target && target.current && ishuman(target))
+			var/mob/living/carbon/human/H = target
+			var/obj/item/card/id/I = H.GetIdCard()
 
 			if(!istype(I)) return 1
 
@@ -236,7 +234,7 @@ datum/objective/hijack
 			return 0
 		if(issilicon(owner.current))
 			return 0
-		var/area/shuttle = locate(/area/shuttle/escape/centcom)
+		var/area/shuttle = locate(/area/shuttle/escape)
 		var/list/protected_mobs = list(/mob/living/silicon/ai, /mob/living/silicon/pai)
 		for(var/mob/living/player in player_list)
 			if(player.type in protected_mobs)	continue
@@ -258,7 +256,7 @@ datum/objective/block
 			return 0
 		if(!owner.current)
 			return 0
-		var/area/shuttle = locate(/area/shuttle/escape/centcom)
+		var/area/shuttle = locate(/area/shuttle/escape)
 		var/protected_mobs[] = list(/mob/living/silicon/ai, /mob/living/silicon/pai, /mob/living/silicon/robot)
 		for(var/mob/living/player in player_list)
 			if(player.type in protected_mobs)	continue
@@ -281,10 +279,10 @@ datum/objective/silence
 			if(player.mind)
 				if(player.stat != DEAD)
 					var/turf/T = get_turf(player)
-					if(!T)	continue
-					switch(T.loc.type)
-						if(/area/shuttle/escape/centcom, /area/shuttle/escape_pod1/centcom, /area/shuttle/escape_pod2/centcom, /area/shuttle/escape_pod3/centcom, /area/shuttle/escape_pod5/centcom)
-							return 0
+					if(!T)
+						continue
+					if(istype(T.loc.type, /area/shuttle/escape) || istype(T.loc.type, /area/shuttle/escape_pod))
+						return 0
 		return 1
 
 
@@ -305,28 +303,13 @@ datum/objective/escape
 		if(!location)
 			return 0
 
-		if(istype(location, /turf/simulated/shuttle/floor4)) // Fails traitors if they are in the shuttle brig -- Polymorph
-			if(istype(owner.current, /mob/living/carbon))
-				var/mob/living/carbon/C = owner.current
-				if (!C.handcuffed)
-					return 1
-			return 0
-
 		var/area/check_area = location.loc
-		if(istype(check_area, /area/shuttle/escape/centcom))
+		if(istype(check_area, /area/shuttle/escape))
 			return 1
-		if(istype(check_area, /area/shuttle/escape_pod1/centcom))
-			return 1
-		if(istype(check_area, /area/shuttle/escape_pod2/centcom))
-			return 1
-		if(istype(check_area, /area/shuttle/escape_pod3/centcom))
-			return 1
-		if(istype(check_area, /area/shuttle/escape_pod5/centcom))
+		if(istype(check_area, /area/shuttle/escape_pod))
 			return 1
 		else
 			return 0
-
-
 
 datum/objective/survive
 	explanation_text = "Stay alive until the end."
@@ -417,7 +400,7 @@ datum/objective/harm
 				if(!found)
 					return 1
 
-			var/obj/item/organ/external/head/head = H.get_organ("head")
+			var/obj/item/organ/external/head/head = H.get_organ(BP_HEAD)
 			if(head.disfigured)
 				return 1
 		return 0
@@ -433,34 +416,34 @@ datum/objective/steal
 	var/target_name
 
 	var/global/possible_items[] = list(
-		"the captain's antique laser gun" = /obj/item/weapon/gun/energy/captain,
-		"a hand teleporter" = /obj/item/weapon/hand_tele,
-		"an RCD" = /obj/item/weapon/rcd,
-		"a jetpack" = /obj/item/weapon/tank/jetpack,
+		"the captain's antique laser gun" = /obj/item/gun/energy/captain,
+		"a hand teleporter" = /obj/item/hand_tele,
+		"a RFD C-Class" = /obj/item/rfd/construction,
+		"a jetpack" = /obj/item/tank/jetpack,
 		"a captain's jumpsuit" = /obj/item/clothing/under/rank/captain,
-		"a functional AI" = /obj/item/weapon/aicard,
+		"a functional AI" = /obj/item/aicard,
 		"a pair of magboots" = /obj/item/clothing/shoes/magboots,
 		"the station blueprints" = /obj/item/blueprints,
 		"a nasa voidsuit" = /obj/item/clothing/suit/space/void,
-		"28 moles of phoron (full tank)" = /obj/item/weapon/tank,
+		"28 moles of phoron (full tank)" = /obj/item/tank,
 		"a sample of slime extract" = /obj/item/slime_extract,
-		"a piece of corgi meat" = /obj/item/weapon/reagent_containers/food/snacks/meat/corgi,
+		"a piece of corgi meat" = /obj/item/reagent_containers/food/snacks/meat/corgi,
 		"a research director's jumpsuit" = /obj/item/clothing/under/rank/research_director,
 		"a chief engineer's jumpsuit" = /obj/item/clothing/under/rank/chief_engineer,
 		"a chief medical officer's jumpsuit" = /obj/item/clothing/under/rank/chief_medical_officer,
 		"a head of security's jumpsuit" = /obj/item/clothing/under/rank/head_of_security,
 		"a head of personnel's jumpsuit" = /obj/item/clothing/under/rank/head_of_personnel,
-		"the hypospray" = /obj/item/weapon/reagent_containers/hypospray,
-		"the captain's pinpointer" = /obj/item/weapon/pinpointer,
+		"the hypospray" = /obj/item/reagent_containers/hypospray,
+		"the captain's pinpointer" = /obj/item/pinpointer,
 		"an ablative armor vest" = /obj/item/clothing/suit/armor/laserproof
 	)
 
 	var/global/possible_items_special[] = list(
-		/*"nuclear authentication disk" = /obj/item/weapon/disk/nuclear,*///Broken with the change to nuke disk making it respawn on z level change.
-		"nuclear gun" = /obj/item/weapon/gun/energy/gun/nuclear,
-		"diamond drill" = /obj/item/weapon/pickaxe/diamonddrill,
-		"bag of holding" = /obj/item/weapon/storage/backpack/holding,
-		"hyper-capacity cell" = /obj/item/weapon/cell/hyper,
+		/*"nuclear authentication disk" = /obj/item/disk/nuclear,*///Broken with the change to nuke disk making it respawn on z level change.
+		"nuclear gun" = /obj/item/gun/energy/gun/nuclear,
+		"diamond drill" = /obj/item/pickaxe/diamonddrill,
+		"bag of holding" = /obj/item/storage/backpack/holding,
+		"hyper-capacity cell" = /obj/item/cell/hyper,
 		"10 diamonds" = /obj/item/stack/material/diamond,
 		"50 gold bars" = /obj/item/stack/material/gold,
 		"25 refined uranium bars" = /obj/item/stack/material/uranium
@@ -510,22 +493,22 @@ datum/objective/steal
 
 				for(var/obj/item/I in all_items) //Check for phoron tanks
 					if(istype(I, steal_target))
-						found_amount += (target_name=="28 moles of phoron (full tank)" ? (I:air_contents:gas["phoron"]) : (I:amount))
+						found_amount += (target_name=="28 moles of phoron (full tank)" ? (I:air_contents:gas[GAS_PHORON]) : (I:amount))
 				return found_amount>=target_amount
 
 			if("50 coins (in bag)")
-				var/obj/item/weapon/moneybag/B = locate() in all_items
+				var/obj/item/storage/bag/money/B = locate() in all_items
 
 				if(B)
 					var/target = text2num(target_name)
 					var/found_amount = 0.0
-					for(var/obj/item/weapon/coin/C in B)
+					for(var/obj/item/coin/C in B)
 						found_amount++
 					return found_amount>=target
 
 			if("a functional AI")
 
-				for(var/obj/item/weapon/aicard/C in all_items) //Check for ai card
+				for(var/obj/item/aicard/C in all_items) //Check for ai card
 					for(var/mob/living/silicon/ai/M in C)
 						if(istype(M, /mob/living/silicon/ai) && M.stat != 2) //See if any AI's are alive inside that card.
 							return 1
@@ -534,15 +517,9 @@ datum/objective/steal
 					var/turf/T = get_turf(ai)
 					if(istype(T))
 						var/area/check_area = get_area(ai)
-						if(istype(check_area, /area/shuttle/escape/centcom))
+						if(istype(check_area, /area/shuttle/escape))
 							return 1
-						if(istype(check_area, /area/shuttle/escape_pod1/centcom))
-							return 1
-						if(istype(check_area, /area/shuttle/escape_pod2/centcom))
-							return 1
-						if(istype(check_area, /area/shuttle/escape_pod3/centcom))
-							return 1
-						if(istype(check_area, /area/shuttle/escape_pod5/centcom))
+						if(istype(check_area, /area/shuttle/escape_pod))
 							return 1
 			else
 
@@ -550,8 +527,6 @@ datum/objective/steal
 					if(istype(I, steal_target))
 						return 1
 		return 0
-
-
 
 datum/objective/download
 	proc/gen_amount_goal()
@@ -567,7 +542,7 @@ datum/objective/download
 			return 0
 
 		var/current_amount
-		var/obj/item/weapon/rig/S
+		var/obj/item/rig/S
 		if(istype(owner.current,/mob/living/carbon/human))
 			var/mob/living/carbon/human/H = owner.current
 			S = H.back
@@ -625,7 +600,8 @@ datum/objective/capture
 					n_p ++
 		else if (SSticker.current_state == GAME_STATE_PLAYING)
 			for(var/mob/living/carbon/human/P in player_list)
-				if(P.client && !(P.mind.changeling) && P.mind!=owner)
+				var/datum/changeling/changeling = P.mind.antag_datums[MODE_CHANGELING]
+				if(P.client && !changeling && P.mind != owner)
 					n_p ++
 		target_amount = min(target_amount, n_p)
 
@@ -633,7 +609,8 @@ datum/objective/capture
 		return target_amount
 
 	check_completion()
-		if(owner && owner.changeling && owner.changeling.absorbed_dna && (owner.changeling.absorbedcount >= target_amount))
+		var/datum/changeling/changeling = owner.antag_datums[MODE_CHANGELING]
+		if(owner && changeling?.absorbed_dna && (changeling.absorbedcount >= target_amount))
 			return 1
 		else
 			return 0
@@ -675,7 +652,7 @@ datum/objective/heist/kidnap
 			//if (!target.current.restrained())
 			//	return 0 // They're loose. Close but no cigar.
 
-			var/area/skipjack_station/start/A = locate()
+			var/area/shuttle/skipjack/A = locate()
 			for(var/mob/living/carbon/human/M in A)
 				if(target.current == M)
 					return 1 //They're restrained on the shuttle. Success.
@@ -704,19 +681,19 @@ datum/objective/heist/loot
 				target_amount = 1
 				loot = "a nuclear bomb"
 			if(5)
-				target = /obj/item/weapon/gun
+				target = /obj/item/gun
 				target_amount = 6
 				loot = "six guns"
 			if(6)
-				target = /obj/item/weapon/gun/energy
+				target = /obj/item/gun/energy
 				target_amount = 4
 				loot = "four energy guns"
 			if(7)
-				target = /obj/item/weapon/gun/energy/laser
+				target = /obj/item/gun/energy/laser
 				target_amount = 2
 				loot = "two laser guns"
 			if(8)
-				target = /obj/item/weapon/gun/energy/rifle/ionrifle
+				target = /obj/item/gun/energy/rifle/ionrifle
 				target_amount = 1
 				loot = "an ion gun"
 
@@ -726,7 +703,7 @@ datum/objective/heist/loot
 
 		var/total_amount = 0
 
-		for(var/obj/O in locate(/area/skipjack_station/start))
+		for(var/obj/O in locate(/area/shuttle/skipjack))
 			if(istype(O,target)) total_amount++
 			for(var/obj/I in O.contents)
 				if(istype(I,target)) total_amount++
@@ -754,7 +731,7 @@ datum/objective/heist/salvage
 				target = "plasteel"
 				target_amount = 100
 			if(4)
-				target = "phoron"
+				target = MATERIAL_PHORON
 				target_amount = 100
 			if(5)
 				target = "silver"
@@ -775,7 +752,7 @@ datum/objective/heist/salvage
 
 		var/total_amount = 0
 
-		for(var/obj/item/O in locate(/area/skipjack_station/start))
+		for(var/obj/item/O in locate(/area/shuttle/skipjack))
 
 			var/obj/item/stack/material/S
 			if(istype(O,/obj/item/stack/material))
@@ -876,7 +853,7 @@ datum/objective/heist/salvage
 				possible_targets += player.mind
 	if(possible_targets.len > 0)
 		target = pick(possible_targets)
-	if(target) explanation_text = "Sacrifice [target.name], the [target.assigned_role]. You will need the sacrifice rune (Hell blood join) and three acolytes to do so."
+	if(target) explanation_text = "Sacrifice [target.name], the [target.assigned_role]. You will need the sacrifice rune and three acolytes to do so."
 
 /datum/objective/cult/sacrifice/check_completion()
 	return (target && cult && !cult.sacrificed.Find(target))

@@ -1,88 +1,57 @@
-/obj/item/organ/heart/left
-	name = "heart"
-	icon_state = "vaurca_heart_l-on"
-	organ_tag = "left heart"
-	parent_organ = "chest"
-	dead_icon = "vaurca_heart_l-off"
+/obj/item/organ/internal/heart/vaurca
+	name = "double heart system"
+	icon_state = "vaurca_heart_d-on"
+	organ_tag = BP_HEART
+	parent_organ = BP_CHEST
+	dead_icon = "vaurca_heart_d-off"
+	max_damage = 90 //two hearts = stronger hearts
 
-/obj/item/organ/heart/right
-	name = "heart"
-	icon_state = "vaurca_heart_r-on"
-	organ_tag = "right heart"
-	parent_organ = "chest"
-	dead_icon = "vaurca_heart_r-off"
-
-/obj/item/organ/lungs/vaurca
+/obj/item/organ/internal/lungs/vaurca
 	icon_state = "lungs_vaurca"
 
-/obj/item/organ/kidneys/vaurca
+/obj/item/organ/internal/kidneys/vaurca
 	icon_state = "kidney_vaurca"
 
-/obj/item/organ/eyes/vaurca
-	icon_state = "eyes_vaurca"
-
-/obj/item/organ/eyes/vaurca/flash_act()
-	if(!owner)
-		return
-
-	to_chat(owner, "<span class='warning'>Your eyes burn with the intense light of the flash!</span>")
-	owner.Weaken(10)
-	take_damage(rand(10, 11))
-
-	if(damage > 12)
-		owner.eye_blurry += rand(3,6)
-
-	if(damage >= min_broken_damage)
-		owner.sdisabilities |= BLIND
-
-	else if(damage >= min_bruised_damage)
-		owner.eye_blind = 5
-		owner.eye_blurry = 5
-		owner.disabilities |= NEARSIGHTED
-		addtimer(CALLBACK(owner, /mob/.proc/reset_nearsighted), 100)
-
-/obj/item/organ/kidneys/vaurca/robo
+/obj/item/organ/internal/kidneys/vaurca/robo
 	icon_state = "kidney_vaurca"
-	organ_tag = "mechanical kidneys"
-	robotic = 2
+	organ_tag = BP_VAURCA_KIDNEYS
+	robotic = ROBOTIC_MECHANICAL
 	robotic_name = null
 	robotic_sprite = null
 
-/obj/item/organ/liver/vaurca/robo
+/obj/item/organ/internal/liver/vaurca/robo
 	icon_state = "liver_vaurca"
-	organ_tag = "mechanical liver"
-	robotic = 2
+	organ_tag = BP_VAURCA_LIVER
+	robotic = ROBOTIC_MECHANICAL
 	robotic_name = null
 	robotic_sprite = null
-	tolerance = 20
 
-/obj/item/organ/liver/vaurca
+/obj/item/organ/internal/liver/vaurca
 	icon_state = "liver_vaurca"
-	tolerance = 20
 
-/obj/item/organ/brain/vaurca
+/obj/item/organ/internal/brain/vaurca
 	icon_state = "brain_vaurca"
 
 /obj/item/organ/vaurca/reservoir
-	name = "phoron reservoir"
-	organ_tag = "phoron reservoir"
-	parent_organ = "chest"
+	name = BP_PHORON_RESERVOIR
+	organ_tag = BP_PHORON_RESERVOIR
+	parent_organ = BP_CHEST
 	icon_state = "phoron_reservoir"
-	robotic = 1
+	robotic = ROBOTIC_ASSISTED
 
 /obj/item/organ/vaurca/filtrationbit
-	name = "filtration bit"
-	organ_tag = "filtration bit"
-	parent_organ = "head"
+	name = BP_FILTRATION_BIT
+	organ_tag = BP_FILTRATION_BIT
+	parent_organ = BP_HEAD
 	icon_state = "filter"
-	robotic = 2
+	robotic = ROBOTIC_MECHANICAL
 
 /obj/item/organ/vaurca/neuralsocket
-	name = "neural socket"
-	organ_tag = "neural socket"
+	name = BP_NEURAL_SOCKET
+	organ_tag = BP_NEURAL_SOCKET
 	icon_state = "neural_socket"
-	parent_organ = "head"
-	robotic = 2
+	parent_organ = BP_HEAD
+	robotic = ROBOTIC_MECHANICAL
 
 obj/item/organ/vaurca/neuralsocket/process()
 	if (is_broken())
@@ -108,11 +77,11 @@ obj/item/organ/vaurca/neuralsocket/process()
 	..()
 
 /obj/item/organ/vaurca/preserve
-	name = "phoron reserve tank"
-	organ_tag = "phoron reserve tank"
-	parent_organ = "chest"
+	name = BP_PHORON_RESERVE
+	organ_tag = BP_PHORON_RESERVE
+	parent_organ = BP_CHEST
 	icon_state = "breathing_app"
-	robotic = 1
+	robotic = ROBOTIC_ASSISTED
 	var/datum/gas_mixture/air_contents = null
 	var/distribute_pressure = ((2*ONE_ATMOSPHERE)*O2STANDARD)
 	var/volume = 50
@@ -122,7 +91,7 @@ obj/item/organ/vaurca/neuralsocket/process()
 	. = ..()
 
 	air_contents = new /datum/gas_mixture()
-	air_contents.adjust_gas("phoron", (ONE_ATMOSPHERE)*volume/(R_IDEAL_GAS_EQUATION*T20C))
+	air_contents.adjust_gas(GAS_PHORON, (ONE_ATMOSPHERE)*volume/(R_IDEAL_GAS_EQUATION*T20C))
 	air_contents.volume = volume //liters
 	air_contents.temperature = T20C
 	distribute_pressure = ((pick(2.4,2.8,3.2,3.6)*ONE_ATMOSPHERE)*O2STANDARD)
@@ -161,18 +130,18 @@ obj/item/organ/vaurca/neuralsocket/process()
 				descriptive = "cold"
 		to_chat(user, "<span class='notice'>\The [src] feels [descriptive].</span>")
 
-/obj/item/organ/vaurca/preserve/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/organ/vaurca/preserve/attackby(obj/item/W as obj, mob/user as mob)
 	..()
 	var/obj/icon = src
 
 	if ((istype(W, /obj/item/device/analyzer)) && get_dist(user, src) <= 1)
-		user.visible_message("<span class='warning'>[user] has used [W] on \icon[icon] [src]</span>")
+		user.visible_message("<span class='warning'>[user] has used [W] on [icon2html(icon, viewers(get_turf(user)))] [src].</span>")
 
 		var/pressure = air_contents.return_pressure()
 		manipulated_by = user.real_name			//This person is aware of the contents of the tank.
 		var/total_moles = air_contents.total_moles
 
-		to_chat(user, "<span class='notice'>Results of analysis of \icon[icon]</span>")
+		to_chat(user, "<span class='notice'>Results of analysis of [icon2html(icon, user)]</span>")
 		if (total_moles>0)
 			to_chat(user, "<span class='notice'>Pressure: [round(pressure,0.1)] kPa</span>")
 			for(var/g in air_contents.gas)
@@ -181,9 +150,9 @@ obj/item/organ/vaurca/neuralsocket/process()
 		else
 			to_chat(user, "<span class='notice'>Tank is empty!</span>")
 		src.add_fingerprint(user)
-	else if (istype(W,/obj/item/latexballon))
-		var/obj/item/latexballon/LB = W
-		LB.blow(src)
+	else if (istype(W,/obj/item/toy/balloon))
+		var/obj/item/toy/balloon/B = W
+		B.blow(src)
 		src.add_fingerprint(user)
 
 /obj/item/organ/vaurca/preserve/attack_self(mob/user as mob)
@@ -218,7 +187,7 @@ obj/item/organ/vaurca/neuralsocket/process()
 		else if(src in location)		// or if tank is in the mobs possession
 			if(!location.internal)		// and they do not have any active internals
 				mask_check = 1
-		else if(istype(src.loc, /obj/item/weapon/rig) && src.loc in location)	// or the rig is in the mobs possession
+		else if(istype(src.loc, /obj/item/rig) && (src.loc in location))	// or the rig is in the mobs possession
 			if(!location.internal)		// and they do not have any active internals
 				mask_check = 1
 
@@ -352,7 +321,7 @@ obj/item/organ/vaurca/neuralsocket/process()
 
 	else if(pressure > (8.0*ONE_ATMOSPHERE))
 
-		if(damage >= 60)
+		if(is_broken())
 			var/turf/simulated/T = get_turf(src)
 			if(!T)
 				return
@@ -362,7 +331,7 @@ obj/item/organ/vaurca/neuralsocket/process()
 
 	else if(pressure > (5.0*ONE_ATMOSPHERE))
 
-		if(damage >= 45)
+		if(is_bruised())
 			var/turf/simulated/T = get_turf(src)
 			if(!T)
 				return
@@ -370,34 +339,34 @@ obj/item/organ/vaurca/neuralsocket/process()
 			T.assume_air(leaked_gas)
 
 /obj/item/organ/external/chest/vaurca
-	cannot_break = TRUE
+	limb_flags = 0
 
 /obj/item/organ/external/groin/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM
 
 /obj/item/organ/external/arm/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM
 
 /obj/item/organ/external/arm/right/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM
 
 /obj/item/organ/external/leg/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM
 
 /obj/item/organ/external/leg/right/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM
 
 /obj/item/organ/external/foot/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM | ORGAN_CAN_STAND
 
 /obj/item/organ/external/foot/right/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM | ORGAN_CAN_STAND
 
 /obj/item/organ/external/hand/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/hand/right/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM | ORGAN_CAN_GRASP
 
 /obj/item/organ/external/head/vaurca
-	cannot_break = TRUE
+	limb_flags = ORGAN_CAN_AMPUTATE | ORGAN_CAN_MAIM

@@ -1,64 +1,55 @@
 /datum/language/ling
 	name = LANGUAGE_CHANGELING
 	desc = "Although they are normally wary and suspicious of each other, changelings can commune over a distance."
-	speech_verb = "says"
+	speech_verb = list("says")
 	colour = "changeling"
 	key = "g"
 	flags = RESTRICTED | HIVEMIND
 
 /datum/language/ling/broadcast(var/mob/living/speaker,var/message,var/speaker_mask)
-
-	if(speaker.mind && speaker.mind.changeling)
-		..(speaker,message,speaker.mind.changeling.changelingID)
-	else
-		..(speaker,message)
+	if(speaker.mind)
+		var/datum/changeling/changeling = speaker.mind.antag_datums[MODE_CHANGELING]
+		if(changeling)
+			..(speaker,message, changeling.changelingID)
+			return
+	..(speaker,message)
 
 /datum/language/corticalborer
 	name = LANGUAGE_BORER
-	desc = "Cortical borers possess a strange link between their tiny minds."
-	speech_verb = "sings"
-	ask_verb = "sings"
-	exclaim_verb = "sings"
+	desc = "A language Cortical Borers use to influence the minds of those nearby, or those they infest."
+	speech_verb = list("sings")
+	ask_verb = list("sings")
+	exclaim_verb = list("sings")
 	colour = "alien"
+	key = "v"
+	flags = RESTRICTED
+
+/datum/language/corticalborer/hivemind
+	name = LANGUAGE_BORER_HIVEMIND
+	desc = "Cortical Borers possess a strange link between their tiny minds, allowing them to communicate telepathically."
 	key = "x"
 	flags = RESTRICTED | HIVEMIND
 
-/datum/language/corticalborer/broadcast(var/mob/living/speaker,var/message,var/speaker_mask)
+/datum/language/corticalborer/hivemind/broadcast(var/mob/living/speaker,var/message,var/speaker_mask)
 
 	var/mob/living/simple_animal/borer/B
 
-	if(istype(speaker,/mob/living/carbon))
+	if(istype(speaker, /mob/living/carbon))
 		var/mob/living/carbon/M = speaker
 		B = M.has_brain_worms()
-	else if(istype(speaker,/mob/living/simple_animal/borer))
+	else if(istype(speaker, /mob/living/simple_animal/borer))
 		B = speaker
 
 	if(B)
 		speaker_mask = B.truename
-	..(speaker,message,speaker_mask)
-
-/datum/language/vox
-	name = LANGUAGE_VOX
-	desc = "The common tongue of the various Vox ships making up the Shoal. It sounds like chaotic shrieking to everyone else."
-	speech_verb = "shrieks"
-	ask_verb = "creels"
-	exclaim_verb = "SHRIEKS"
-	colour = "vox"
-	key = "5"
-	flags = WHITELISTED
-	syllables = list("ti","ti","ti","hi","hi","ki","ki","ki","ki","ya","ta","ha","ka","ya","chi","cha","kah", \
-	"SKRE","AHK","EHK","RAWK","KRA","AAA","EEE","KI","II","KRI","KA")
-	machine_understands = FALSE
-
-/datum/language/vox/get_random_name()
-	return ..(FEMALE,1,6)
+	..(speaker, message, speaker_mask)
 
 /datum/language/cultcommon
 	name = LANGUAGE_CULT
 	desc = "The chants of the occult, the incomprehensible."
-	speech_verb = "intones"
-	ask_verb = "intones"
-	exclaim_verb = "chants"
+	speech_verb = list("intones")
+	ask_verb = list("intones")
+	exclaim_verb = list("chants")
 	colour = "cult"
 	key = "f"
 	flags = RESTRICTED
@@ -81,9 +72,9 @@
 /datum/language/cult
 	name = LANGUAGE_OCCULT
 	desc = "The initiated can share their thoughts by means defying all reason."
-	speech_verb = "intones"
-	ask_verb = "intones"
-	exclaim_verb = "chants"
+	speech_verb = list("intones")
+	ask_verb = list("intones")
+	exclaim_verb = list("chants")
 	colour = "cult"
 	key = "y"
 	flags = RESTRICTED | HIVEMIND
@@ -91,9 +82,9 @@
 /datum/language/terminator
 	name = LANGUAGE_TERMINATOR
 	desc = "A heavily encrypted communication network that piggybacks off of the state telecomms relays to covertly link Hephaestus black ops droids to their control AIs."
-	speech_verb = "buzzes"
-	ask_verb = "buzzes"
-	exclaim_verb = "buzzes"
+	speech_verb = list("buzzes")
+	ask_verb = list("buzzes")
+	exclaim_verb = list("buzzes")
 	colour = "bad"
 	key = "#"
 	flags = RESTRICTED | HIVEMIND
@@ -102,3 +93,22 @@
 
 /datum/language/terminator/get_random_name()
 	return "HK [pick(list("Hera","Zeus","Artemis","Athena","Ares","Hades","Poseidon","Demeter","Apollo","Aphrodite","Hermes","Hestia","Dionysus","Persephone","Kronos","Odysseus","Ajax","Agamemnon","Chiron","Charon"))]-[rand(100, 999)]"
+
+/datum/language/revenant
+	name = LANGUAGE_REVENANT
+	desc = "The language of the forsaken bluespace inhabitants."
+	speech_verb = list("gargles")
+	ask_verb = list("gags")
+	exclaim_verb = list("retches")
+	colour = "revenant"
+	key = "c"
+	syllables = list("grhhg", "ghrohg", "grgugh", "grrhh", "hghh", "rghghh", "gghhh", "ggrh", "aghrh")
+	flags = RESTRICTED
+	partial_understanding = list(LANGUAGE_TCB = 80)
+	always_parse_language = TRUE
+
+/datum/language/revenant/hivemind
+	name = LANGUAGE_REVENANT_RIFTSPEAK
+	desc = "A manner of speaking that allows revenants to talk to eachother no matter the distance."
+	key = "rs"
+	flags = RESTRICTED | HIVEMIND

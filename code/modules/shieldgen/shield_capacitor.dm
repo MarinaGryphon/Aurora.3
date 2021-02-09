@@ -7,6 +7,7 @@
 	desc = "Machine that charges a shield generator."
 	icon = 'icons/obj/machines/shielding.dmi'
 	icon_state = "capacitor"
+	obj_flags = OBJ_FLAG_ROTATABLE
 	var/active = 0
 	density = 1
 	var/stored_charge = 0	//not to be confused with power cell charge, this is in Joules
@@ -39,17 +40,17 @@
 
 /obj/machinery/shield_capacitor/attackby(obj/item/W, mob/user)
 
-	if(istype(W, /obj/item/weapon/card/id))
-		var/obj/item/weapon/card/id/C = W
-		if(access_captain in C.access || access_security in C.access || access_engine in C.access)
+	if(istype(W, /obj/item/card/id))
+		var/obj/item/card/id/C = W
+		if((access_captain in C.access) || (access_security in C.access) || (access_engine in C.access))
 			src.locked = !src.locked
 			to_chat(user, "Controls are now [src.locked ? "locked." : "unlocked."]")
 			updateDialog()
 		else
-			to_chat(user, span("alert", "Access denied."))
+			to_chat(user, SPAN_ALERT("Access denied."))
 	else if(W.iswrench())
 		src.anchored = !src.anchored
-		src.visible_message(span("notice", "\The [src] has been [anchored ? "bolted to the floor" : "unbolted from the floor"] by \the [user]."))
+		src.visible_message(SPAN_NOTICE("\The [src] has been [anchored ? "bolted to the floor" : "unbolted from the floor"] by \the [user]."))
 
 		if(anchored)
 			spawn(0)
@@ -147,26 +148,3 @@
 		icon_state = "broke"
 	else
 		..()
-
-/obj/machinery/shield_capacitor/verb/rotate()
-	set name = "Rotate capacitor clockwise"
-	set category = "Object"
-	set src in oview(1)
-
-	if (src.anchored)
-		to_chat(usr, "It is fastened to the floor!")
-		return
-	if(config.ghost_interaction)
-		src.set_dir(turn(src.dir, -90))
-		return
-	else
-		if(istype(usr,/mob/living/simple_animal/rat))
-			return
-		if(!usr || !isturf(usr.loc))
-			return
-		if(usr.stat || usr.restrained())
-			return
-
-		src.set_dir(turn(src.dir, -90))
-		return
-	return

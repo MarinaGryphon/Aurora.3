@@ -2,33 +2,36 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// (Mixing)Glass.
 ////////////////////////////////////////////////////////////////////////////////
-/obj/item/weapon/reagent_containers/glass
+/obj/item/reagent_containers/glass
 	name = " "
 	var/base_name = " "
 	desc = " "
 	icon = 'icons/obj/chemical.dmi'
-	icon_state = "null"
-	item_state = "null"
+	icon_state = null
+	item_state = null
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60)
 	volume = 60
 	accuracy = 0.1
-	w_class = 2
+	w_class = ITEMSIZE_SMALL
 	flags = OPENCONTAINER
+	fragile = 2
 	unacidable = 1 //glass doesn't dissolve in acid
-
+	drop_sound = 'sound/items/drop/bottle.ogg'
+	pickup_sound = 'sound/items/pickup/bottle.ogg'
 	var/label_text = ""
 
-/obj/item/weapon/reagent_containers/glass/Initialize()
+/obj/item/reagent_containers/glass/Initialize()
 	. = ..()
 	base_name = name
 
-/obj/item/weapon/reagent_containers/glass/examine(var/mob/user)
+/obj/item/reagent_containers/glass/examine(var/mob/user)
 	if(!..(user, 2))
 		return
-	if(reagents && reagents.reagent_list.len)
+	if(LAZYLEN(reagents.reagent_volumes))
 		to_chat(user, "<span class='notice'>It contains [round(reagents.total_volume, accuracy)] units of liquid.</span>")
-		for(var/datum/reagent/T in reagents.reagent_list)
+		for(var/_T in reagents.reagent_volumes)
+			var/decl/reagent/T = decls_repository.get_decl(_T)
 			if(T.reagent_state == SOLID)
 				to_chat(user, "<span class='notice'>You see something solid in the beaker.</span>")
 				break // to stop multiple messages of this
@@ -37,7 +40,18 @@
 	if(!is_open_container())
 		to_chat(user, "<span class='notice'>Airtight lid seals it completely.</span>")
 
-/obj/item/weapon/reagent_containers/glass/attack_self()
+/obj/item/reagent_containers/glass/get_additional_forensics_swab_info()
+	var/list/additional_evidence = ..()
+	var/list/Bdata = REAGENT_DATA(reagents, /decl/reagent/blood/)
+	if(Bdata)
+		additional_evidence["type"] = EVIDENCE_TYPE_BLOOD
+		additional_evidence["sample_type"] = "blood"
+		additional_evidence["dna"] += Bdata["blood_DNA"]
+		additional_evidence["sample_message"] = "You dip the swab inside [src] to sample its contents."
+
+	return additional_evidence
+
+/obj/item/reagent_containers/glass/attack_self()
 	..()
 	if(is_open_container())
 		to_chat(usr, "<span class = 'notice'>You put the lid on \the [src].</span>")
@@ -47,14 +61,14 @@
 		flags |= OPENCONTAINER
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/AltClick(var/mob/user)
+/obj/item/reagent_containers/glass/AltClick(var/mob/user)
 	set_APTFT()
 
-/obj/item/weapon/reagent_containers/glass/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(istype(W,/obj/item/weapon/storage/part_replacer))
+/obj/item/reagent_containers/glass/attackby(obj/item/W as obj, mob/user as mob)
+	if(istype(W,/obj/item/storage/part_replacer))
 		if(!reagents || !reagents.total_volume)
 			return ..()
-	if(istype(W, /obj/item/weapon/pen) || istype(W, /obj/item/device/flashlight/pen))
+	if(W.ispen() || istype(W, /obj/item/device/flashlight/pen))
 		var/tmp_label = sanitizeSafe(input(user, "Enter a label for [name]", "Label", label_text), MAX_NAME_LEN)
 		if(length(tmp_label) > 15)
 			to_chat(user, "<span class='notice'>The label can be at most 15 characters long.</span>")
@@ -62,45 +76,54 @@
 			to_chat(user, "<span class='notice'>You set the label to \"[tmp_label]\".</span>")
 			label_text = tmp_label
 			update_name_label()
+		return
+	. = ..() // in the case of nitroglycerin, explode BEFORE it shatters
 
-/obj/item/weapon/reagent_containers/glass/proc/update_name_label()
+/obj/item/reagent_containers/glass/proc/update_name_label()
 	if(label_text == "")
 		name = base_name
 	else
 		name = "[base_name] ([label_text])"
 
-/obj/item/weapon/reagent_containers/glass/beaker
+/obj/item/reagent_containers/glass/beaker
 	name = "beaker"
 	desc = "A beaker."
 	icon = 'icons/obj/chemical.dmi'
+	item_icons = list(
+		slot_l_hand_str = 'icons/mob/items/stacks/lefthand_medical.dmi',
+		slot_r_hand_str = 'icons/mob/items/stacks/righthand_medical.dmi',
+		)
 	icon_state = "beaker"
 	item_state = "beaker"
-	matter = list("glass" = 500)
-	drop_sound = 'sound/items/drop/glass.ogg'
+	center_of_mass = list("x" = 15,"y" = 11)
+	matter = list(MATERIAL_GLASS = 500)
+	drop_sound = 'sound/items/drop/drinkglass.ogg'
+	pickup_sound = 'sound/items/pickup/drinkglass.ogg'
+	fragile = 1
 
-/obj/item/weapon/reagent_containers/glass/beaker/Initialize()
+/obj/item/reagent_containers/glass/beaker/Initialize()
 	. = ..()
 	desc += " Can hold up to [volume] units."
 
-/obj/item/weapon/reagent_containers/glass/beaker/self_feed_message(var/mob/user)
+/obj/item/reagent_containers/glass/beaker/self_feed_message(var/mob/user)
 	to_chat(user, "<span class='notice'>You drink from \the [src].</span>")
 
-/obj/item/weapon/reagent_containers/glass/beaker/on_reagent_change()
+/obj/item/reagent_containers/glass/beaker/on_reagent_change()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/beaker/pickup(mob/user)
+/obj/item/reagent_containers/glass/beaker/pickup(mob/user)
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/beaker/dropped(mob/user)
+/obj/item/reagent_containers/glass/beaker/dropped(mob/user)
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/beaker/attack_hand()
+/obj/item/reagent_containers/glass/beaker/attack_hand()
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/beaker/update_icon()
+/obj/item/reagent_containers/glass/beaker/update_icon()
 	cut_overlays()
 
 	if(reagents.total_volume)
@@ -122,100 +145,94 @@
 	if (!is_open_container())
 		add_overlay("lid_[initial(icon_state)]")
 
-/obj/item/weapon/reagent_containers/glass/beaker/large
+/obj/item/reagent_containers/glass/beaker/large
 	name = "large beaker"
 	desc = "A large beaker."
 	icon_state = "beakerlarge"
-	matter = list("glass" = 5000)
+	center_of_mass = list("x" = 16,"y" = 11)
+	matter = list(MATERIAL_GLASS = 5000)
 	volume = 120
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60,120)
 	flags = OPENCONTAINER
+	fragile = 6 // a bit sturdier
 
-/obj/item/weapon/reagent_containers/glass/beaker/bowl
-	name = "mixing bowl"
-	desc = "A large mixing bowl."
-	icon = 'icons/obj/kitchen.dmi'
-	icon_state = "mixingbowl"
-	matter = list(DEFAULT_WALL_MATERIAL = 300)
-	volume = 180
-	amount_per_transfer_from_this = 10
-	possible_transfer_amounts = list(5,10,15,25,30,60,180)
-	flags = OPENCONTAINER
-	unacidable = 0
-
-/obj/item/weapon/reagent_containers/glass/beaker/noreact
+/obj/item/reagent_containers/glass/beaker/noreact
 	name = "cryostasis beaker"
 	desc = "A cryostasis beaker that allows for chemical storage without reactions."
 	icon_state = "beakernoreact"
-	matter = list("glass" = 500)
+	center_of_mass = list("x" = 16,"y" = 13)
+	matter = list(MATERIAL_GLASS = 500)
 	volume = 60
 	amount_per_transfer_from_this = 10
 	flags = OPENCONTAINER | NOREACT
+	fragile = 0
 
-/obj/item/weapon/reagent_containers/glass/beaker/bluespace
+/obj/item/reagent_containers/glass/beaker/bluespace
 	name = "bluespace beaker"
 	desc = "A bluespace beaker, powered by experimental bluespace technology."
 	icon_state = "beakerbluespace"
-	matter = list("glass" = 5000)
+	center_of_mass = list("x" = 16,"y" = 11)
+	matter = list(MATERIAL_PHORON = 1000, MATERIAL_DIAMOND = 100)
 	volume = 300
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25,30,60,120,300)
 	flags = OPENCONTAINER
+	fragile = 0
 
-/obj/item/weapon/reagent_containers/glass/beaker/vial
+/obj/item/reagent_containers/glass/beaker/vial
 	name = "vial"
 	desc = "A small glass vial."
 	icon_state = "vial"
-	matter = list("glass" = 250)
+	center_of_mass = list("x" = 15,"y" = 9)
+	matter = list(MATERIAL_GLASS = 250)
 	volume = 30
 	amount_per_transfer_from_this = 10
 	possible_transfer_amounts = list(5,10,15,25)
 	flags = OPENCONTAINER
+	fragile = 1 // very fragile
 
-/obj/item/weapon/reagent_containers/glass/beaker/cryoxadone
-/obj/item/weapon/reagent_containers/glass/beaker/cryoxadone/Initialize()
-	. = ..()
-	reagents.add_reagent("cryoxadone", 30)
-	update_icon()
+/obj/item/reagent_containers/glass/beaker/cryoxadone/reagents_to_add = list(/decl/reagent/cryoxadone = 30)
 
-/obj/item/weapon/reagent_containers/glass/beaker/sulphuric
-/obj/item/weapon/reagent_containers/glass/beaker/sulphuric/Initialize()
-	. = ..()
-	reagents.add_reagent("sacid", 60)
-	update_icon()
+/obj/item/reagent_containers/glass/beaker/sulphuric/reagents_to_add = list(/decl/reagent/acid = 60)
 
-/obj/item/weapon/reagent_containers/glass/bucket
+/obj/item/reagent_containers/glass/bucket
 	desc = "A blue plastic bucket."
 	name = "bucket"
 	icon = 'icons/obj/janitor.dmi'
+	item_icons = list(
+		slot_l_hand_str = 'icons/mob/items/lefthand_janitor.dmi',
+		slot_r_hand_str = 'icons/mob/items/righthand_janitor.dmi',
+		)
 	icon_state = "bucket"
 	item_state = "bucket"
+	center_of_mass = list("x" = 16,"y" = 10)
 	accuracy = 1
 	matter = list(DEFAULT_WALL_MATERIAL = 200)
-	w_class = 3.0
-	amount_per_transfer_from_this = 20
+	w_class = ITEMSIZE_NORMAL
+	amount_per_transfer_from_this = 120
 	possible_transfer_amounts = list(10,20,30,60,120)
 	volume = 120
 	flags = OPENCONTAINER
 	unacidable = 0
 	drop_sound = 'sound/items/drop/helm.ogg'
-	var/carving_weapon = /obj/item/weapon/wirecutters
+	pickup_sound = 'sound/items/pickup/helm.ogg'
 	var/helmet_type = /obj/item/clothing/head/helmet/bucket
+	fragile = 0
 
-/obj/item/weapon/reagent_containers/glass/bucket/attackby(var/obj/D, mob/user as mob)
+/obj/item/reagent_containers/glass/bucket/attackby(var/obj/D, mob/user as mob)
 	if(isprox(D))
 		to_chat(user, "You add [D] to [src].")
 		qdel(D)
-		user.put_in_hands(new /obj/item/weapon/bucket_sensor)
+		user.put_in_hands(new /obj/item/bucket_sensor)
 		qdel(src)
 		return
-	else if(istype(D, carving_weapon))
+	else if(D.iswirecutter())
 		to_chat(user, "<span class='notice'>You cut a big hole in \the [src] with \the [D].</span>")
 		user.put_in_hands(new helmet_type)
 		qdel(src)
 		return
-	else if(istype(D, /obj/item/weapon/mop))
+	else if(istype(D, /obj/item/mop))
 		if(reagents.total_volume < 1)
 			to_chat(user, "<span class='warning'>\The [src] is empty!</span>")
 		else
@@ -226,33 +243,35 @@
 	else
 		return ..()
 
-/obj/item/weapon/reagent_containers/glass/bucket/update_icon()
+/obj/item/reagent_containers/glass/bucket/update_icon()
 	cut_overlays()
 	if(reagents.total_volume > 0)
 		add_overlay("water_[initial(icon_state)]")
 	if(!is_open_container())
 		add_overlay("lid_[initial(icon_state)]")
 
-/obj/item/weapon/reagent_containers/glass/bucket/on_reagent_change()
+/obj/item/reagent_containers/glass/bucket/on_reagent_change()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bucket/self_feed_message(var/mob/user)
+/obj/item/reagent_containers/glass/bucket/self_feed_message(var/mob/user)
 	to_chat(user, "<span class='notice'>You drink heavily from \the [src].</span>")
 
 
-obj/item/weapon/reagent_containers/glass/bucket/wood
+/obj/item/reagent_containers/glass/bucket/wood
 	desc = "An old wooden bucket."
 	name = "wooden bucket"
 	icon = 'icons/obj/janitor.dmi'
 	icon_state = "woodbucket"
 	item_state = "woodbucket"
+	center_of_mass = list("x" = 16,"y" = 8)
 	matter = list("wood" = 50)
 	drop_sound = 'sound/items/drop/wooden.ogg'
-	carving_weapon = /obj/item/weapon/material/hatchet
+	pickup_sound = 'sound/items/pickup/wooden.ogg'
 	helmet_type = /obj/item/clothing/head/helmet/bucket/wood
 
-/obj/item/weapon/reagent_containers/glass/bucket/wood/attackby(var/obj/D, mob/user as mob)
+/obj/item/reagent_containers/glass/bucket/wood/attackby(var/obj/D, mob/user as mob)
 	if(isprox(D))
 		to_chat(user, "This wooden bucket doesn't play well with electronics.")
 		return
-	 ..()
+
+	..()

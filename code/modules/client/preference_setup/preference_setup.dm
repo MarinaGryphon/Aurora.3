@@ -1,7 +1,8 @@
-// These are not flags, binary operations not intended
-#define TOPIC_NOACTION	0
-#define TOPIC_HANDLED	1
-#define TOPIC_REFRESH	2
+#define TOPIC_NOACTION       0
+#define TOPIC_HANDLED        1
+#define TOPIC_REFRESH        2
+#define TOPIC_UPDATE_PREVIEW 4
+#define TOPIC_REFRESH_UPDATE_PREVIEW (TOPIC_UPDATE_PREVIEW|TOPIC_REFRESH)
 
 // These are bitflags. Use wisely.
 #define SQL_CHARACTER	0x1
@@ -117,7 +118,7 @@
 
 	if(href_list["category"])
 		var/category = locate(href_list["category"])
-		if(category && category in categories)
+		if(category && (category in categories))
 			selected_category = category
 		. = 1
 
@@ -131,6 +132,9 @@
 	var/sort_order = 0
 	var/sql_role = SQL_CHARACTER
 	var/modified = 0
+
+/datum/category_group/player_setup_category/dd_SortValue()
+	return sort_order
 
 /datum/category_group/player_setup_category/proc/sanitize_setup(sql_load = FALSE)
 	for(var/datum/category_item/player_setup_item/PI in items)
@@ -220,6 +224,9 @@
 	pref = null
 	return ..()
 
+/datum/category_item/player_setup_item/dd_SortValue()
+	return sort_order
+
 /datum/category_item/player_setup_item/proc/to_client_chat(str)
 	if (pref && pref.client)
 		to_chat(pref.client, str)
@@ -284,7 +291,7 @@
 /datum/category_item/player_setup_item/proc/gather_save_parameters()
 	return list()
 
-/datum/category_item/player_setup_item/proc/content()
+/datum/category_item/player_setup_item/proc/content(var/mob/user)
 	return
 
 /datum/category_item/player_setup_item/proc/sanitize_character(var/sql_load = 0)
@@ -304,8 +311,10 @@
 	if (. != TOPIC_NOACTION)
 		var/datum/category_group/player_setup_category/cat = category
 		cat.modified = 1
-	if (. == TOPIC_REFRESH)
+	if (. & TOPIC_REFRESH)
 		user.client.prefs.ShowChoices(user)
+	if(. & TOPIC_UPDATE_PREVIEW)
+		user.client.prefs.update_preview_icon()
 
 /datum/category_item/player_setup_item/CanUseTopic(var/mob/user)
 	return 1

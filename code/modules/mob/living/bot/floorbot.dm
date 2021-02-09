@@ -17,7 +17,7 @@
 	var/turf/target
 	var/floor_build_type = /decl/flooring/tiling // Basic steel floor.
 
-/mob/living/bot/floorbot/update_icons()
+/mob/living/bot/floorbot/update_icon()
 	if(repairing)
 		icon_state = "floorbot-c"
 	else if(amount > 0)
@@ -31,8 +31,8 @@
 		return
 
 	user.set_machine(src)
-	var/dat
-	dat += "<TT><B>Automatic Station Floor Repairer v1.1</B></TT><BR><BR>"
+
+	var/dat = ""
 	dat += "Status: <A href='?src=\ref[src];operation=start'>[src.on ? "On" : "Off"]</A><BR>"
 	dat += "Maintenance panel is [open ? "opened" : "closed"]<BR>"
 	//dat += "Tiles left: [amount]<BR>"
@@ -48,9 +48,9 @@
 			bmode = "Disabled"
 		dat += "<BR><BR>Bridge Mode : <A href='?src=\ref[src];operation=bridgemode'>[bmode]</A><BR>"
 
-	user << browse("<HEAD><TITLE>Repairbot v1.1 controls</TITLE></HEAD>[dat]", "window=autorepair")
-	onclose(user, "autorepair")
-	return
+	var/datum/browser/bot_win = new(user, "autorepair", "Automatic Repairbot v1.2 Controls")
+	bot_win.set_content(dat)
+	bot_win.open()
 
 /mob/living/bot/floorbot/emag_act(var/remaining_charges, var/mob/user)
 	. = ..()
@@ -115,7 +115,7 @@
 		addTiles(1)
 
 	if(prob(5))
-		custom_emote(2, "makes an excited booping beeping sound!")
+		custom_emote(AUDIBLE_MESSAGE, "makes an excited booping beeping sound!")
 
 /mob/living/bot/floorbot/think()
 	..()
@@ -194,19 +194,20 @@
 	target = null
 
 /mob/living/bot/floorbot/UnarmedAttack(var/atom/A, var/proximity)
-	if(!..())
+	. = ..()
+	if(!.)
 		return
 
 	if(repairing)
 		return
 
-	if(get_turf(A) != loc)
+	if(!src.Adjacent(A))
 		return
 
 	if(emagged && istype(A, /turf/simulated/floor))
 		var/turf/simulated/floor/F = A
 		repairing = 1
-		update_icons()
+		update_icon()
 		if(F.is_plating())
 			visible_message("<span class='warning'>[src] begins to tear the floor tile from the floor!</span>")
 			if(do_after(src, 50))
@@ -219,7 +220,7 @@
 				addTiles(1)
 		target = null
 		repairing = 0
-		update_icons()
+		update_icon()
 	else if(istype(A, /turf/space))
 		var/building = 2
 		if(locate(/obj/structure/lattice, A))
@@ -227,7 +228,7 @@
 		if(amount < building)
 			return
 		repairing = 1
-		update_icons()
+		update_icon()
 		visible_message("<span class='notice'>[src] begins to repair the hole.</span>")
 		if(do_after(src, 50))
 			if(A && (locate(/obj/structure/lattice, A) && building == 1 || !locate(/obj/structure/lattice, A) && building == 2)) // Make sure that it still needs repairs
@@ -239,25 +240,25 @@
 				A.attackby(I, src)
 		target = null
 		repairing = 0
-		update_icons()
+		update_icon()
 	else if(istype(A, /turf/simulated/floor))
 		var/turf/simulated/floor/F = A
 		if(!F.flooring && amount)
 			repairing = 1
-			update_icons()
+			update_icon()
 			visible_message("<span class='notice'>[src] begins to improve the floor.</span>")
 			if(do_after(src, 50))
 				if(!F.flooring)
-					F.set_flooring(get_flooring_data(floor_build_type))
+					F.set_flooring(decls_repository.get_decl(floor_build_type))
 					addTiles(-1)
 			target = null
 			repairing = 0
-			update_icons()
+			update_icon()
 	else if(istype(A, /obj/item/stack/tile/floor) && amount < maxAmount)
 		var/obj/item/stack/tile/floor/T = A
 		visible_message("<span class='notice'>[src] begins to collect tiles.</span>")
 		repairing = 1
-		update_icons()
+		update_icon()
 		if(do_after(src, 20))
 			if(T)
 				var/eaten = min(maxAmount - amount, T.get_amount())
@@ -265,13 +266,13 @@
 				addTiles(eaten)
 		target = null
 		repairing = 0
-		update_icons()
+		update_icon()
 	else if(istype(A, /obj/item/stack/material) && amount + 4 <= maxAmount)
 		var/obj/item/stack/material/M = A
 		if(M.get_material_name() == DEFAULT_WALL_MATERIAL)
 			visible_message("<span class='notice'>[src] begins to make tiles.</span>")
 			repairing = 1
-			update_icons()
+			update_icon()
 			if(do_after(50))
 				if(M)
 					M.use(1)
@@ -282,7 +283,7 @@
 	visible_message("<span class='danger'>[src] blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 
-	var/obj/item/weapon/storage/toolbox/mechanical/N = new /obj/item/weapon/storage/toolbox/mechanical(Tsec)
+	var/obj/item/storage/toolbox/mechanical/N = new /obj/item/storage/toolbox/mechanical(Tsec)
 	N.contents = list()
 	new /obj/item/device/assembly/prox_sensor(Tsec)
 	if(prob(50))
@@ -301,7 +302,7 @@
 
 /* Assembly */
 
-/obj/item/weapon/storage/toolbox/mechanical/attackby(var/obj/item/stack/tile/floor/T, mob/user as mob)
+/obj/item/storage/toolbox/mechanical/attackby(var/obj/item/stack/tile/floor/T, mob/user as mob)
 	if(!istype(T, /obj/item/stack/tile/floor))
 		..()
 		return
@@ -311,7 +312,7 @@
 	if(user.s_active)
 		user.s_active.close(user)
 	if(T.use(10))
-		var/obj/item/weapon/toolbox_tiles/B = new /obj/item/weapon/toolbox_tiles
+		var/obj/item/toolbox_tiles/B = new /obj/item/toolbox_tiles
 		user.put_in_hands(B)
 		to_chat(user, "<span class='notice'>You add the tiles into the empty toolbox. They protrude from the top.</span>")
 		qdel(src)
@@ -319,7 +320,7 @@
 		to_chat(user, "<span class='warning'>You need 10 floor tiles for a floorbot.</span>")
 	return
 
-/obj/item/weapon/toolbox_tiles
+/obj/item/toolbox_tiles
 	desc = "It's a toolbox with tiles sticking out the top"
 	name = "tiles and toolbox"
 	icon = 'icons/obj/aibots.dmi'
@@ -328,20 +329,20 @@
 	throwforce = 10.0
 	throw_speed = 2
 	throw_range = 5
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 	var/created_name = "Floorbot"
 
-/obj/item/weapon/toolbox_tiles/attackby(var/obj/item/W, mob/user as mob)
+/obj/item/toolbox_tiles/attackby(var/obj/item/W, mob/user as mob)
 	..()
 	if(isprox(W))
 		qdel(W)
-		var/obj/item/weapon/toolbox_tiles_sensor/B = new /obj/item/weapon/toolbox_tiles_sensor()
+		var/obj/item/toolbox_tiles_sensor/B = new /obj/item/toolbox_tiles_sensor()
 		B.created_name = created_name
 		user.put_in_hands(B)
 		to_chat(user, "<span class='notice'>You add the sensor to the toolbox and tiles!</span>")
 		qdel(src)
 		return 1
-	else if (istype(W, /obj/item/weapon/pen))
+	else if (W.ispen())
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return
@@ -349,7 +350,7 @@
 			return
 		created_name = t
 
-/obj/item/weapon/toolbox_tiles_sensor
+/obj/item/toolbox_tiles_sensor
 	desc = "It's a toolbox with tiles sticking out the top and a sensor attached"
 	name = "tiles, toolbox and sensor arrangement"
 	icon = 'icons/obj/aibots.dmi'
@@ -358,10 +359,10 @@
 	throwforce = 10.0
 	throw_speed = 2
 	throw_range = 5
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 	var/created_name = "Floorbot"
 
-/obj/item/weapon/toolbox_tiles_sensor/attackby(var/obj/item/W, mob/user as mob)
+/obj/item/toolbox_tiles_sensor/attackby(var/obj/item/W, mob/user as mob)
 	..()
 	if(istype(W, /obj/item/robot_parts/l_arm) || istype(W, /obj/item/robot_parts/r_arm))
 		qdel(W)
@@ -371,7 +372,7 @@
 		to_chat(user, "<span class='notice'>You add the robot arm to the odd looking toolbox assembly! Boop beep!</span>")
 		qdel(src)
 		return 1
-	else if(istype(W, /obj/item/weapon/pen))
+	else if(W.ispen())
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return
@@ -388,7 +389,7 @@
 	amount = 120 // 1 for tile, 2 for lattice
 	maxAmount = 120
 
-/mob/living/bot/floorbot/floorbob/update_icons()
+/mob/living/bot/floorbot/floorbob/update_icon()
 	if(repairing)
 		icon_state = "floorbob-c"
 	else if(amount > 0)

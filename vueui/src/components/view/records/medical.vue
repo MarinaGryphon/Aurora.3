@@ -23,7 +23,7 @@
 </template>
 
 <script>
-import Utils from '../../../utils.js'
+import Utils from "@/utils"
 export default {
   data() {
     return this.$root.$data.state
@@ -40,7 +40,3 @@ export default {
   }
 }
 </script>
-
-<style>
-
-</style>

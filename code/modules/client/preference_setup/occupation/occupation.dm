@@ -1,8 +1,3 @@
-//used for pref.alternate_option
-#define GET_RANDOM_JOB 0
-#define BE_ASSISTANT 1
-#define RETURN_TO_LOBBY 2
-
 /datum/category_item/player_setup_item/occupation
 	name = "Occupation"
 	sort_order = 1
@@ -112,7 +107,7 @@
 					log_debug("LOADING: Bad job preference key: [preference].")
 					log_debug(e.desc)
 
-	pref.alternate_option  = sanitize_integer(text2num(pref.alternate_option), 0, 2, initial(pref.alternate_option))
+	pref.alternate_option  = sanitize_integer(text2num(pref.alternate_option), 0, 1, initial(pref.alternate_option))
 	pref.job_civilian_high = sanitize_integer(text2num(pref.job_civilian_high), 0, 65535, initial(pref.job_civilian_high))
 	pref.job_civilian_med  = sanitize_integer(text2num(pref.job_civilian_med), 0, 65535, initial(pref.job_civilian_med))
 	pref.job_civilian_low  = sanitize_integer(text2num(pref.job_civilian_low), 0, 65535, initial(pref.job_civilian_low))
@@ -137,6 +132,9 @@
 		var/alt_title = pref.player_alt_titles[job.title]
 		if(alt_title && !(alt_title in job.alt_titles))
 			pref.player_alt_titles -= job.title
+		var/list/available = pref.GetValidTitles(job)
+		if(LAZYLEN(available) == 1)
+			SetPlayerAltTitle(job, LAZYACCESS(available, 1))
 
 	sanitize_faction()
 
@@ -145,6 +143,7 @@
 		return "<center><large>Jobs controller not initialized yet. Please wait a bit and reload this section.</large></center>"
 
 	var/list/dat = list(
+		"<style>span.none{color: black} span.low{color: #DDD} span.med{color: yellow} span.high{color: lime} a:hover span{color: #40628a !important}</style>",
 		"<center><b>Character faction</b><br>",
 		"<small>This will influence the jobs you can select from, and the starting equipment.</small><br>",
 		"<b><a href='?src=\ref[src];faction_preview=[html_encode(pref.faction)]'>[pref.faction]</a></b></center><br><hr>"
@@ -158,43 +157,51 @@
 	)
 	var/index = -1
 
-	//The job before the current job. I only use this to get the previous jobs color when I'm filling in blank rows.
-	var/datum/job/lastJob
-
 	var/datum/faction/faction = SSjobs.name_factions[pref.faction] || SSjobs.default_faction
-
 	for(var/datum/job/job in faction.get_occupations())
 		index += 1
 		if((index >= limit) || (job.title in splitJobs))
-			if((index < limit) && (lastJob != null))
-				//If the cells were broken up by a job in the splitJob list then it will fill in the rest of the cells with
-				//the last job's selection color. Creating a rather nice effect.
-				for(var/i = 0, i < (limit - index), i += 1)
-					dat += "<tr bgcolor='[lastJob.selection_color]'><td width='60%' align='right'><a>&nbsp</a></td><td><a>&nbsp</a></td></tr>"
 			dat += "</table></td><td width='20%'><table width='100%' cellpadding='1' cellspacing='0'>"
 			index = 0
 
-		dat += "<tr bgcolor='[job.selection_color]'><td width='60%' align='right'>"
 		var/rank = job.title
-		lastJob = job
+		var/head = (rank in command_positions) || (rank == "AI")
+		dat += "<tr style='background-color: [hex2cssrgba(job.selection_color, head ? 1 : 0.5)];'><td width='60%' align='right'>"
+
+		var/list/available = pref.GetValidTitles(job)
+		var/dispRank = LAZYLEN(available) ? LAZYACCESS(available, 1) : rank
 		var/ban_reason = jobban_isbanned(user, rank)
 		if(ban_reason == "WHITELISTED")
-			dat += "<del>[rank]</del></td><td><b> \[WHITELISTED]</b></td></tr>"
+			dat += "<del>[dispRank]</del></td><td><b> \[WHITELISTED]</b></td></tr>"
 			continue
 		else if (ban_reason == "AGE WHITELISTED")
 			var/available_in_days = player_old_enough_for_role(user.client, rank)
-			dat += "<del>[rank]</del></td><td> \[IN [(available_in_days)] DAYS]</td></tr>"
+			dat += "<del>[dispRank]</del></td><td> \[IN [(available_in_days)] DAYS]</td></tr>"
+			continue
+		else if(!LAZYLEN(pref.GetValidTitles(job))) // we have no available jobs the character is old enough for
+			dat += "<del>[dispRank]</del></td><td> \[MINIMUM AGE: [LAZYLEN(job.alt_ages) ? min(job.alt_ages[min(job.alt_ages)], job.minimum_character_age) : job.minimum_character_age]]</td></tr>"
 			continue
 		else if (ban_reason)
-			dat += "<del>[rank]</del></td><td><b> \[<a href='?src=\ref[user.client];view_jobban=\ref[rank];'>BANNED</a>]</b></td></tr>"
+			dat += "<del>[dispRank]</del></td><td><b> \[<a href='?src=\ref[user.client];view_jobban=[rank];'>BANNED</a>]</b></td></tr>"
 			continue
+		if(job.blacklisted_species) // check for restricted species
+			var/datum/species/S = all_species[pref.species]
+			if(S.name in job.blacklisted_species)
+				dat += "<del>[dispRank]</del></td><td><b> \[SPECIES RESTRICTED]</b></td></tr>"
+				continue
+		var/datum/citizenship/C = SSrecords.citizenships[pref.citizenship]
+		if(C.job_species_blacklist[job.title] && (pref.species in C.job_species_blacklist[job.title]))
+			dat += "<del>[dispRank]</del></td><td><b> \[SPECIES RESTRICTED]</b></td></tr>"
+			continue
+		if(job.alt_titles && (LAZYLEN(pref.GetValidTitles(job)) > 1))
+			dispRank = "<span width='60%' align='center'>&nbsp<a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></span>"
 		if((pref.job_civilian_low & ASSISTANT) && (rank != "Assistant"))
-			dat += "<font color=orange>[rank]</font></td><td></td></tr>"
+			dat += "<span class='none'>[dispRank]</span></td><td></td></tr>"
 			continue
-		if((rank in command_positions) || (rank == "AI"))//Bold head jobs
-			dat += "<b>[rank]</b>"
+		if(head)//Bold head jobs
+			dat += "<b>[dispRank]</b>"
 		else
-			dat += "[rank]"
+			dat += "[dispRank]"
 
 		dat += "</td><td width='40%'>"
 
@@ -202,24 +209,20 @@
 
 		if(rank == "Assistant")//Assistant is special
 			if(pref.job_civilian_low & ASSISTANT)
-				dat += " <font color=green>\[Yes]</font>"
+				dat += " <span class='high'>\[Yes]</span>"
 			else
-				dat += " <font color=red>\[No]</font>"
-			if(job.alt_titles) //Blatantly cloned from a few lines down.
-				dat += "</a></td></tr><tr bgcolor='[lastJob.selection_color]'><td width='60%' align='center'>&nbsp</td><td><a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></td></tr>"
+				dat += " <span class='none'>\[No]</span>"
 			dat += "</a></td></tr>"
 			continue
 
 		if(pref.GetJobDepartment(job, 1) & job.flag)
-			dat += " <font color=blue>\[High]</font>"
+			dat += " <span class='high'>\[High]</span>"
 		else if(pref.GetJobDepartment(job, 2) & job.flag)
-			dat += " <font color=green>\[Medium]</font>"
+			dat += " <span class='med'>\[Medium]</span>"
 		else if(pref.GetJobDepartment(job, 3) & job.flag)
-			dat += " <font color=orange>\[Low]</font>"
+			dat += " <span class='low'>\[Low]</span>"
 		else
-			dat += " <font color=red>\[NEVER]</font>"
-		if(job.alt_titles)
-			dat += "</a></td></tr><tr bgcolor='[lastJob.selection_color]'><td width='60%' align='center'>&nbsp</td><td><a href='?src=\ref[src];select_alt_title=\ref[job]'>\[[pref.GetPlayerAltTitle(job)]\]</a></td></tr>"
+			dat += " <span class='none'>\[NEVER]</span>"
 		dat += "</a></td></tr>"
 
 	dat += "</td'></tr></table>"
@@ -227,42 +230,43 @@
 	dat += "</center></table>"
 
 	switch(pref.alternate_option)
-		if(GET_RANDOM_JOB)
-			dat += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=green>Get random job if preferences unavailable</font></a></u></center><br>"
 		if(BE_ASSISTANT)
-			dat += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=red>Be assistant if preference unavailable</font></a></u></center><br>"
+			dat += "<center><br><u><a href='?src=\ref[src];job_alternative=1'>Be assistant if preference unavailable</a></u></center><br>"
 		if(RETURN_TO_LOBBY)
-			dat += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><font color=purple>Return to lobby if preference unavailable</font></a></u></center><br>"
+			dat += "<center><br><u><a href='?src=\ref[src];job_alternative=1'><span class='high'>Return to lobby if preference unavailable</span></a></u></center><br>"
 
 	dat += "<center><a href='?src=\ref[src];reset_jobs=1'>\[Reset\]</a></center>"
 	dat += "</tt>"
 
 	. = dat.Join()
 
-/datum/category_item/player_setup_item/occupation/OnTopic(href, href_list, user)
+/datum/category_item/player_setup_item/occupation/OnTopic(href, href_list, mob/user)
 	if(href_list["reset_jobs"])
 		ResetJobs()
 		return TOPIC_REFRESH
 
 	else if(href_list["job_alternative"])
-		if(pref.alternate_option == GET_RANDOM_JOB || pref.alternate_option == BE_ASSISTANT)
-			pref.alternate_option += 1
+		if(pref.alternate_option == BE_ASSISTANT)
+			pref.alternate_option = RETURN_TO_LOBBY
 		else if(pref.alternate_option == RETURN_TO_LOBBY)
-			pref.alternate_option = 0
+			pref.alternate_option = BE_ASSISTANT
 		return TOPIC_REFRESH
 
 	else if(href_list["select_alt_title"])
 		var/datum/job/job = locate(href_list["select_alt_title"])
-		if (job)
-			var/choices = list(job.title) + job.alt_titles
-			var/choice = input("Choose an title for [job.title].", "Choose Title", pref.GetPlayerAltTitle(job)) as anything in choices|null
-			if(choice && CanUseTopic(user))
-				SetPlayerAltTitle(job, choice)
-				return TOPIC_REFRESH
+		if (!job)
+			return ..()
+		var/list/choices = pref.GetValidTitles(job)
+		if(!LAZYLEN(choices))
+			return ..()// should never happen
+		var/choice = input("Choose an title for [job.title].", "Choose Title", pref.GetPlayerAltTitle(job)) as anything in choices|null
+		if(choice && CanUseTopic(user))
+			SetPlayerAltTitle(job, choice)
+			return TOPIC_REFRESH_UPDATE_PREVIEW
 
 	else if(href_list["set_job"])
 		if(SetJob(user, href_list["set_job"]))
-			return TOPIC_REFRESH
+			return TOPIC_REFRESH_UPDATE_PREVIEW
 
 	else if(href_list["faction_preview"])
 		show_faction_menu(user, html_decode(href_list["faction_preview"]))
@@ -271,17 +275,27 @@
 	else if(href_list["faction_select"])
 		validate_and_set_faction(html_decode(href_list["faction_select"]))
 		show_faction_menu(user, html_decode(href_list["faction_select"]))
-		return TOPIC_REFRESH
+		return TOPIC_REFRESH_UPDATE_PREVIEW
 
 	return ..()
 
 /datum/category_item/player_setup_item/occupation/proc/sanitize_faction()
 	if (!SSjobs.name_factions[pref.faction])
 		pref.faction = SSjobs.default_faction.name
-
-		to_client_chat("<span class='danger'>Your faction selection has been reset to [pref.faction].</span>")
-		to_client_chat("<span class='danger'>Your jobs have been reset due to this!</span>")
+		to_client_chat(SPAN_DANGER("Your faction selection has been reset to [pref.faction]."))
+		to_client_chat(SPAN_DANGER("Your jobs have been reset due to this!"))
 		ResetJobs()
+		return TOPIC_REFRESH_UPDATE_PREVIEW
+
+	var/datum/faction/faction = SSjobs.name_factions[pref.faction]
+	for(var/datum/job/job in faction.get_occupations())
+		for(var/department = 1 to NUM_JOB_DEPTS)
+			if(pref.GetJobDepartment(job, department) & job.flag)
+				if(pref.species in job.blacklisted_species)
+					to_client_chat(SPAN_DANGER("Your faction selection does not permit this species-occupation combination, [pref.species] as [job.title]."))
+					to_client_chat(SPAN_DANGER("Your jobs have been reset due to this!"))
+					ResetJobs()
+					return TOPIC_REFRESH_UPDATE_PREVIEW
 
 /datum/category_item/player_setup_item/occupation/proc/SetPlayerAltTitle(datum/job/job, new_title)
 	// remove existing entry
@@ -293,14 +307,14 @@
 /datum/category_item/player_setup_item/occupation/proc/SetJob(mob/user, role)
 	var/datum/job/job = SSjobs.GetJob(role)
 	if(!job)
-		return 0
+		return FALSE
 
 	if(role == "Assistant")
 		if(pref.job_civilian_low & job.flag)
 			pref.job_civilian_low &= ~job.flag
 		else
 			pref.job_civilian_low |= job.flag
-		return 1
+		return TRUE
 
 	if(pref.GetJobDepartment(job, 1) & job.flag)
 		SetJobDepartment(job, 1)
@@ -315,7 +329,7 @@
 
 /datum/category_item/player_setup_item/occupation/proc/SetJobDepartment(var/datum/job/job, var/level)
 	if(!job || !level)
-		return 0
+		return FALSE
 	switch(level)
 		if(1)//Only one of these should ever be active at once so clear them all here
 			pref.job_civilian_high = 0
@@ -428,8 +442,21 @@
 /datum/preferences/proc/GetPlayerAltTitle(datum/job/job)
 	return player_alt_titles[job.title] || job.title
 
+/datum/preferences/proc/GetValidTitles(datum/job/job)
+	if (!job)
+		return
+	var/choices = list(job.title) + job.alt_titles
+	if((global.all_species[src.species].spawn_flags & NO_AGE_MINIMUM))
+		return choices
+	for(var/t in choices)
+		if (src.age >= (LAZYACCESS(job.alt_ages, t) || job.minimum_character_age))
+			continue
+		choices -= t
+	return choices
+
 /datum/preferences/proc/GetJobDepartment(var/datum/job/job, var/level)
-	if(!job || !level)	return 0
+	if(!job || !level)
+		return FALSE
 	switch(job.department_flag)
 		if(CIVILIAN)
 			switch(level)

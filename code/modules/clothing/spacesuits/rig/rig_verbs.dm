@@ -1,5 +1,5 @@
 // Interface for humans.
-/obj/item/weapon/rig/verb/hardsuit_interface()
+/obj/item/rig/verb/hardsuit_interface()
 
 	set name = "Open Hardsuit Interface"
 	set desc = "Open the hardsuit system interface."
@@ -9,7 +9,7 @@
 	if(wearer && wearer.back == src)
 		ui_interact(usr)
 
-/obj/item/weapon/rig/verb/toggle_vision()
+/obj/item/rig/verb/toggle_vision()
 
 	set name = "Toggle Visor"
 	set desc = "Turns your rig visor off or on."
@@ -35,11 +35,11 @@
 		return
 
 	if(!visor.active)
-		visor.activate()
+		visor.activate(usr)
 	else
-		visor.deactivate()
+		visor.deactivate(usr)
 
-/obj/item/weapon/rig/proc/toggle_helmet()
+/obj/item/rig/proc/toggle_helmet()
 
 	set name = "Toggle Helmet"
 	set desc = "Deploys or retracts your helmet."
@@ -55,7 +55,7 @@
 
 	toggle_piece("helmet",wearer)
 
-/obj/item/weapon/rig/proc/toggle_chest()
+/obj/item/rig/proc/toggle_chest()
 
 	set name = "Toggle Chestpiece"
 	set desc = "Deploys or retracts your chestpiece."
@@ -65,9 +65,9 @@
 	if(!check_suit_access(usr))
 		return
 
-	toggle_piece("chest",wearer)
+	toggle_piece(BP_CHEST,wearer)
 
-/obj/item/weapon/rig/proc/toggle_gauntlets()
+/obj/item/rig/proc/toggle_gauntlets()
 
 	set name = "Toggle Gauntlets"
 	set desc = "Deploys or retracts your gauntlets."
@@ -83,7 +83,7 @@
 
 	toggle_piece("gauntlets",wearer)
 
-/obj/item/weapon/rig/proc/toggle_boots()
+/obj/item/rig/proc/toggle_boots()
 
 	set name = "Toggle Boots"
 	set desc = "Deploys or retracts your boots."
@@ -99,7 +99,7 @@
 
 	toggle_piece("boots",wearer)
 
-/obj/item/weapon/rig/verb/deploy_suit()
+/obj/item/rig/verb/deploy_suit()
 
 	set name = "Deploy Hardsuit"
 	set desc = "Deploys helmet, gloves and boots."
@@ -118,7 +118,7 @@
 
 	deploy(wearer)
 
-/obj/item/weapon/rig/verb/toggle_seals_verb()
+/obj/item/rig/verb/toggle_seals_verb()
 
 	set name = "Toggle Hardsuit"
 	set desc = "Activates or deactivates your rig."
@@ -134,7 +134,7 @@
 
 	toggle_seals(wearer)
 
-/obj/item/weapon/rig/verb/switch_vision_mode()
+/obj/item/rig/verb/switch_vision_mode()
 
 	set name = "Switch Vision Mode"
 	set desc = "Switches between available vision modes."
@@ -156,15 +156,15 @@
 		return
 
 	if(!visor.active)
-		visor.activate()
+		visor.activate(usr)
 
 	if(!visor.active)
 		to_chat(usr, "<span class='warning'>The visor is suffering a hardware fault and cannot be configured.</span>")
 		return
 
-	visor.engage()
+	visor.engage(null, usr)
 
-/obj/item/weapon/rig/verb/alter_voice()
+/obj/item/rig/verb/alter_voice()
 
 	set name = "Configure Voice Synthesiser"
 	set desc = "Toggles or configures your voice synthesizer."
@@ -186,9 +186,9 @@
 		to_chat(usr, "<span class='warning'>The hardsuit does not have a speech synthesiser.</span>")
 		return
 
-	speech.engage()
+	speech.engage(null, usr)
 
-/obj/item/weapon/rig/verb/select_module()
+/obj/item/rig/verb/select_module()
 
 	set name = "Select Module"
 	set desc = "Selects a module as your primary system."
@@ -218,13 +218,13 @@
 
 	if(!istype(module))
 		selected_module = null
-		to_chat(usr, "<font color='blue'><b>Primary system is now: deselected.</b></font>")
+		to_chat(usr, "<span class='notice'><b>Primary system is now: deselected.</b></span>")
 		return
 
 	selected_module = module
-	to_chat(usr, "<font color='blue'><b>Primary system is now: [selected_module.interface_name].</b></font>")
+	to_chat(usr, "<span class='notice'><b>Primary system is now: [selected_module.interface_name].</b></span>")
 
-/obj/item/weapon/rig/verb/toggle_module()
+/obj/item/rig/verb/toggle_module()
 
 	set name = "Toggle Module"
 	set desc = "Toggle a system module."
@@ -257,12 +257,12 @@
 
 	if(module.active)
 		to_chat(usr, "<font color='blue'><b>You attempt to deactivate \the [module.interface_name].</b></font>")
-		module.deactivate()
+		module.deactivate(usr)
 	else
 		to_chat(usr, "<font color='blue'><b>You attempt to activate \the [module.interface_name].</b></font>")
-		module.activate()
+		module.activate(usr)
 
-/obj/item/weapon/rig/verb/engage_module()
+/obj/item/rig/verb/engage_module()
 
 	set name = "Engage Module"
 	set desc = "Engages a system module."
@@ -294,4 +294,4 @@
 		return
 
 	to_chat(usr, "<font color='blue'><b>You attempt to engage the [module.interface_name].</b></font>")
-	module.engage()
+	module.engage(null, usr)

@@ -10,7 +10,8 @@
 	response_disarm = "shoves"
 	response_harm = "hits"
 	speed = -1
-	meat_type = /obj/item/weapon/reagent_containers/food/snacks/xenomeat
+	meat_type = /obj/item/reagent_containers/food/snacks/xenomeat
+	organ_names = list("chest", "lower body", "left arm", "right arm", "left leg", "right leg", "head")
 	maxHealth = 100
 	health = 100
 	harm_intent_damage = 5
@@ -37,7 +38,7 @@
 
 	tameable = FALSE
 	attack_emote = "growls at"
-	smart = TRUE
+	smart_ranged = TRUE
 
 	butchering_products = list(/obj/item/stack/material/animalhide/xeno = 5)
 
@@ -98,7 +99,7 @@
 // Xenoarch aliens.
 /mob/living/simple_animal/hostile/samak
 	name = "samak"
-	desc = "A fast, armoured predator accustomed to hiding and ambushing in cold terrain."
+	desc = "A fast, armored predator accustomed to hiding and ambushing in cold terrain."
 	faction = "samak"
 	icon_state = "samak"
 	icon_living = "samak"
@@ -173,6 +174,8 @@
 	pass_flags = PASSTABLE
 	density = 0
 	mob_size = 2
+	canbrush = TRUE
+	brush = /obj/item/reagent_containers/glass/rag
 
 /mob/living/simple_animal/tindalos
 	name = "tindalos"
@@ -184,3 +187,5 @@
 	pass_flags = PASSTABLE
 	density = 0
 	mob_size = 1.5
+	canbrush = TRUE
+	brush = /obj/item/reagent_containers/glass/rag

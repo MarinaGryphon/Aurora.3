@@ -5,22 +5,26 @@
 
 // -- SStimer stuff --
 //Don't run if there is an identical unique timer active
-#define TIMER_UNIQUE		0x1
+#define TIMER_UNIQUE		(1<<0)
 
 //For unique timers: Replace the old timer rather then not start this one
-#define TIMER_OVERRIDE		0x2
+#define TIMER_OVERRIDE		(1<<1)
 
 //Timing should be based on how timing progresses on clients, not the sever.
 //	tracking this is more expensive,
 //	should only be used in conjuction with things that have to progress client side, such as animate() or sound()
-#define TIMER_CLIENT_TIME	0x4
+#define TIMER_CLIENT_TIME	(1<<2)
 
 //Timer can be stopped using deltimer()
-#define TIMER_STOPPABLE		0x8
+#define TIMER_STOPPABLE		(1<<3)
 
 //To be used with TIMER_UNIQUE
 //prevents distinguishing identical timers with the wait variable
-#define TIMER_NO_HASH_WAIT  0x10
+#define TIMER_NO_HASH_WAIT  (1<<4)
+
+//Loops the timer repeatedly until qdeleted
+//In most cases you want a subsystem instead
+#define TIMER_LOOP			(1<<5)
 
 //number of byond ticks that are allowed to pass before the timer subsystem thinks it hung on something
 #define TIMER_NO_INVOKE_WARNING 600
@@ -79,17 +83,11 @@
 // -- SSfalling --
 #define ADD_FALLING_ATOM(atom) if (!atom.multiz_falling) { atom.multiz_falling = 1; SSfalling.falling[atom] = 0; }
 
-// -- SSmachinery --
-#define RECIPE_LIST(T) (SSmachinery.recipe_datums["[T]"])
-
 // -- SSlistener --
 #define GET_LISTENERS(id) (id ? SSlistener.listeners["[id]"] : null)
 
 // Connection prefixes for player-editable fields
 #define WP_ELECTRONICS "elec_"
-
-// -- SSatlas --
-#define ARE_Z_CONNECTED(ZA, ZB) ((ZA == ZB) || ((SSatlas.connected_z_cache.len >= ZA && SSatlas.connected_z_cache[ZA]) ? SSatlas.connected_z_cache[ZA][ZB] : AreConnectedZLevels(ZA, ZB)))
 
 // -- SSicon_cache --
 #define LIGHT_FIXTURE_CACHE(icon,state,color) SSicon_cache.light_fixture_cache["[icon]_[state]_[color]"] || (SSicon_cache.light_fixture_cache["[icon]_[state]_[color]"] = SSicon_cache.generate_color_variant(icon,state,color))
@@ -107,3 +105,32 @@
 #define RECORD_LOCKED 8
 #define RECORD_WARRANT 16
 #define RECORD_VIRUS 32
+
+
+// - SSjobs --
+// departments
+#define DEPARTMENT_COMMAND "Command"
+#define DEPARTMENT_SECURITY "Security"
+#define DEPARTMENT_ENGINEERING "Engineering"
+#define DEPARTMENT_MEDICAL "Medical"
+#define DEPARTMENT_SCIENCE "Science"
+#define DEPARTMENT_CARGO "Cargo"
+#define DEPARTMENT_CIVILIAN "Civilian"
+#define DEPARTMENT_EQUIPMENT "Equipment"
+#define DEPARTMENT_MISCELLANEOUS "Miscellaneous"
+#define DEPARTMENTS_LIST_INIT list(\
+	DEPARTMENT_COMMAND = list(),\
+	DEPARTMENT_SECURITY = list(),\
+	DEPARTMENT_ENGINEERING = list(),\
+	DEPARTMENT_MEDICAL = list(),\
+	DEPARTMENT_SCIENCE = list(),\
+	DEPARTMENT_CARGO = list(),\
+	DEPARTMENT_CIVILIAN = list(),\
+	DEPARTMENT_EQUIPMENT = list(),\
+	DEPARTMENT_MISCELLANEOUS = list(),\
+)
+
+// job roles within departments
+#define JOBROLE_DEFAULT 0                    // This is the default "job role", no special meaning.
+#define JOBROLE_SUPERVISOR (1 << 0)          // Indicates that the job is a supervisory position, i.e a head of department.
+#define SIMPLEDEPT(dept) list(dept = JOBROLE_DEFAULT)

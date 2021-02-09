@@ -21,9 +21,6 @@
 		global_hud.holomap
 	)
 
-	// This is kinda important. Set up details of what the hell things are made of.
-	populate_material_list()
-
 	// Create autolathe recipes, as above.
 	populate_lathe_recipes()
 
@@ -47,6 +44,6 @@
 		ore_data[OD.name] = OD
 
 	// Setup cargo spawn lists.
-	global.cargo_master.setup_cargo_stock()
+	setup_cargo_spawn_lists()
 
 	..()

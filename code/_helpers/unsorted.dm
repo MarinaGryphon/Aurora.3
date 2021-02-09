@@ -1,5 +1,3 @@
-//This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:31
-
 /*
  * A large number of misc global procs.
  */
@@ -12,11 +10,9 @@
 
 	if (!( istext(HTMLstring) ))
 		CRASH("Given non-text argument!")
-		return
 	else
 		if (length(HTMLstring) != 7)
 			CRASH("Given non-HTML argument!")
-			return
 	var/textr = copytext(HTMLstring, 2, 4)
 	var/textg = copytext(HTMLstring, 4, 6)
 	var/textb = copytext(HTMLstring, 6, 8)
@@ -33,7 +29,6 @@
 	if (length(textb) < 2)
 		textr = text("0[]", textb)
 	return text("#[][][]", textr, textg, textb)
-	return
 
 //Returns the middle-most value
 /proc/dd_range(var/low, var/high, var/num)
@@ -282,91 +277,6 @@ Turf and target are seperate in case you want to teleport some distance from a t
 /proc/format_frequency(var/f)
 	return "[round(f / 10)].[f % 10]"
 
-
-
-//This will update a mob's name, real_name, mind.name, SSrecords records, pda and id
-//Calling this proc without an oldname will only update the mob and skip updating the pda, id and records ~Carn
-/mob/proc/fully_replace_character_name(var/oldname,var/newname)
-	if(!newname)	return 0
-	real_name = newname
-	name = newname
-	if(mind)
-		mind.name = newname
-	if(dna)
-		dna.real_name = real_name
-
-	if(oldname)
-		//update the datacore records! This is goig to be a bit costly.
-		for(var/datum/record/general/R in list(SSrecords.records, SSrecords.records_locked))
-			if(R.name == oldname)
-				R.name = newname
-				break
-
-		//update our pda and id if we have them on our person
-		var/list/searching = GetAllContents(searchDepth = 3)
-		var/search_id = 1
-		var/search_pda = 1
-
-		for(var/A in searching)
-			if( search_id && istype(A,/obj/item/weapon/card/id) )
-				var/obj/item/weapon/card/id/ID = A
-				if(ID.registered_name == oldname)
-					ID.registered_name = newname
-					ID.name = "[newname]'s ID Card ([ID.assignment])"
-					if(!search_pda)	break
-					search_id = 0
-
-			else if( search_pda && istype(A,/obj/item/device/pda) )
-				var/obj/item/device/pda/PDA = A
-				if(PDA.owner == oldname)
-					PDA.owner = newname
-					PDA.name = "PDA-[newname] ([PDA.ownjob])"
-					if(!search_id)	break
-					search_pda = 0
-	return 1
-
-
-
-//Generalised helper proc for letting mobs rename themselves. Used to be clname() and ainame()
-//Last modified by Carn
-/mob/proc/rename_self(var/role, var/allow_numbers=0)
-	set waitfor = FALSE
-	var/oldname = real_name
-
-	var/time_passed = world.time
-	var/newname
-
-	for(var/i=1,i<=3,i++)	//we get 3 attempts to pick a suitable name.
-		newname = input(src,"You are \a [role]. Would you like to change your name to something else?", "Name change",oldname) as text
-		if((world.time-time_passed)>3000)
-			return	//took too long
-		newname = sanitizeName(newname, ,allow_numbers)	//returns null if the name doesn't meet some basic requirements. Tidies up a few other things like bad-characters.
-
-		for(var/mob/living/M in player_list)
-			if(M == src)
-				continue
-			if(!newname || M.real_name == newname)
-				newname = null
-				break
-		if(newname)
-			break	//That's a suitable name!
-		to_chat(src, "Sorry, that [role]-name wasn't appropriate, please try another. It's possibly too long/short, has bad characters or is already taken.")
-
-	if(!newname)	//we'll stick with the oldname then
-		return
-
-	if(cmptext("ai",role))
-		if(isAI(src))
-			var/mob/living/silicon/ai/A = src
-			oldname = null//don't bother with the records update crap
-			// Set eyeobj name
-			A.SetName(newname)
-
-
-	fully_replace_character_name(oldname,newname)
-
-
-
 //Picks a string of symbols to display as the law number for hacked or ion laws
 /proc/ionnum()
 	return "[pick("1","2","3","4","5","6","7","8","9","0")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")][pick("!","@","#","$","%","^","&","*")]"
@@ -376,9 +286,9 @@ Turf and target are seperate in case you want to teleport some distance from a t
 	var/select = null
 	var/list/borgs = list()
 	for (var/mob/living/silicon/robot/A in player_list)
-		if (A.stat == 2 || A.connected_ai || A.scrambledcodes || istype(A,/mob/living/silicon/robot/drone))
+		if (A.stat == 2 || A.connected_ai || A.scrambled_codes || istype(A,/mob/living/silicon/robot/drone))
 			continue
-		var/name = "[A.real_name] ([A.modtype] [A.braintype])"
+		var/name = "[A.real_name] ([A.mod_type] [A.braintype])"
 		borgs[name] = A
 
 	if (borgs.len)
@@ -559,12 +469,8 @@ Turf and target are seperate in case you want to teleport some distance from a t
 /proc/between(var/low, var/middle, var/high)
 	return max(min(middle, high), low)
 
-proc/arctan(x)
-	var/y=arcsin(x/sqrt(1+x*x))
-	return y
-
 //returns random gauss number
-proc/GaussRand(var/sigma)
+/proc/GaussRand(var/sigma)
   var/x,y,rsq
   do
     x=2*rand()-1
@@ -574,19 +480,8 @@ proc/GaussRand(var/sigma)
   return sigma*y*sqrt(-2*log(rsq)/rsq)
 
 //returns random gauss number, rounded to 'roundto'
-proc/GaussRandRound(var/sigma,var/roundto)
+/proc/GaussRandRound(var/sigma,var/roundto)
 	return round(GaussRand(sigma),roundto)
-
-//Will return the contents of an atom recursivly to a depth of 'searchDepth'
-/atom/proc/GetAllContents(searchDepth = 5)
-	var/list/toReturn = list()
-
-	for(var/atom/part in contents)
-		toReturn += part
-		if(part.contents.len && searchDepth)
-			toReturn += part.GetAllContents(searchDepth - 1)
-
-	return toReturn
 
 //Step-towards method of determining whether one atom can see another. Similar to viewers()
 /proc/can_see(var/atom/source, var/atom/target, var/length=5) // I couldn't be arsed to do actual raycasting :I This is horribly inaccurate.
@@ -653,7 +548,10 @@ proc/GaussRandRound(var/sigma,var/roundto)
 
 	var/datum/progressbar/progbar
 	if (display_progress && user.client && (user.client.prefs.toggles_secondary & PROGRESS_BARS))
-		progbar = new(user, delay, target)
+		var/atom/loc_check = target
+		for(var/i = 0; !isturf(loc_check.loc) && i < 5; i++)
+			loc_check = target.loc
+		progbar = new(user, delay, loc_check)
 
 	var/endtime = world.time + delay
 	var/starttime = world.time
@@ -680,14 +578,17 @@ proc/GaussRandRound(var/sigma,var/roundto)
 	if(!user || isnull(user))
 		return 0
 
-	if (!act_target)
-		act_target = user
-
 	var/Location
+	var/act_location
 	if(use_user_turf)	//When this is true, do_after() will check whether the user's turf has changed, rather than the user's loc.
 		Location = get_turf(user)
 	else
 		Location = user.loc
+
+	if (!act_target)
+		act_target = user
+	else
+		act_location = get_turf(act_target)
 
 	var/holding = user.get_active_hand()
 
@@ -711,7 +612,11 @@ proc/GaussRandRound(var/sigma,var/roundto)
 		else
 			user_loc_to_check = user.loc
 
-		if (!user || user.stat || user.weakened || user.stunned || (use_user_turf >= 0 && user_loc_to_check != Location))
+		if (!user || user.stat || user.weakened || user.stunned)
+			. = 0
+			break
+
+		if ((use_user_turf >= 0 && user_loc_to_check != Location) || (act_location && (get_turf(act_target) != act_location)))
 			. = 0
 			break
 
@@ -732,7 +637,7 @@ proc/GaussRandRound(var/sigma,var/roundto)
 	if(A.vars.Find(lowertext(varname))) return 1
 	else return 0
 
-proc/DuplicateObject(obj/original, var/perfectcopy = 0 , var/sameloc = 0)
+/proc/DuplicateObject(obj/original, var/perfectcopy = 0 , var/sameloc = 0)
 	if(!original)
 		return null
 
@@ -750,16 +655,16 @@ proc/DuplicateObject(obj/original, var/perfectcopy = 0 , var/sameloc = 0)
 					O.vars[V] = original.vars[V]
 	return O
 
-proc/get_cardinal_dir(atom/A, atom/B)
+/proc/get_cardinal_dir(atom/A, atom/B)
 	var/dx = abs(B.x - A.x)
 	var/dy = abs(B.y - A.y)
 	return get_dir(A, B) & (rand() * (dx+dy) < dy ? 3 : 12)
 
 //chances are 1:value. anyprob(1) will always return true
-proc/anyprob(value)
+/proc/anyprob(value)
 	return (rand(1,value)==value)
 
-proc/view_or_range(distance = world.view , center = usr , type)
+/proc/view_or_range(distance = world.view , center = usr , type)
 	switch(type)
 		if("view")
 			. = view(distance,center)
@@ -767,7 +672,7 @@ proc/view_or_range(distance = world.view , center = usr , type)
 			. = range(distance,center)
 	return
 
-proc/oview_or_orange(distance = world.view , center = usr , type)
+/proc/oview_or_orange(distance = world.view , center = usr , type)
 	switch(type)
 		if("view")
 			. = oview(distance,center)
@@ -775,7 +680,7 @@ proc/oview_or_orange(distance = world.view , center = usr , type)
 			. = orange(distance,center)
 	return
 
-proc/get_mob_with_client_list()
+/proc/get_mob_with_client_list()
 	var/list/mobs = list()
 	for(var/mob/M in mob_list)
 		if (M.client)
@@ -784,18 +689,18 @@ proc/get_mob_with_client_list()
 
 
 /proc/parse_zone(zone)
-	if(zone == "r_hand") return "right hand"
-	else if (zone == "l_hand") return "left hand"
-	else if (zone == "l_arm") return "left arm"
-	else if (zone == "r_arm") return "right arm"
-	else if (zone == "l_leg") return "left leg"
-	else if (zone == "r_leg") return "right leg"
-	else if (zone == "l_foot") return "left foot"
-	else if (zone == "r_foot") return "right foot"
-	else if (zone == "l_hand") return "left hand"
-	else if (zone == "r_hand") return "right hand"
-	else if (zone == "l_foot") return "left foot"
-	else if (zone == "r_foot") return "right foot"
+	if(zone == BP_R_HAND) return "right hand"
+	else if (zone == BP_L_HAND) return "left hand"
+	else if (zone == BP_L_ARM) return "left arm"
+	else if (zone == BP_R_ARM) return "right arm"
+	else if (zone == BP_L_LEG) return "left leg"
+	else if (zone == BP_R_LEG) return "right leg"
+	else if (zone == BP_L_FOOT) return "left foot"
+	else if (zone == BP_R_FOOT) return "right foot"
+	else if (zone == BP_L_HAND) return "left hand"
+	else if (zone == BP_R_HAND) return "right hand"
+	else if (zone == BP_L_FOOT) return "left foot"
+	else if (zone == BP_R_FOOT) return "right foot"
 	else return zone
 
 /proc/get(atom/loc, type)
@@ -812,32 +717,35 @@ proc/get_mob_with_client_list()
 //Quick type checks for some tools
 var/global/list/common_tools = list(
 /obj/item/stack/cable_coil,
-/obj/item/weapon/wrench,
-/obj/item/weapon/weldingtool,
-/obj/item/weapon/screwdriver,
-/obj/item/weapon/wirecutters,
+/obj/item/wrench,
+/obj/item/pipewrench,
+/obj/item/weldingtool,
+/obj/item/screwdriver,
+/obj/item/wirecutters,
+/obj/item/powerdrill,
+/obj/item/combitool,
 /obj/item/device/multitool,
-/obj/item/weapon/crowbar)
+/obj/item/crowbar)
 
 /proc/istool(O)
 	if(O && is_type_in_list(O, common_tools))
 		return 1
 	return 0
 
-proc/is_hot(obj/item/W as obj)
+/proc/is_hot(obj/item/W as obj)
 	switch(W.type)
-		if(/obj/item/weapon/weldingtool)
-			var/obj/item/weapon/weldingtool/WT = W
+		if(/obj/item/weldingtool)
+			var/obj/item/weldingtool/WT = W
 			if(WT.isOn())
 				return 3800
 			else
 				return 0
-		if(/obj/item/weapon/flame/lighter)
+		if(/obj/item/flame/lighter)
 			if(W:lit)
 				return 1500
 			else
 				return 0
-		if(/obj/item/weapon/flame/match)
+		if(/obj/item/flame/match)
 			if(W:lit)
 				return 1000
 			else
@@ -847,62 +755,76 @@ proc/is_hot(obj/item/W as obj)
 				return 1000
 			else
 				return 0
-		if(/obj/item/weapon/gun/energy/plasmacutter)
+		if(/obj/item/gun/energy/plasmacutter)
 			return 3800
-		if(/obj/item/weapon/melee/energy)
+		if(/obj/item/melee/energy)
 			return 3500
 		else
 			return 0
 
-	return 0
-
 //Whether or not the given item counts as sharp in terms of dealing damage
-/proc/is_sharp(obj/O as obj)
-	if (!O) return 0
-	if (O.sharp) return 1
-	if (O.edge) return 1
+/proc/is_sharp(obj/O)
+	if (!O)
+		return 0
+	if (O.sharp)
+		return 1
+	if (O.edge)
+		return 1
 	return 0
 
 //Whether or not the given item counts as cutting with an edge in terms of removing limbs
-/proc/has_edge(obj/O as obj)
-	if (!O) return 0
-	if (O.edge) return 1
+/proc/has_edge(obj/O)
+	if (!O)
+		return 0
+	if (O.edge)
+		return 1
 	return 0
 
 //Returns 1 if the given item is capable of popping things like balloons, inflatable barriers, or cutting police tape.
 /proc/can_puncture(obj/item/W as obj)		// For the record, WHAT THE HELL IS THIS METHOD OF DOING IT?
-	if(!W) return 0
-	if(W.sharp) return 1
+	if(!W)
+		return 0
+	if(W.sharp)
+		return 1
 	return ( \
 		W.sharp													  || \
 		W.isscrewdriver()                   || \
-		istype(W, /obj/item/weapon/pen)                           || \
+		W.ispen()                           || \
 		W.iswelder()					  || \
-		istype(W, /obj/item/weapon/flame/lighter/zippo)			  || \
-		istype(W, /obj/item/weapon/flame/match)            		  || \
+		istype(W, /obj/item/flame/lighter/zippo)			  || \
+		istype(W, /obj/item/flame/match)            		  || \
 		istype(W, /obj/item/clothing/mask/smokable/cigarette) 		      || \
-		istype(W, /obj/item/weapon/shovel) \
+		istype(W, /obj/item/shovel) \
 	)
 
-/proc/is_surgery_tool(obj/item/W as obj)
-	return (	\
-	istype(W, /obj/item/weapon/scalpel)			||	\
-	istype(W, /obj/item/weapon/hemostat)		||	\
-	istype(W, /obj/item/weapon/retractor)		||	\
-	istype(W, /obj/item/weapon/cautery)			||	\
-	istype(W, /obj/item/weapon/bonegel)			||	\
-	istype(W, /obj/item/weapon/bonesetter)
-	)
+/proc/is_surgery_tool(obj/item/W)
+	return istype(W, /obj/item/surgery)
 
-/proc/is_borg_item(obj/item/W as obj)
+/proc/is_borg_item(obj/item/W)
 	return W && W.loc && isrobot(W.loc)
 
 //check if mob is lying down on something we can operate him on.
-/proc/can_operate(mob/living/carbon/M)
-	return (M.lying && \
-	locate(/obj/machinery/optable, M.loc) || \
-	(locate(/obj/structure/bed/roller, M.loc) && prob(75)) || \
-	(locate(/obj/structure/table/, M.loc) && prob(66)))
+/proc/can_operate(mob/living/carbon/M) //If it's 2, commence surgery, if it's 1, fail surgery, if it's 0, attack
+	var/surgery_attempt = SURGERY_IGNORE
+	var/located = FALSE
+	if(locate(/obj/machinery/optable, M.loc))
+		located = TRUE
+		surgery_attempt = SURGERY_SUCCESS
+	else if(locate(/obj/structure/bed/roller, M.loc))
+		located = TRUE
+		if(prob(80))
+			surgery_attempt = SURGERY_SUCCESS
+		else
+			surgery_attempt = SURGERY_FAIL
+	else if(locate(/obj/structure/table, M.loc))
+		located = TRUE
+		if(prob(66))
+			surgery_attempt = SURGERY_SUCCESS
+		else
+			surgery_attempt = SURGERY_FAIL
+	if(!M.lying && surgery_attempt != SURGERY_SUCCESS && located)
+		surgery_attempt = SURGERY_IGNORE //hit yourself if you're not lying
+	return surgery_attempt
 
 /proc/reverse_direction(var/dir)
 	switch(dir)
@@ -940,7 +862,7 @@ var/list/wall_items = typecacheof(list(
 	/obj/structure/noticeboard,
 	/obj/machinery/computer/security/telescreen,
 	/obj/machinery/embedded_controller/radio/airlock,
-	/obj/item/weapon/storage/secure/safe,
+	/obj/item/storage/secure/safe,
 	/obj/machinery/door_timer,
 	/obj/machinery/flasher,
 	/obj/machinery/keycard_auth,
@@ -979,6 +901,91 @@ var/list/wall_items = typecacheof(list(
 			return 1
 	return 0
 
+// Returns a variable type as string, optionally with some details:
+// Objects (datums) get their type, paths get the type name, scalars show length (text) and value (numbers), lists show length.
+// Also attempts some detection of otherwise undetectable types using ref IDs
+var/global/known_proc = new /proc/get_type_ref_bytes
+/proc/get_debug_type(var/V, var/details = TRUE, var/print_numbers = TRUE, var/path_names = TRUE, var/text_lengths = TRUE, var/list_lengths = TRUE, var/show_useless_subtypes = TRUE)
+	// scalars / basic types
+	if(isnull(V))
+		return "null"
+	if(ispath(V))
+		return details && path_names ? "path([V])" : "path"
+	if(istext(V))
+		return details && text_lengths ? "text([length(V) ])" : "text"
+	if(isnum(V)) // Byond doesn't really differentiate between floats and ints, but we can sort of guess here
+		// also technically we could also say that 0 and 1 are boolean but that'd be quite silly
+		if(IsInteger(V) && V < 16777216 && V > -16777216)
+			return details && print_numbers ? "int([V])" : "int"
+		if(V >= INFINITY)
+			return details ? "float(+INF)" : "float"
+		if(V <= -INFINITY)
+			return details ? "float(-INF)" : "float"
+		return details && print_numbers ? "float([V])" : "float"
+	// Resource types
+	if(isicon(V))
+		return "icon"
+	if(isfile(V))
+		return "file"
+	// Types that don't inherit from /datum (note that /world is not here because you can't hold a reference to it)
+	if(islist(V))
+		return details && list_lengths ? "list([length(V)])" : "list"
+	if(isclient(V))
+		return "client"
+	if(istype(V, /savefile))
+		return "savefile"
+	// Finally actual objects that inherit from /datum
+	// We want to differentiate at least the basic "special" Byond types
+	var/datum/D = V
+	if(isarea(D))
+		return details ? "area([D.type])" : "area"
+	if(isturf(D))
+		return details ? "turf([D.type])" : "turf"
+	if(ismob(D))
+		return details ? "mob([D.type])" : "mob"
+	if(isobj(D))
+		return details ? "obj([D.type])" : "obj"
+	if(istype(D, /atom/movable)) // according to DM docs there should be no defined types under this but there certainly are some
+		return details ? "movable([D.type])" : "movable"
+	if(isatom(D))
+		return details ? "atom([D.type])" : "atom"
+	if(istype(D, /database))
+		return details && show_useless_subtypes ? "database([D.type])" : "database"
+	if(istype(D, /exception))
+		return details && show_useless_subtypes ? "exception([D.type])" : "exception"
+	if(istype(D, /mutable_appearance)) // must come before /image
+		return details && show_useless_subtypes ? "mutable_appearance([D.type])" : "mutable_appearance"
+	if(istype(D, /image))
+		return details ? "image([D.type])" : "image"
+	if(istype(D, /matrix))
+		return details && show_useless_subtypes ? "matrix([D.type])" : "matrix"
+	if(istype(D, /regex))
+		return details && show_useless_subtypes ? "regex([D.type])" : "regex"
+	if(istype(D, /sound))
+		return details ? "sound([D.type])" : "sound"
+	if(istype(D, /decl))
+		return details ? "decl([D.type])" : "decl"
+	if(isdatum(D))
+		return details ? "datum([D.type])" : "datum"
+	if(istype(D)) // let's future proof ourselves
+		return details ? "unknown-object([D.type])" : "unknown-object"
+	// some undetectable types
+	var/refType = get_type_ref_bytes(V)
+	if(refType == "")
+		return "unknown"
+	if(refType == get_type_ref_bytes(known_proc)) // it's a proc of some kind
+		if(istext(V?:name) && V:name != "") // procs with names are generally verbs
+			return "verb"
+		return "proc"
+	if(refType == "53")
+		return "filters"
+	if(refType == "3a")
+		return "appearance"
+	return "unknown-object([refType])" // If you see this you found a new undetectable type. Feel free to add it here.
+
+/proc/get_type_ref_bytes(var/V) // returns first 4 bytes from \ref which denote the object type (for objects that is)
+	return lowertext(copytext(ref(V), 4, 6))
+
 /proc/format_text(text)
 	return replacetext(replacetext(text,"\proper ",""),"\improper ","")
 
@@ -999,36 +1006,9 @@ var/list/wall_items = typecacheof(list(
 			colour += temp_col
 	return "#[colour]"
 
-
-
-/atom/proc/get_light_and_color(var/atom/origin)
-	if(origin)
-		color = origin.color
-		set_light(origin.light_range, origin.light_power, origin.light_color)
-
 // call to generate a stack trace and print to runtime logs
 /proc/crash_with(msg)
 	CRASH(msg)
-
-/atom/proc/find_up_hierarchy(var/atom/target)
-	//This function will recurse up the hierarchy containing src, in search of the target
-	//It will stop when it reaches an area, as areas have no loc
-	var/x = 0//As a safety, we'll crawl up a maximum of ten layers
-	var/atom/a = src
-	while (x < 10)
-		x++
-		if (isnull(a))
-			return 0
-
-		if (a == target)//we found it!
-			return 1
-
-		if (istype(a, /area))
-			return 0//Can't recurse any higher than this.
-
-		a = a.loc
-
-	return 0//If we get here, we must be buried many layers deep in nested containers. Shouldn't happen
 
 //similar function to RANGE_TURFS(), but will search spiralling outwards from the center (like the above, but only turfs)
 /proc/spiral_range_turfs(dist=0, center=usr, orange=0)
@@ -1106,91 +1086,3 @@ var/list/wall_items = typecacheof(list(
 	while (world.tick_usage > min(TICK_LIMIT_TO_RUN, CURRENT_TICKLIMIT))
 
 #undef DELTA_CALC
-
-// Helper for adding verbs with timers.
-/atom/proc/add_verb(the_verb, datum/callback/callback)
-	if (callback && !callback.Invoke())
-		return
-
-	verbs += the_verb
-
-
-
-#define NOT_FLAG(flag) (!(flag & use_flags))
-#define HAS_FLAG(flag) (flag & use_flags)
-
-// Checks if user can use this object. Set use_flags to customize what checks are done.
-// Returns 0 if they can use it, a value representing why they can't if not.
-// Flags are in `code/__defines/misc.dm`
-/atom/proc/use_check(mob/user, use_flags = 0, show_messages = FALSE)
-	. = 0
-	if (NOT_FLAG(USE_ALLOW_NONLIVING) && !isliving(user))
-		// No message for ghosts.
-		return USE_FAIL_NONLIVING
-
-	if (NOT_FLAG(USE_ALLOW_NON_ADJACENT) && !Adjacent(user))
-		if (show_messages)
-			to_chat(user, "<span class='notice'>You're too far away from [src] to do that.</span>")
-		return USE_FAIL_NON_ADJACENT
-
-	if (NOT_FLAG(USE_ALLOW_DEAD) && user.stat == DEAD)
-		if (show_messages)
-			to_chat(user, "<span class='notice'>How do you expect to do that when you're dead?</span>")
-		return USE_FAIL_DEAD
-
-	if (NOT_FLAG(USE_ALLOW_INCAPACITATED) && (user.incapacitated()))
-		if (show_messages)
-			to_chat(user, "<span class='notice'>You cannot do that in your current state.</span>")
-		return USE_FAIL_INCAPACITATED
-
-	if (NOT_FLAG(USE_ALLOW_NON_ADV_TOOL_USR) && !user.IsAdvancedToolUser())
-		if (show_messages)
-			to_chat(user, "<span class='notice'>You don't know how to operate [src].</span>")
-		return USE_FAIL_NON_ADV_TOOL_USR
-
-	if (HAS_FLAG(USE_DISALLOW_SILICONS) && issilicon(user))
-		if (show_messages)
-			to_chat(user, "<span class='notice'>How do you propose doing that without hands?</span>")
-		return USE_FAIL_IS_SILICON
-
-	if (HAS_FLAG(USE_FORCE_SRC_IN_USER) && !(src in user))
-		if (show_messages)
-			to_chat(user, "<span class='notice'>You need to be holding [src] to do that.</span>")
-		return USE_FAIL_NOT_IN_USER
-
-/atom/proc/use_check_and_message(mob/user, use_flags = 0)
-	. = use_check(user, use_flags, TRUE)
-
-/obj/proc/iswrench()
-	return FALSE
-
-/obj/proc/isscrewdriver()
-	return FALSE
-
-/obj/proc/iswirecutter()
-	return FALSE
-
-/obj/proc/ismultitool()
-	return FALSE
-
-/obj/proc/iscrowbar()
-	return FALSE
-
-/obj/proc/iswelder()
-	return FALSE
-
-/obj/proc/iscoil()
-	return FALSE
-
-#undef NOT_FLAG
-#undef HAS_FLAG
-
-//Prevents robots dropping their modules.
-/proc/dropsafety(var/atom/movable/A)
-	if (istype(A.loc, /mob/living/silicon))
-		return 0
-
-	else if (istype(A.loc, /obj/item/rig_module))
-		return 0
-	return 1
-

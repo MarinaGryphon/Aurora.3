@@ -1,6 +1,7 @@
 /obj/item/inflatable
 	name = "inflatable"
-	w_class = 2
+	desc_info = "Inflate by using it in your hand.  The inflatable barrier will inflate on your tile.  To deflate it, use the 'deflate' verb."
+	w_class = ITEMSIZE_SMALL
 	icon = 'icons/obj/inflatable.dmi'
 	var/deploy_path = null
 
@@ -13,7 +14,6 @@
 	src.transfer_fingerprints_to(R)
 	R.add_fingerprint(user)
 	qdel(src)
-
 
 /obj/item/inflatable/wall
 	name = "inflatable wall"
@@ -30,6 +30,7 @@
 /obj/structure/inflatable
 	name = "inflatable"
 	desc = "An inflated membrane. Do not puncture."
+	desc_info = "To remove these safely, use the 'deflate' verb.  Hitting these with any objects will probably puncture and break it forever."
 	density = 1
 	anchored = 1
 	opacity = 0
@@ -83,8 +84,8 @@
 	add_fingerprint(user)
 	return
 
-/obj/structure/inflatable/attackby(obj/item/weapon/W as obj, mob/user as mob)
-	if(!istype(W) || istype(W, /obj/item/weapon/inflatable_dispenser)) return
+/obj/structure/inflatable/attackby(obj/item/W as obj, mob/user as mob)
+	if(!istype(W) || istype(W, /obj/item/inflatable_dispenser)) return
 
 	if (can_puncture(W))
 		visible_message("<span class='danger'>[user] pierces [src] with [W]!</span>")
@@ -97,7 +98,7 @@
 /obj/structure/inflatable/proc/hit(var/damage, var/sound_effect = 1)
 	health = max(0, health - damage)
 	if(sound_effect)
-		playsound(loc, 'sound/effects/Glasshit.ogg', 75, 1)
+		playsound(loc, 'sound/effects/glass_hit.ogg', 75, 1)
 	if(health <= 0)
 		deflate(1)
 
@@ -145,9 +146,11 @@
 
 /obj/structure/inflatable/door //Based on mineral door code
 	name = "inflatable door"
-	density = 1
-	anchored = 1
-	opacity = 0
+	desc_info = "Click the door to open or close it.  It only stops air while closed.<br>\
+	To remove these safely, use the 'deflate' verb.  Hitting these with any objects will probably puncture and break it forever."
+	density = TRUE
+	anchored = TRUE
+	opacity = FALSE
 
 	icon_state = "door_closed"
 	undeploy_path = /obj/item/inflatable/door
@@ -158,9 +161,8 @@
 /obj/structure/inflatable/door/attack_ai(mob/user as mob) //those aren't machinery, they're just big fucking slabs of a mineral
 	if(isAI(user)) //so the AI can't open it
 		return
-	else if(isrobot(user)) //but cyborgs can
-		if(get_dist(user,src) <= 1) //not remotely though
-			return TryToSwitchState(user)
+	else if(isrobot(user) && Adjacent(user)) //but cyborgs can
+		return TryToSwitchState(user)
 
 /obj/structure/inflatable/door/attack_hand(mob/user as mob)
 	return TryToSwitchState(user)
@@ -183,8 +185,6 @@
 					SwitchState()
 			else
 				SwitchState()
-	else if(istype(user, /obj/mecha))
-		SwitchState()
 
 /obj/structure/inflatable/door/proc/SwitchState()
 	if(state)
@@ -256,12 +256,12 @@
 		to_chat(user, "<span class='notice'>The inflatable door is too torn to be inflated!</span>")
 		add_fingerprint(user)
 
-/obj/item/weapon/storage/briefcase/inflatable
+/obj/item/storage/briefcase/inflatable
 	name = "inflatable barrier box"
 	desc = "Contains inflatable walls and doors."
 	icon_state = "inf_box"
-	item_state = "syringe_kit"
-	w_class = 3
+	item_state = "box"
+	w_class = ITEMSIZE_NORMAL
 	max_storage_space = 28
 	can_hold = list(/obj/item/inflatable)
 

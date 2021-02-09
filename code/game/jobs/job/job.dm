@@ -1,34 +1,37 @@
 /datum/job
-
-	//The name of the job
-	var/title = "NOPE"
+	var/title = "NOPE"                    //The name of the job
 	//Job access. The use of minimal_access or access is determined by a config setting: config.jobs_have_minimal_access
 	var/list/minimal_access = list()      // Useful for servers which prefer to only have access given to the places a job absolutely needs (Larger server population)
 	var/list/access = list()              // Useful for servers which either have fewer players, so each person needs to fill more than one role, or servers which like to give more access, so players can't hide forever in their super secure departments (I'm looking at you, chemistry!)
-	var/flag = 0 	                      // Bitflags for the job
-	var/department_flag = 0
+
+	var/flag = 0                          // Bitflags for the job
+	var/department_flag = 0               // Used to tell which set of job bitflags to use to determine the actual job (since there are too many jobs to fit in a single bit flag)
 	var/faction = "None"	              // Players will be allowed to spawn in as jobs that are set to "Station"
+
 	var/total_positions = 0               // How many players can be this job
 	var/spawn_positions = 0               // How many players can spawn in as this job
 	var/current_positions = 0             // How many players have this job
+
+	var/intro_prefix = "a"
 	var/supervisors = null                // Supervisors, who this person answers to directly
-	var/selection_color = "#ffffff"       // Selection screen color
+	var/selection_color = "#5d6a67"     // Selection screen color
+	var/list/departments = list()         // List of departments this job is a part of. Keys are departments, values are a bit field that indicate special roles of that job within the department (like whether they are a head/supervisor of that department).
 	var/list/alt_titles                   // List of alternate titles, if any
 	var/list/title_accesses               // A map of title -> list of accesses to add if the person has this title.
 	var/minimal_player_age = 0            // If you have use_age_restriction_for_jobs config option enabled and the database set up, this option will add a requirement for players to be at least minimal_player_age days old. (meaning they first signed in at least that many days before.)
-	var/department = null                 // Does this position have a department tag?
-	var/head_position = 0                 // Is this position Command?
 	var/minimum_character_age = 17
+	var/list/alt_ages = null              // assoc list of alt titles to minimum character ages
 	var/ideal_character_age = 30
 
-	var/latejoin_at_spawnpoints = FALSE          //If this job should use roundstart spawnpoints for latejoin (offstation jobs etc)
+	var/latejoin_at_spawnpoints = FALSE   //If this job should use roundstart spawnpoints for latejoin (offstation jobs etc)
 
-	var/account_allowed = 1				  // Does this job type come with a station account?
-	var/economic_modifier = 2			  // With how much does this job modify the initial account amount?
-	var/create_record = 1                 // Do we announce/make records for people who spawn on this job?
+	var/account_allowed = TRUE            // Does this job type come with a station account?
+	var/economic_modifier = 2             // With how much does this job modify the initial account amount?
+	var/create_record = TRUE              // Do we announce/make records for people who spawn on this job?
 
 	var/datum/outfit/outfit = null
 	var/list/alt_outfits = null           // A list of special outfits for the alt titles list("alttitle" = /datum/outfit)
+	var/list/blacklisted_species = null   // A blacklist of species that can't be this job
 
 //Only override this proc
 /datum/job/proc/after_spawn(mob/living/carbon/human/H)
@@ -86,9 +89,8 @@
 	//give them an account in the station database
 	var/species_modifier = (H.species ? H.species.economic_modifier : null)
 	if (!species_modifier)
-		var/datum/species/human_species = global.all_species["Human"]
+		var/datum/species/human_species = global.all_species[SPECIES_HUMAN]
 		species_modifier = human_species.economic_modifier
-		PROCLOG_WEIRD("species [H.species || "NULL"] did not have a set economic_modifier!")
 
 	var/money_amount = (rand(5,50) + rand(5, 50)) * loyalty * economic_modifier * species_modifier
 	var/datum/money_account/M = SSeconomy.create_account(H.real_name, money_amount, null)
@@ -121,8 +123,15 @@
 	if (LAZYLEN(title_accesses) && title_accesses[selected_title])
 		. += title_accesses[selected_title]
 
+/datum/job/proc/get_total_positions()
+	return total_positions
+
+/datum/job/proc/get_spawn_positions()
+	return spawn_positions
+
 /datum/job/proc/is_position_available()
-	return (current_positions < total_positions) || (total_positions == -1)
+	var/total = get_total_positions()
+	return (current_positions < total) || (total == -1)
 
 /datum/job/proc/fetch_age_restriction()
 	if (!config.age_restrictions_from_file)
@@ -154,12 +163,8 @@
 	var/wealth = (loyalty + economic_modifier + species_modifier)
 
 	switch(wealth)
-		if(-INFINITY to 2)
+		if(-INFINITY to 6)
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/color/grey(H), slot_w_uniform)
-			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/black(H), slot_shoes)
-		if(3 to 6)
-			H.equip_to_slot_or_del(new /obj/item/clothing/under/color/grey(H), slot_w_uniform)
-			H.equip_to_slot_or_del(new /obj/item/clothing/suit/storage/hooded/wintercoat/hoodie/grey(H), slot_wear_suit)
 			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/black(H), slot_shoes)
 		if(7 to 9)
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/sl_suit(H), slot_w_uniform)
@@ -168,7 +173,7 @@
 		if(10 to 14)
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/suit_jacket/really_black(H), slot_w_uniform)
 			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/laceup(H), slot_shoes)
-			H.equip_to_slot_or_del(new /obj/item/weapon/storage/briefcase(H), slot_l_hand)
+			H.equip_to_slot_or_del(new /obj/item/storage/briefcase(H), slot_l_hand)
 		if(15 to INFINITY)
 			H.equip_to_slot_or_del(new /obj/item/clothing/under/sl_suit(H), slot_w_uniform)
 			H.equip_to_slot_or_del(new /obj/item/clothing/shoes/laceup(H), slot_shoes)
@@ -185,48 +190,22 @@
 	collect_not_del = FALSE
 
 	var/allow_loadout = TRUE
-	var/allow_backbag_choice = TRUE
+	allow_backbag_choice = TRUE
+	allow_pda_choice = TRUE
+	allow_headset_choice = TRUE
 	var/jobtype = null
 
 	uniform = /obj/item/clothing/under/color/grey
-	id = /obj/item/weapon/card/id
-	l_ear = /obj/item/device/radio/headset
-	back = /obj/item/weapon/storage/backpack
+	id = /obj/item/card/id
+	headset = /obj/item/device/radio/headset
+	bowman = /obj/item/device/radio/headset/alt
+	back = /obj/item/storage/backpack
 	shoes = /obj/item/clothing/shoes/black
-	pda = /obj/item/device/pda
+	tab_pda = /obj/item/modular_computer/handheld/pda/civilian
+	wristbound = /obj/item/modular_computer/handheld/wristbound/preset/pda/civilian
+	tablet = /obj/item/modular_computer/handheld/preset/civilian
 
-	var/backpack = /obj/item/weapon/storage/backpack
-	var/satchel = /obj/item/weapon/storage/backpack/satchel_norm
-	var/satchel_alt = /obj/item/weapon/storage/backpack/satchel
-	var/dufflebag = /obj/item/weapon/storage/backpack/duffel
-	var/messengerbag = /obj/item/weapon/storage/backpack/messenger
-	var/box = /obj/item/weapon/storage/box/survival
-
-/datum/outfit/job/pre_equip(mob/living/carbon/human/H, visualsOnly = FALSE)
-	. = ..()
-	if(allow_backbag_choice)
-		var/use_job_specific = H.backbag_style == 1
-		switch(H.backbag)
-			if (1)
-				back = null
-			if (2)
-				back = use_job_specific ? backpack : /obj/item/weapon/storage/backpack
-			if (3)
-				back = use_job_specific ? satchel : /obj/item/weapon/storage/backpack/satchel_norm
-			if (4)
-				back = use_job_specific ? satchel_alt : /obj/item/weapon/storage/backpack/satchel
-			if (5)
-				back = use_job_specific ? dufflebag : /obj/item/weapon/storage/backpack/duffel
-			if (6)
-				back = use_job_specific ? messengerbag : /obj/item/weapon/storage/backpack/messenger
-			else
-				back = backpack //Department backpack
-	if(back)
-		equip_item(H, back, slot_back)
-
-	if(istype(H.back,/obj/item/weapon/storage/backpack))
-		var/obj/item/weapon/storage/backpack/B = H.back
-		B.autodrobe_no_remove = TRUE
+	var/box = /obj/item/storage/box/survival
 
 /datum/outfit/job/equip(mob/living/carbon/human/H, visualsOnly = FALSE)
 	back = null //Nulling the backpack here, since we already equipped the backpack in pre_equip

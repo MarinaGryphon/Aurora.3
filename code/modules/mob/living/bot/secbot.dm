@@ -33,7 +33,7 @@
 	var/obj/secbot_listener/listener = null
 	var/beacon_freq = 1445			// Navigation beacon frequency
 	var/control_freq = BOT_FREQ		// Bot control frequency
-	var/list/path = list()
+	var/list/turf/path = list()
 	var/frustration = 0
 	var/turf/patrol_target = null	// This is where we are headed
 	var/closest_dist				// Used to find the closest beakon
@@ -41,7 +41,7 @@
 	var/next_destination = "__nearest__"	// This is the next beacon's ID
 	var/nearest_beacon				// Tag of the beakon that we assume to be the closest one
 
-	var/bot_version = 1.4
+	var/bot_version = 1.5
 	var/list/threat_found_sounds = list(
 		'sound/voice/bcriminal.ogg',
 		'sound/voice/bjustice.ogg',
@@ -58,6 +58,7 @@
 
 	var/datum/callback/patrol_callback	// this is here so we don't constantly recreate this datum, it being identical each time.
 	var/move_to_delay = 4 //delay for the automated movement.
+	can_take_pai = FALSE
 
 /mob/living/bot/secbot/beepsky
 	name = "Officer Beepsky"
@@ -85,7 +86,7 @@
 	frustration = 0
 	mode = SECBOT_IDLE
 
-/mob/living/bot/secbot/update_icons()
+/mob/living/bot/secbot/update_icon()
 	if(on && is_attacking)
 		icon_state = "secbot-c"
 	else
@@ -101,8 +102,7 @@
 		to_chat(user, "<span class='warning'>The unit's interface refuses to unlock!</span>")
 		return
 	user.set_machine(src)
-	var/dat
-	dat += "<TT><B>Automatic Security Unit v[bot_version]</B></TT><BR><BR>"
+	var/dat = ""
 	dat += "Status: <A href='?src=\ref[src];power=1'>[on ? "On" : "Off"]</A><BR>"
 	dat += "Behaviour controls are [locked ? "locked" : "unlocked"]<BR>"
 	dat += "Maintenance panel is [open ? "opened" : "closed"]"
@@ -113,9 +113,10 @@
 		dat += "Operating Mode: <A href='?src=\ref[src];operation=switchmode'>[arrest_type ? "Detain" : "Arrest"]</A><BR>"
 		dat += "Report Arrests: <A href='?src=\ref[src];operation=declarearrests'>[declare_arrests ? "Yes" : "No"]</A><BR>"
 		dat += "Auto Patrol: <A href='?src=\ref[src];operation=patrol'>[auto_patrol ? "On" : "Off"]</A>"
-	user << browse("<HEAD><TITLE>Securitron v[bot_version] controls</TITLE></HEAD>[dat]", "window=autosec")
-	onclose(user, "autosec")
-	return
+
+	var/datum/browser/bot_win = new(user, "autosec", "Automatic Securitron v[bot_version] Controls")
+	bot_win.set_content(dat)
+	bot_win.open()
 
 /mob/living/bot/secbot/Topic(href, href_list)
 	if(..())
@@ -281,7 +282,7 @@
 		var/cuff = 1
 		if(istype(C, /mob/living/carbon/human))
 			var/mob/living/carbon/human/H = C
-			if(istype(H.back, /obj/item/weapon/rig) && istype(H.gloves,/obj/item/clothing/gloves/rig))
+			if(istype(H.back, /obj/item/rig) && istype(H.gloves,/obj/item/clothing/gloves/rig))
 				cuff = 0
 		if(!C.lying || C.handcuffed || arrest_type)
 			cuff = 0
@@ -290,7 +291,7 @@
 			playsound(loc, 'sound/weapons/Egloves.ogg', 50, 1, -1)
 			do_attack_animation(C)
 			is_attacking = 1
-			update_icons()
+			update_icon()
 			addtimer(CALLBACK(src, .proc/stop_attacking_cb), 2)
 			visible_message("<span class='warning'>[C] was prodded by [src] with a stun baton!</span>")
 		else
@@ -298,7 +299,7 @@
 			visible_message("<span class='warning'>[src] is trying to put handcuffs on [C]!</span>")
 			if(do_mob(src, C, 60))
 				if(!C.handcuffed)
-					C.handcuffed = new /obj/item/weapon/handcuffs(C)
+					C.handcuffed = new /obj/item/handcuffs(C)
 					C.update_inv_handcuffed()
 				if(preparing_arrest_sounds.len)
 					playsound(loc, pick(preparing_arrest_sounds), 50, 0)
@@ -306,26 +307,26 @@
 		var/mob/living/simple_animal/S = M
 		S.adjustBruteLoss(15)
 		do_attack_animation(M)
-		playsound(loc, "swing_hit", 50, 1, -1)
+		playsound(loc, /decl/sound_category/swing_hit_sound, 50, 1, -1)
 		is_attacking = 1
-		update_icons()
+		update_icon()
 		addtimer(CALLBACK(src, .proc/stop_attacking_cb), 2)
 		visible_message("<span class='warning'>[M] was beaten by [src] with a stun baton!</span>")
 
 /mob/living/bot/secbot/proc/stop_attacking_cb()
 	is_attacking = FALSE
-	update_icons()
+	update_icon()
 
 /mob/living/bot/secbot/explode()
 	visible_message("<span class='warning'>[src] blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 
-	var/obj/item/weapon/secbot_assembly/Sa = new /obj/item/weapon/secbot_assembly(Tsec)
+	var/obj/item/secbot_assembly/Sa = new /obj/item/secbot_assembly(Tsec)
 	Sa.build_step = 1
 	Sa.add_overlay("hs_hole")
 	Sa.created_name = name
 	new /obj/item/device/assembly/prox_sensor(Tsec)
-	new /obj/item/weapon/melee/baton(Tsec)
+	new /obj/item/melee/baton(Tsec)
 	if(prob(50))
 		new /obj/item/robot_parts/l_arm(Tsec)
 
@@ -353,7 +354,7 @@
 		if(threat >= 4)
 			target = M
 			say("Level [threat] infraction alert!")
-			custom_emote(1, "points at [M.name]!")
+			custom_emote(VISIBLE_MESSAGE, "points at [M.name]!")
 			mode = SECBOT_HUNT
 			break
 	return
@@ -451,7 +452,7 @@
 
 	var/datum/signal/signal = new()
 	signal.source = secbot
-	signal.transmission_method = 1
+	signal.transmission_method = TRANSMISSION_RADIO
 	signal.data = keyval.Copy()
 
 	if(signal.data["findbeacon"])
@@ -528,7 +529,7 @@
 		mode = SECBOT_HUNT
 		var/mob/living/carbon/human/H = M
 		var/perpname = H.name
-		var/obj/item/weapon/card/id/id = H.GetIdCard()
+		var/obj/item/card/id/id = H.GetIdCard()
 		if(id)
 			perpname = id.registered_name
 
@@ -548,7 +549,7 @@
 		idcheck = TRUE
 		var/mob/living/carbon/human/H = user
 		var/perpname = H.name
-		var/obj/item/weapon/card/id/id = H.GetIdCard()
+		var/obj/item/card/id/id = H.GetIdCard()
 		if(id)
 			perpname = id.registered_name
 
@@ -584,7 +585,7 @@
 			idcheck = TRUE
 			var/mob/living/carbon/human/H = P.firer
 			var/perpname = H.name
-			var/obj/item/weapon/card/id/id = H.GetIdCard()
+			var/obj/item/card/id/id = H.GetIdCard()
 			if(id)
 				perpname = id.registered_name
 
@@ -597,7 +598,7 @@
 
 /mob/living/bot/secbot/attackby(var/obj/item/O, var/mob/user)
 	..()
-	if(istype(O, /obj/item/weapon/card/id) || istype(O, /obj/item/weapon/pen) || istype(O, /obj/item/device/pda))
+	if(O.GetID() || O.ispen())
 		return
 
 	target = user
@@ -606,7 +607,7 @@
 		idcheck = TRUE
 		var/mob/living/carbon/human/H = user
 		var/perpname = H.name
-		var/obj/item/weapon/card/id/id = H.GetIdCard()
+		var/obj/item/card/id/id = H.GetIdCard()
 		if(id)
 			perpname = id.registered_name
 
@@ -629,7 +630,7 @@
 				idcheck = TRUE
 				var/mob/living/carbon/human/H = O.thrower
 				var/perpname = H.name
-				var/obj/item/weapon/card/id/id = H.GetIdCard()
+				var/obj/item/card/id/id = H.GetIdCard()
 				if(id)
 					perpname = id.registered_name
 
@@ -653,7 +654,7 @@
 
 	if(S.secured)
 		qdel(S)
-		var/obj/item/weapon/secbot_assembly/A = new /obj/item/weapon/secbot_assembly
+		var/obj/item/secbot_assembly/A = new /obj/item/secbot_assembly
 		user.put_in_hands(A)
 		to_chat(user, "You add the signaler to the helmet.")
 		user.drop_from_inventory(src)
@@ -662,7 +663,7 @@
 	else
 		return
 
-/obj/item/weapon/secbot_assembly
+/obj/item/secbot_assembly
 	name = "helmet/signaler assembly"
 	desc = "Some sort of bizarre assembly."
 	icon = 'icons/obj/aibots.dmi'
@@ -671,10 +672,10 @@
 	var/build_step = 0
 	var/created_name = "Securitron"
 
-/obj/item/weapon/secbot_assembly/attackby(var/obj/item/O, var/mob/user)
+/obj/item/secbot_assembly/attackby(var/obj/item/O, var/mob/user)
 	..()
 	if(O.iswelder() && !build_step)
-		var/obj/item/weapon/weldingtool/WT = O
+		var/obj/item/weldingtool/WT = O
 		if(WT.remove_fuel(0, user))
 			build_step = 1
 			add_overlay("hs_hole")
@@ -699,7 +700,7 @@
 		qdel(O)
 		return 1
 
-	else if(istype(O, /obj/item/weapon/melee/baton) && build_step == 3)
+	else if(istype(O, /obj/item/melee/baton) && build_step == 3)
 		to_chat(user, "You complete the Securitron! Beep boop.")
 		var/mob/living/bot/secbot/S = new /mob/living/bot/secbot(get_turf(src))
 		S.name = created_name
@@ -708,7 +709,7 @@
 		qdel(src)
 		return 1
 
-	else if(istype(O, /obj/item/weapon/pen))
+	else if(O.ispen())
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return

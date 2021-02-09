@@ -1,11 +1,12 @@
 //This file was auto-corrected by findeclaration.exe on 25.5.2012 20:42:32
 
-/obj/item/device/mmi/digital/New()
+/obj/item/device/mmi/digital/Initialize(mapload, ...)
+	. = ..()
 	src.brainmob = new(src)
+	brainmob.add_language(LANGUAGE_EAL)
 	src.brainmob.stat = CONSCIOUS
 	src.brainmob.container = src
 	src.brainmob.silent = 0
-	..()
 
 /obj/item/device/mmi/digital/transfer_identity(var/mob/living/carbon/H)
 	brainmob.dna = H.dna
@@ -20,29 +21,30 @@
 	desc = "The Warrior's bland acronym, MMI, obscures the true horror of this monstrosity."
 	icon = 'icons/obj/assemblies.dmi'
 	icon_state = "mmi_empty"
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	origin_tech = list(TECH_BIO = 3)
 
 	req_access = list(access_robotics)
 
 	//Revised. Brainmob is now contained directly within object of transfer. MMI in this case.
 
-	var/locked = 0
+	var/locked = FALSE
+	var/can_be_ipc = FALSE
 	var/mob/living/carbon/brain/brainmob = null//The current occupant.
-	var/obj/item/organ/brain/brainobj = null	//The current brain organ.
-	var/obj/mecha = null//This does not appear to be used outside of reference in mecha.dm.
+	var/obj/item/organ/internal/brain/brainobj = null	//The current brain organ.
 
 	attackby(var/obj/item/O as obj, var/mob/user as mob)
-		if(istype(O,/obj/item/organ/brain) && !brainmob) //Time to stick a brain in it --NEO
-			var/obj/item/organ/brain/B = O
+		if(istype(O,/obj/item/organ/internal/brain) && !brainmob) //Time to stick a brain in it --NEO
+			var/obj/item/organ/internal/brain/B = O
+			if(!B.can_lobotomize)
+				to_chat(user, "<span class='warning'>\The [B] is incompatible with [src]!</span>")
+				return
 			if(B.health <= 0)
 				to_chat(user, "<span class='warning'>That brain is well and truly dead.</span>")
 				return
 			else if(!B.lobotomized && B.can_lobotomize)
 				to_chat(user, "<span class='warning'>The brain won't fit until you perform a lobotomy!</span>")
 				return
-			else if(!B.can_lobotomize)
-				to_chat(user, "<span class='warning'>The [B] is incompatible with [src]!</span>")
 			else if(!B.brainmob)
 				to_chat(user, "<span class='warning'>You aren't sure where this brain came from, but you're pretty sure it's a useless brain.</span>")
 				return
@@ -70,7 +72,7 @@
 
 			return
 
-		if((istype(O,/obj/item/weapon/card/id)||istype(O,/obj/item/device/pda)) && brainmob)
+		if(O.GetID() && brainmob)
 			if(allowed(user))
 				locked = !locked
 				to_chat(user, "<span class='notice'>You [locked ? "lock" : "unlock"] the brain holder.</span>")
@@ -90,7 +92,7 @@
 			to_chat(user, "<span class='warning'>You upend the MMI, but the brain is clamped into place.</span>")
 		else
 			to_chat(user, "<span class='notice'>You upend the MMI, spilling the brain onto the floor.</span>")
-			var/obj/item/organ/brain/brain
+			var/obj/item/organ/internal/brain/brain
 			if (brainobj)	//Pull brain organ out of MMI.
 				brainobj.forceMove(user.loc)
 				brain = brainobj
@@ -125,7 +127,7 @@
 /obj/item/device/mmi/relaymove(var/mob/user, var/direction)
 	if(user.stat || user.stunned)
 		return
-	var/obj/item/weapon/rig/rig = src.get_rig()
+	var/obj/item/rig/rig = src.get_rig()
 	if(istype(rig))
 		rig.forced_move(direction, user)
 
@@ -134,8 +136,7 @@
 		var/mob/living/silicon/robot/borg = loc
 		borg.mmi = null
 	if(brainmob)
-		qdel(brainmob)
-		brainmob = null
+		QDEL_NULL(brainmob)
 	return ..()
 
 /obj/item/device/mmi/radio_enabled
@@ -148,7 +149,7 @@
 	New()
 		..()
 		radio = new(src)//Spawns a radio inside the MMI.
-		radio.broadcasting = 1//So it's broadcasting from the start.
+		radio.broadcasting = TRUE//So it's broadcasting from the start.
 
 	verb//Allows the brain to toggle the radio functions.
 		Toggle_Broadcasting()

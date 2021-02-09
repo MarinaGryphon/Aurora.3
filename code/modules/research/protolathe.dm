@@ -1,5 +1,6 @@
 /obj/machinery/r_n_d/protolathe
-	name = "Protolathe"
+	name = "protolathe"
+	desc = "An upgraded variant of a common Autolathe, this can only be operated via a nearby RnD console, but can manufacture cutting edge technology, provided it has the design and the correct materials."
 	icon_state = "protolathe"
 	flags = OPENCONTAINER
 
@@ -8,7 +9,7 @@
 	active_power_usage = 5000
 
 	var/max_material_storage = 100000
-	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, "glass" = 0, "gold" = 0, "silver" = 0, "phoron" = 0, "uranium" = 0, "diamond" = 0)
+	var/list/materials = list(DEFAULT_WALL_MATERIAL = 0, MATERIAL_GLASS = 0, MATERIAL_GOLD = 0, MATERIAL_SILVER = 0, MATERIAL_PHORON = 0, MATERIAL_URANIUM = 0, MATERIAL_DIAMOND = 0)
 
 	var/list/datum/design/queue = list()
 	var/progress = 0
@@ -17,10 +18,10 @@
 	var/speed = 1
 
 	component_types = list(
-		/obj/item/weapon/circuitboard/protolathe,
-		/obj/item/weapon/stock_parts/matter_bin = 2,
-		/obj/item/weapon/stock_parts/manipulator = 2,
-		/obj/item/weapon/reagent_containers/glass/beaker = 2
+		/obj/item/circuitboard/protolathe,
+		/obj/item/stock_parts/matter_bin = 2,
+		/obj/item/stock_parts/manipulator = 2,
+		/obj/item/reagent_containers/glass/beaker = 2
 	)
 
 /obj/machinery/r_n_d/protolathe/machinery_process()
@@ -45,7 +46,7 @@
 		update_icon()
 	else
 		if(busy)
-			visible_message("<span class='notice'>\icon [src] flashes: insufficient materials: [getLackingMaterials(D)].</span>")
+			visible_message("<span class='notice'>[icon2html(src, viewers(get_turf(src)))] [src] flashes: insufficient materials: [getLackingMaterials(D)].</span>")
 			busy = 0
 			update_icon()
 
@@ -58,28 +59,28 @@
 /obj/machinery/r_n_d/protolathe/RefreshParts()
 	// Adjust reagent container volume to match combined volume of the inserted beakers
 	var/T = 0
-	for(var/obj/item/weapon/reagent_containers/glass/G in component_parts)
+	for(var/obj/item/reagent_containers/glass/G in component_parts)
 		T += G.reagents.maximum_volume
 	create_reagents(T)
 	// Transfer all reagents from the beakers to internal reagent container
-	for(var/obj/item/weapon/reagent_containers/glass/G in component_parts)
+	for(var/obj/item/reagent_containers/glass/G in component_parts)
 		G.reagents.trans_to_obj(src, G.reagents.total_volume)
 
 	// Adjust material storage capacity to scale with matter bin rating
 	max_material_storage = 0
-	for(var/obj/item/weapon/stock_parts/matter_bin/M in component_parts)
+	for(var/obj/item/stock_parts/matter_bin/M in component_parts)
 		max_material_storage += M.rating * 75000
 
 	// Adjust production speed to increase with manipulator rating
 	T = 0
-	for(var/obj/item/weapon/stock_parts/manipulator/M in component_parts)
+	for(var/obj/item/stock_parts/manipulator/M in component_parts)
 		T += M.rating
 	mat_efficiency = 1 - (T - 2) / 8
 	speed = T / 2
 
 /obj/machinery/r_n_d/protolathe/dismantle()
 	for(var/obj/I in component_parts)
-		if(istype(I, /obj/item/weapon/reagent_containers/glass/beaker))
+		if(istype(I, /obj/item/reagent_containers/glass/beaker))
 			reagents.trans_to_obj(I, reagents.total_volume)
 	for(var/f in materials)
 		if(materials[f] >= SHEET_MATERIAL_AMOUNT)
@@ -132,6 +133,9 @@
 	var/amount = round(input("How many sheets do you want to add?") as num)//No decimals
 	if(!O)
 		return
+	if(!Adjacent(user))
+		to_chat(user, "<span class='notice'>\The [src] is too far away for you to insert this.</span>")
+		return
 	if(amount <= 0)//No negative numbers
 		return
 	if(amount > stack.get_amount())
@@ -157,11 +161,9 @@
 
 /obj/machinery/r_n_d/protolathe/proc/addToQueue(var/datum/design/D)
 	queue += D
-	return
 
 /obj/machinery/r_n_d/protolathe/proc/removeFromQueue(var/index)
 	queue.Cut(index, index + 1)
-	return
 
 /obj/machinery/r_n_d/protolathe/proc/canBuild(var/datum/design/D)
 	for(var/M in D.materials)
@@ -183,7 +185,7 @@
 		if(!reagents.has_reagent(C, D.chemicals[C]))
 			if(ret != "")
 				ret += ", "
-			ret += C
+			ret += "[C]"
 	return ret
 
 /obj/machinery/r_n_d/protolathe/proc/build(var/datum/design/D)

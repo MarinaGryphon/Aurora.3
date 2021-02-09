@@ -29,16 +29,14 @@
 	else
 		alert("The game hasn't started yet!")
 
-var/datum/vueui_module/player_panel/global_player_panel
 /datum/vueui_module/player_panel
-	var/something = TRUE
 
-/datum/vueui_module/player_panel/ui_interact(var/mob/user)
+/datum/vueui_module/player_panel/ui_interact(mob/user)
 	if (!usr.client.holder)
 		return
 	var/datum/vueui/ui = SSvueui.get_open_ui(user, src)
 	if(!ui)
-		ui = new(user, src, "admin-player-panel", 800, 600, "Modern player panel", nstate = interactive_state)
+		ui = new(user, src, "admin-player-panel", 800, 600, "Modern player panel", state = interactive_state)
 		ui.header = "minimal"
 		ui.auto_update_content = TRUE
 
@@ -57,10 +55,11 @@ var/datum/vueui_module/player_panel/global_player_panel
 	var/list/mobs = sortmobs()
 	
 	LAZYINITLIST(data["players"])
-	if(data["players"].len != mobs.len)
-		data["players"].Cut()
+	if(LAZYLEN(data["players"]) != mobs.len)
+		data["players"] = list()
 	for(var/mob/M in mobs)
 		var/ref = "\ref[M]"
+		LAZYINITLIST(data["players"][ref])
 		if(!M.ckey)
 			data["players"][ref] = FALSE
 			continue
@@ -86,8 +85,14 @@ var/datum/vueui_module/player_panel/global_player_panel
 			VUEUI_SET_CHECK(data["players"][ref]["antag"], special_char, ., data)
 		else
 			VUEUI_SET_CHECK(data["players"][ref]["antag"], -1, ., data)
-		if(isMod && M.client?.player_age)
-			var/age = M.client.player_age
+		if(isMod && (M.client?.player_age || M.player_age))
+			var/age = "Requires database"
+			if(M.client?.player_age)
+				age = M.client.player_age
+			else if(M.player_age)
+				age = M.player_age
+			else
+				age = "NA"
 			if(age == "Requires database")
 				age = "NA"
 			VUEUI_SET_CHECK(data["players"][ref]["age"], age, ., data)
@@ -100,7 +105,9 @@ var/datum/vueui_module/player_panel/global_player_panel
 	if(isrobot(M))
 		return "Cyborg"
 	if(ishuman(M))
-		return M.real_name
+		if(M.real_name)
+			return M.real_name
+		return "Unknown"
 	if(istype(M, /mob/living/silicon/pai))
 		return "pAI"
 	if(istype(M, /mob/abstract/new_player))

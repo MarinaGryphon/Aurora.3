@@ -7,11 +7,12 @@
 /datum/language
 	var/name = "an unknown language"  // Fluff name of language if any.
 	var/desc = "A language."          // Short description for 'Check Languages'.
-	var/speech_verb = "says"          // 'says', 'hisses', 'farts'.
-	var/ask_verb = "asks"             // Used when sentence ends in a ?
-	var/exclaim_verb = "exclaims"     // Used when sentence ends in a !
-	var/whisper_verb                  // Optional. When not specified speech_verb + quietly/softly is used instead.
-	var/signlang_verb = list("signs") // list of emotes that might be displayed if this language has NONVERBAL or SIGNLANG flags
+	var/list/speech_verb = list("says")          // 'says', 'hisses', 'farts'.)
+	var/list/ask_verb = list("asks")  // Used when sentence ends in a ?
+	var/list/exclaim_verb = list("exclaims") // Used when sentence ends in a !
+	var/list/shout_verb = list("shouts", "yells", "screams") //Used when a sentence ends in !!
+	var/list/whisper_verb = list("says quietly", "says softly", "whispers")  // Optional. When not specified speech_verb + quietly/softly is used instead.
+	var/list/signlang_verb = list("signs") // list of emotes that might be displayed if this language has NONVERBAL or SIGNLANG flags
 	var/colour = "body"               // CSS style to use for strings in this language.
 	var/key = "x"                     // Character used to speak in language eg. :o for Unathi.
 	var/flags = 0                     // Various language flags.
@@ -20,6 +21,8 @@
 	var/list/space_chance = 55        // Likelihood of getting a space in the random scramble string
 	var/list/partial_understanding				  // List of languages that can /somehwat/ understand it, format is: name = chance of understanding a word
 	var/machine_understands = TRUE	// Whether machines can parse and understand this language
+	var/allow_accents = FALSE
+	var/always_parse_language = FALSE // forces the language to parse for language keys even when a default is set
 
 /datum/language/proc/get_random_name(var/gender, name_count=2, syllable_count=4, syllable_divisor=2)
 	if(!syllables || !syllables.len)
@@ -46,35 +49,33 @@
 
 	var/understand_chance = 0
 	for(var/datum/language/L in known_languages)
-		if(partial_understanding && partial_understanding[L.name])
+		if(LAZYACCESS(partial_understanding, L.name))
 			understand_chance += partial_understanding[L.name]
-		if(L.partial_understanding && L.partial_understanding[name])
-			understand_chance += L.partial_understanding[name] * 0.5
 
-	var/scrambled_text = ""
 	var/list/words = splittext(input, " ")
+	var/list/scrambled_text = list()
+	var/new_sentence = 0
 	for(var/w in words)
-		if(prob(understand_chance))
-			scrambled_text += " [w] "
-		else
-			var/nword = scramble_word(w)
-			var/ending = copytext(scrambled_text, length(scrambled_text)-1)
-			if(findtext(ending,"."))
+		var/nword = "[w] "
+		var/input_ending = copytext(w, length(w))
+		var/ends_sentence = findtext(".?!",input_ending)
+		if(!prob(understand_chance))
+			nword = scramble_word(w)
+			if(new_sentence)
 				nword = capitalize(nword)
-			scrambled_text += nword
-	scrambled_text = replacetext(scrambled_text,"  "," ")
+				new_sentence = FALSE
+			if(ends_sentence)
+				nword = trim(nword)
+				nword = "[nword][input_ending] "
 
-	scrambled_text = capitalize(scrambled_text)
-	scrambled_text = trim(scrambled_text)
-	var/ending = copytext(scrambled_text, length(scrambled_text))
-	if(ending == ".")
-		scrambled_text = copytext(scrambled_text,1,length(scrambled_text)-1)
+		if(ends_sentence)
+			new_sentence = TRUE
 
-	var/input_ending = copytext(input, length(input))
-	if(input_ending in list("!","?","."))
-		scrambled_text += input_ending
+		scrambled_text += nword
 
-	return scrambled_text
+	. = jointext(scrambled_text, null)
+	. = capitalize(.)
+	. = trim(.)
 
 /datum/language/proc/scramble_word(var/input)
 	if(!syllables || !syllables.len)
@@ -124,10 +125,11 @@
 	// if you yell, you'll be heard from two tiles over instead of one
 	return (copytext(message, length(message)) == "!") ? 2 : 1
 
-/datum/language/proc/broadcast(var/mob/living/speaker,var/message,var/speaker_mask)
+/datum/language/proc/broadcast(var/mob/living/speaker, var/message, var/speaker_mask)
 	log_say("[key_name(speaker)] : ([name]) [message]",ckey=key_name(speaker))
 
-	if(!speaker_mask) speaker_mask = speaker.name
+	if(!speaker_mask)
+		speaker_mask = speaker.name
 	message = format_message(message, get_spoken_verb(message))
 
 	for(var/mob/player in player_list)
@@ -150,13 +152,22 @@
 /datum/language/proc/check_special_condition(var/mob/other)
 	return 1
 
-/datum/language/proc/get_spoken_verb(var/msg_end)
+/datum/language/proc/get_spoken_verb(var/msg_end, var/pre_end)
+	var/chosen_verb = speech_verb
 	switch(msg_end)
 		if("!")
-			return exclaim_verb
+			if(pre_end == "!" || pre_end == "?")
+				chosen_verb = shout_verb
+			else
+				chosen_verb = exclaim_verb
 		if("?")
-			return ask_verb
-	return speech_verb
+			if(pre_end == "!")
+				chosen_verb = shout_verb
+			else
+				chosen_verb = ask_verb
+		else
+			chosen_verb = speech_verb
+	return pick(chosen_verb)
 
 // Language handling.
 /mob/proc/add_language(var/language)
@@ -185,7 +196,7 @@
 
 // Can we speak this language, as opposed to just understanding it?
 /mob/proc/can_speak(datum/language/speaking)
-	return (universal_speak || (speaking && speaking.flags & INNATE) || speaking in src.languages)
+	return (universal_speak || (speaking && speaking.flags & INNATE) || (speaking in src.languages))
 
 /mob/proc/get_language_prefix()
 	if(client && client.prefs.language_prefixes && client.prefs.language_prefixes.len)

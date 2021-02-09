@@ -341,7 +341,7 @@
 	desc = "Head of Security"
 	region = ACCESS_REGION_SECURITY
 
-/var/const/access_RC_announce = 59 //Request console announcements
+/var/const/access_RC_announce = 59 //Requests console announcements
 /datum/access/RC_announce
 	id = access_RC_announce
 	desc = "RC Announcements"
@@ -389,10 +389,10 @@
 	desc = "Medical Equipment"
 	region = ACCESS_REGION_MEDBAY
 
-/var/const/access_paramedic = 67
-/datum/access/access_paramedic
-	id = access_paramedic
-	desc = "Paramedic Equipment"
+/var/const/access_first_responder = 67
+/datum/access/access_first_responder
+	id = access_first_responder
+	desc = "First Responder Equipment"
 	region = ACCESS_REGION_MEDBAY
 
 /var/const/access_detective = 68
@@ -412,6 +412,16 @@ var/const/access_journalist = 70//journalist's office access
 	id = access_journalist
 	desc = "Journalist Office"
 	region = ACCESS_REGION_GENERAL
+
+var/const/access_it = 71 // allows some unique interactions with devices
+/datum/access/tech_support
+	id = access_it
+	desc = "Tech Support"
+
+var/const/access_consular = 72
+/datum/access/consular
+	id = access_consular
+	desc = "Consular"
 
 /******************
 * Central Command *
@@ -482,6 +492,37 @@ var/const/access_journalist = 70//journalist's office access
 	desc = "Tau Ceti Foreign Legion Access"
 	access_type = ACCESS_TYPE_CENTCOM
 
+var/const/access_distress = 112
+/datum/access/distress
+	id = access_distress
+	desc = "General ERT Base Access"
+	access_type = ACCESS_TYPE_CENTCOM
+
+
+/****************************
+* Kataphract Chapter Access *
+****************************/
+var/const/access_kataphract = 113
+/datum/access/kataphract
+	id = access_kataphract
+	desc = "Kataphract Chapter Access"
+	access_type = ACCESS_TYPE_CENTCOM
+
+var/const/access_kataphract_knight = 114
+/datum/access/kataphract/knight
+	id = access_kataphract_knight
+	desc = "Kataphract Knight Access"
+
+var/const/access_kataphract_quartermaster = 115
+/datum/access/kataphract/quartermaster
+	id = access_kataphract_quartermaster
+	desc = "Kataphract Quartermaster Access"
+
+var/const/access_kataphract_trader = 116
+/datum/access/kataphract/trader
+	id = access_kataphract_trader
+	desc = "Kataphract Trader Access"
+
 /***************
 * Antag access *
 ***************/
@@ -508,3 +549,9 @@ var/const/access_journalist = 70//journalist's office access
 /datum/access/crate_cash
 	id = access_crate_cash
 	access_type = ACCESS_TYPE_NONE
+
+/var/const/access_none = -1
+/datum/access/none
+	id = access_none
+	access_type = ACCESS_TYPE_NONE
+

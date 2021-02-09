@@ -56,7 +56,7 @@
 		process_glasses(glasses)
 	if(istype(src.wear_mask, /obj/item/clothing/mask))
 		add_clothing_protection(wear_mask)
-	if(istype(back,/obj/item/weapon/rig))
+	if(istype(back,/obj/item/rig))
 		process_rig(back)
 
 /mob/living/carbon/human/proc/process_glasses(var/obj/item/clothing/glasses/G)
@@ -75,7 +75,7 @@
 		add_clothing_protection(G)
 		G.process_hud(src)
 
-/mob/living/carbon/human/proc/process_rig(var/obj/item/weapon/rig/O)
+/mob/living/carbon/human/proc/process_rig(var/obj/item/rig/O)
 	if(O.visor && O.visor.active && O.visor.vision && O.visor.vision.glasses && (!O.helmet || (head && O.helmet == head)))
 		process_glasses(O.visor.vision.glasses)
 
@@ -110,6 +110,8 @@
 							I.mechassist()
 						if ("mechanical")
 							I.robotize()
+						if ("removed")
+							qdel(I)
 
 	if (apply_markings)
 		for(var/N in organs_by_name)
@@ -149,7 +151,125 @@
 		return null
 
 	var/obj/item/organ/O = internal_organs_by_name[species.vision_organ]
-	if (!istype(O, /obj/item/organ/eyes) || (no_synthetic && (O.status & ORGAN_ROBOT)))
+	if (!istype(O, /obj/item/organ/internal/eyes) || (no_synthetic && (O.status & ORGAN_ROBOT)))
 		return null
 
 	return O
+
+/mob/living/carbon/human/proc/awaken_psi_basic(var/source)
+	var/static/list/psi_operancy_messages = list(
+		"There's something in your skull!",
+		"Something is eating your thoughts!",
+		"You can feel your brain being rewritten!",
+		"Something is crawling over your frontal lobe!",
+		"Something is drilling through your skull!",
+		"Your head feels like it's going to implode!",
+		"Thousands of ants are tunneling in your head!"
+		)
+	to_chat(src, SPAN_DANGER("An indescribable, brain-tearing sound hisses from [source], and you collapse in a seizure!"))
+	seizure()
+	var/new_latencies = rand(2,4)
+	var/list/faculties = list(PSI_COERCION, PSI_REDACTION, PSI_ENERGISTICS, PSI_PSYCHOKINESIS)
+	for(var/i = 1 to new_latencies)
+		custom_pain(SPAN_DANGER("<font size = 3>[pick(psi_operancy_messages)]</font>"), 25)
+		set_psi_rank(pick_n_take(faculties), 1)
+		sleep(30)
+		psi.update()
+	sleep(45)
+	psi.check_latency_trigger(100, source, TRUE)
+
+/mob/living/carbon/human/get_resist_power()
+	return species.resist_mod
+
+// Handle cases where the mob's awareness may reside in another mob, but still cares about how its brain is doing
+/mob/living/carbon/human/proc/find_mob_consciousness()
+	if(istype(bg) && bg.client)
+		return bg
+
+	return src
+
+/mob/living/carbon/human/proc/has_hearing_aid()
+	if(istype(l_ear, /obj/item/device/hearing_aid) || istype(r_ear, /obj/item/device/hearing_aid))
+		return TRUE
+	return FALSE
+
+/mob/living/carbon/human/proc/is_submerged()
+	if(lying && istype(loc, /turf/simulated/floor/beach/water)) // replace this when we port fluids
+		return TRUE
+	return FALSE
+
+/mob/living/carbon/human/proc/getCryogenicFactor(var/bodytemperature)
+	if(isSynthetic())
+		return 0
+	if(!species)
+		return 0
+
+	if(bodytemperature > species.cold_level_1)
+		return 0
+	else if(bodytemperature > species.cold_level_2)
+		. = 5 * (1 - (bodytemperature - species.cold_level_2) / (species.cold_level_1 - species.cold_level_2))
+		. = max(2, .)
+	else if(bodytemperature > species.cold_level_3)
+		. = 20 * (1 - (bodytemperature - species.cold_level_3) / (species.cold_level_2 - species.cold_level_3))
+		. = max(5, .)
+	else
+		. = 80 * (1 - bodytemperature / species.cold_level_3)
+		. = max(20, .)
+	return round(.)
+
+// Martial Art Helpers
+/mob/living/carbon/human/proc/check_martial_deflection_chance()
+	var/deflection_chance = 0
+	if(!length(known_martial_arts))
+		return deflection_chance
+	for(var/art in known_martial_arts)
+		var/datum/martial_art/M = art
+		deflection_chance = max(deflection_chance, M.deflection_chance)
+	return deflection_chance
+
+/mob/living/carbon/human/proc/check_weapon_affinity(var/obj/O, var/parry_chance)
+	if(!length(known_martial_arts))
+		return FALSE
+	var/parry_bonus = 0
+	for(var/art in known_martial_arts)
+		var/datum/martial_art/M = art
+		for(var/type in M.weapon_affinity)
+			if(istype(O, type))
+				if(parry_chance)
+					parry_bonus = max(parry_bonus, M.parry_multiplier)
+					continue
+				return TRUE
+	if(parry_chance)
+		return parry_bonus
+	return FALSE
+
+/mob/living/carbon/human/proc/check_no_guns()
+	if(!length(known_martial_arts))
+		return FALSE
+	for(var/art in known_martial_arts)
+		var/datum/martial_art/M = art
+		if(M.no_guns)
+			return M.no_guns_message
+	return FALSE
+
+/mob/living/carbon/human/get_standard_pixel_x()
+	return species.icon_x_offset
+
+/mob/living/carbon/human/get_standard_pixel_y()
+	return species.icon_y_offset
+
+/mob/living/carbon/human/proc/protected_from_sound()
+	return (l_ear?.item_flags & SOUNDPROTECTION) || (r_ear?.item_flags & SOUNDPROTECTION) || (head?.item_flags & SOUNDPROTECTION)
+
+/mob/living/carbon/human/get_antag_datum(var/antag_role)
+	if(!mind)
+		return
+	var/datum/D = mind.antag_datums[antag_role]
+	if(D)
+		return D
+
+/mob/living/carbon/human/set_respawn_time()
+	if(species?.respawn_type)
+		set_death_time(species.respawn_type, world.time)
+	else
+		set_death_time(CREW, world.time)

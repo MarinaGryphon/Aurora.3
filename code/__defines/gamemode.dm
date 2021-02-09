@@ -9,29 +9,31 @@
 #define GAME_FAILURE_TOO_MANY_PLAYERS      0x4
 
 // Security levels.
-#define SEC_LEVEL_GREEN 0
+#define SEC_LEVEL_GREEN  0
 #define SEC_LEVEL_YELLOW 1
-#define SEC_LEVEL_BLUE  2
-#define SEC_LEVEL_RED   3
-#define SEC_LEVEL_DELTA 4
+#define SEC_LEVEL_BLUE   2
+#define SEC_LEVEL_RED    3
+#define SEC_LEVEL_DELTA  4
 
 #define BE_PLANT "BE_PLANT"
 #define BE_SYNTH "BE_SYNTH"
 #define BE_PAI   "BE_PAI"
 
 // Antagonist datum flags.
-#define ANTAG_OVERRIDE_JOB        0x1 // Assigned job is set to MODE when spawning.
-#define ANTAG_OVERRIDE_MOB        0x2 // Mob is recreated from datum mob_type var when spawning.
-#define ANTAG_CLEAR_EQUIPMENT     0x4 // All preexisting equipment is purged.
-#define ANTAG_CHOOSE_NAME         0x8 // Antagonists are prompted to enter a name.
-#define ANTAG_IMPLANT_IMMUNE     0x10 // Cannot be loyalty implanted.
-#define ANTAG_SUSPICIOUS         0x20 // Shows up on roundstart report.
-#define ANTAG_HAS_LEADER         0x40 // Generates a leader antagonist.
-#define ANTAG_HAS_NUKE           0x80 // Will spawn a nuke at supplied location.
-#define ANTAG_RANDSPAWN         0x100 // Potentially randomly spawns due to events.
-#define ANTAG_VOTABLE           0x200 // Can be voted as an additional antagonist before roundstart.
-#define ANTAG_SET_APPEARANCE    0x400 // Causes antagonists to use an appearance modifier on spawn.
-#define ANTAG_RANDOM_EXCEPTED   0x800 // If a game mode randomly selects antag types, antag types with this flag should be excluded.
+#define ANTAG_OVERRIDE_JOB          0x1 // Assigned job is set to MODE when spawning.
+#define ANTAG_OVERRIDE_MOB          0x2 // Mob is recreated from datum mob_type var when spawning.
+#define ANTAG_CLEAR_EQUIPMENT       0x4 // All preexisting equipment is purged.
+#define ANTAG_CHOOSE_NAME           0x8 // Antagonists are prompted to enter a name.
+#define ANTAG_IMPLANT_IMMUNE       0x10 // Cannot be loyalty implanted.
+#define ANTAG_SUSPICIOUS           0x20 // Shows up on roundstart report.
+#define ANTAG_HAS_LEADER           0x40 // Generates a leader antagonist.
+#define ANTAG_HAS_NUKE             0x80 // Will spawn a nuke at supplied location.
+#define ANTAG_RANDSPAWN           0x100 // Potentially randomly spawns due to events.
+#define ANTAG_VOTABLE             0x200 // Can be voted as an additional antagonist before roundstart.
+#define ANTAG_SET_APPEARANCE      0x400 // Causes antagonists to use an appearance modifier on spawn.
+#define ANTAG_RANDOM_EXCEPTED     0x800 // If a game mode randomly selects antag types, antag types with this flag should be excluded.
+#define ANTAG_NO_FLAVORTEXT       0x1000 // To prevent flavor text from being scrubbed from crewmember intruders
+#define ANTAG_NO_ROUNDSTART_SPAWN 0x2000 // Prevents the antag from spawning at roundstart
 
 // Mode/antag template macros.
 #define MODE_BORER "borer"
@@ -42,7 +44,10 @@
 #define MODE_ERT "ert"
 #define MODE_MERCENARY "mercenary"
 #define MODE_NINJA "ninja"
+#define MODE_RAIDER_MAGE "raider mage"
 #define MODE_RAIDER "raider"
+#define MODE_BURGLAR "burglar"
+#define MODE_LONER "loner"
 #define MODE_WIZARD "wizard"
 #define MODE_CHANGELING "changeling"
 #define MODE_CULTIST "cultist"
@@ -54,7 +59,8 @@
 #define MODE_TRAITOR "traitor"
 #define MODE_VAMPIRE "vampire"
 #define MODE_THRALL "thrall"
-#define MODE_LEGION "tau ceti foreign legion"
+#define MODE_REVENANT "revenant"
+#define MODE_GOLEM "golem"
 
 #define DEFAULT_TELECRYSTAL_AMOUNT 25
 

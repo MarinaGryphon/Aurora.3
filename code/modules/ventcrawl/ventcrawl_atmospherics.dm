@@ -41,14 +41,17 @@
 	//If its not small or the device isnt enabled, it wont blend
 	if(!issmall(AM) || !use_power)
 		return FALSE
-	
+
 	//Get the things we need to create the "output"
 	var/mob/living/L = AM
+
+	if(L.mob_size > MOB_TINY)
+		return
 
 	var/blood_color = "#A10808"
 	if(L.blood_color)
 		blood_color = L.blood_color
-	
+
 	if(iscarbon(AM))
 		var/mob/living/carbon/C = AM
 		blood_color = C.species.blood_color
@@ -56,9 +59,9 @@
 	var/reagent_amount = L.mob_size * 2
 
 	//Blend the Mob
-	to_chat(AM, span("danger","\The [src] blends you to a fine dust."))
+	to_chat(AM, SPAN_DANGER("\The [src] blends you to a fine dust."))
 	L.death()
-	qdel(L)	
+	qdel(L)
 
 	//Output what´s left through the connected vents
 	if(N)
@@ -71,7 +74,7 @@
 			if(istype(V, /obj/machinery/atmospherics/unary/vent_pump) && vent.loc && !vent.is_welded())
 				var/datum/reagents/R = new/datum/reagents(reagent_amount)
 				R.my_atom = vent
-				R.add_reagent("blood", reagent_amount, list("blood_colour" = blood_color))
+				R.add_reagent(/decl/reagent/blood, reagent_amount, list("blood_colour" = blood_color))
 
 				var/datum/effect/effect/system/smoke_spread/chem/smoke = new
 				smoke.show_log = 0 // This displays a log on creation
@@ -84,7 +87,7 @@
 	else
 		var/datum/reagents/R = new/datum/reagents(reagent_amount)
 		R.my_atom = src
-		R.add_reagent("blood", reagent_amount, list("blood_colour" = blood_color))
+		R.add_reagent(/decl/reagent/blood, reagent_amount, list("blood_colour" = blood_color))
 
 		var/datum/effect/effect/system/smoke_spread/chem/smoke = new
 		smoke.show_log = 0 // This displays a log on creation
@@ -184,9 +187,9 @@ obj/machinery/atmospherics/trinary/isConnectable(var/obj/machinery/atmospherics/
 	return
 
 /obj/machinery/atmospherics/pipe/zpipe/handle_z_crawl(var/mob/living/L, var/direction)
-	to_chat(L, span("notice", "You start climbing [travel_direction_name] the pipe. This will take a while..."))
+	to_chat(L, SPAN_NOTICE("You start climbing [travel_direction_name] the pipe. This will take a while..."))
 	playsound(loc, 'sound/machines/ventcrawl.ogg', 100, 1, 3)
 	if(!do_after(L, 100, needhand = 0, act_target = get_turf(src)) || !can_z_crawl(L, direction))
-		to_chat(L, span("danger", "You gave up on climbing [travel_direction_name] the pipe."))
+		to_chat(L, SPAN_DANGER("You gave up on climbing [travel_direction_name] the pipe."))
 		return FALSE
 	return ventcrawl_to(L, node2, null)

@@ -122,7 +122,7 @@ datum/unit_test/human_breath/check_result()
 //#define TOX       "tox"
 //#define OXY       "oxy"
 //#define CLONE     "clone"
-//#define HALLOSS   "halloss"
+//#define PAIN   "halloss"
 
 
 proc/create_test_mob_with_mind(var/turf/mobloc = null, var/mobtype = /mob/living/carbon/human, var/add_to_playerlist = FALSE)
@@ -164,15 +164,20 @@ proc/damage_check(var/mob/living/M, var/damage_type)
 			loss = M.getToxLoss()
 		if(OXY)
 			loss = M.getOxyLoss()
+			if(istype(M,/mob/living/carbon/human))
+				var/mob/living/carbon/human/H = M
+				var/obj/item/organ/internal/lungs/L = H.internal_organs_by_name["lungs"]
+				if(L)
+					loss = L.oxygen_deprivation
 		if(CLONE)
 			loss = M.getCloneLoss()
-		if(HALLOSS)
+		if(PAIN)
 			loss = M.getHalLoss()
 
 	if(!loss && istype(M, /mob/living/carbon/human))          // Revert IPC's when?
 		var/mob/living/carbon/human/H = M                 // IPC's have robot limbs which don't report damage to getXXXLoss()
 		if(istype(H.species, /datum/species/machine))     // So we have ot hard code this check or create a different one for them.
-			return 100 - H.health                     // TODO: Find better way to do this then hardcoding this formula
+			return H.species.total_health - H.health                     // TODO: Find better way to do this then hardcoding this formula
 
 	return loss
 
@@ -197,7 +202,7 @@ datum/unit_test/mob_damage
 	var/mob_type = /mob/living/carbon/human
 	var/expected_vulnerability = STANDARD
 	var/check_health = 0
-	var/damage_location = "chest"
+	var/damage_location = BP_CHEST
 
 datum/unit_test/mob_damage/start_test()
 	var/list/test = create_test_mob_with_mind(null, mob_type)
@@ -308,7 +313,7 @@ datum/unit_test/mob_damage/clone
 
 datum/unit_test/mob_damage/halloss
 	name = "MOB: Human Halloss damage check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 
 // =================================================================
 // Unathi
@@ -341,7 +346,7 @@ datum/unit_test/mob_damage/unathi/clone
 
 datum/unit_test/mob_damage/unathi/halloss
 	name = "MOB: Unathi Halloss Damage Check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 
 // =================================================================
 // SpessKahjit aka Tajaran
@@ -374,7 +379,7 @@ datum/unit_test/mob_damage/tajaran/clone
 
 datum/unit_test/mob_damage/tajaran/halloss
 	name = "MOB: Tajaran Halloss Damage Check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 
 // =================================================================
 // Skrell
@@ -406,41 +411,7 @@ datum/unit_test/mob_damage/skrell/clone
 
 datum/unit_test/mob_damage/skrell/halloss
 	name = "MOB: Skrell Halloss Damage Check"
-	damagetype = HALLOSS
-
-// =================================================================
-// Vox
-// =================================================================
-
-datum/unit_test/mob_damage/vox
-	name = "MOB: Vox damage check template"
-	mob_type = /mob/living/carbon/human/vox
-
-datum/unit_test/mob_damage/vox/brute
-	name = "MOB: Vox Brute Damage Check"
-	damagetype = BRUTE
-
-datum/unit_test/mob_damage/vox/fire
-	name = "MOB: Vox Fire Damage Check"
-	damagetype = BURN
-
-datum/unit_test/mob_damage/vox/tox
-	name = "MOB: Vox Toxins Damage Check"
-	damagetype = TOX
-
-datum/unit_test/mob_damage/vox/oxy
-	name = "MOB: Vox Oxygen Damage Check"
-	damagetype = OXY
-
-datum/unit_test/mob_damage/vox/clone
-	name = "MOB: Vox Clone Damage Check"
-	damagetype = CLONE
-	expected_vulnerability = IMMUNE
-
-
-datum/unit_test/mob_damage/vox/halloss
-	name = "MOB: Vox Halloss Damage Check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 
 // =================================================================
 // Diona
@@ -474,8 +445,8 @@ datum/unit_test/mob_damage/diona/clone
 
 datum/unit_test/mob_damage/diona/halloss
 	name = "MOB: Diona Halloss Damage Check"
-	damagetype = HALLOSS
-	expected_vulnerability = IMMUNE
+	damagetype = PAIN
+	expected_vulnerability = ARMORED
 
 // =================================================================
 // SPECIAL WHITTLE SNOWFLAKES aka IPC
@@ -512,7 +483,7 @@ datum/unit_test/mob_damage/machine/clone
 
 datum/unit_test/mob_damage/machine/halloss
 	name = "MOB: IPC Halloss Damage Check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 	expected_vulnerability = IMMUNE
 
 // =================================================================
@@ -549,7 +520,7 @@ datum/unit_test/mob_damage/vaurca/clone
 
 datum/unit_test/mob_damage/vaurca/halloss
 	name = "MOB: Vaurca Halloss Damage Check"
-	damagetype = HALLOSS
+	damagetype = PAIN
 
 // ==============================================================================
 
@@ -582,7 +553,6 @@ datum/unit_test/robot_module_icons/start_test()
 
 	return 1
 
-#undef VULNERABLE
 #undef IMMUNE
 #undef SUCCESS
 #undef FAILURE

@@ -13,20 +13,20 @@
 	var/mob/living/carbon/human/patient = null
 	var/mob/ignored = list() // Used by emag
 	var/last_newpatient_speak = 0
-	var/vocal = 1
+	var/message = null
+	var/speech = 0
 
 	//Healing vars
-	var/obj/item/weapon/reagent_containers/glass/reagent_glass = null //Can be set to draw from this for reagents.
+	var/obj/item/reagent_containers/glass/reagent_glass = null //Can be set to draw from this for reagents.
 	var/currently_healing = 0
-	var/injection_amount = 15 //How much reagent do we inject at a time?
+	var/injection_amount = 10 //How much reagent do we inject at a time?
 	var/heal_threshold = 10 //Start healing when they have this much damage in a category
 	var/use_beaker = 0 //Use reagents in beaker instead of default treatment agents.
-	var/treatment_brute = "tricordrazine"
-	var/treatment_oxy = "tricordrazine"
-	var/treatment_fire = "tricordrazine"
-	var/treatment_tox = "tricordrazine"
-	var/treatment_virus = "deltamivir"
-	var/treatment_emag = "toxin"
+	var/treatment_brute = /decl/reagent/tricordrazine
+	var/treatment_oxy = /decl/reagent/tricordrazine
+	var/treatment_fire = /decl/reagent/tricordrazine
+	var/treatment_tox = /decl/reagent/tricordrazine
+	var/treatment_emag = /decl/reagent/toxin
 	var/declare_treatment = 0 //When attempting to treat a patient, should it notify everyone wearing medhuds?
 
 
@@ -39,8 +39,7 @@
 	if(!on)
 		return
 
-	if(vocal && prob(1))
-		var/message = pick("Radar, put a mask on!", "There's always a catch, and it's the best there is.", "I knew it, I should've been a plastic surgeon.", "What kind of medbay is this? Everyone's dropping like dead flies.", "Delicious!")
+	if(speech && prob(1))
 		say(message)
 
 	if(patient)
@@ -69,12 +68,13 @@
 				if(last_newpatient_speak + 300 < world.time)
 					var/message = pick("Hey, [H.name]! Hold on, I'm coming.", "Wait [H.name]! I want to help!", "[H.name], you appear to be injured!")
 					say(message)
-					custom_emote(1, "points at [H.name].")
+					custom_emote(VISIBLE_MESSAGE, "points at [H.name].")
 					last_newpatient_speak = world.time
 				break
 
 /mob/living/bot/medbot/UnarmedAttack(var/mob/living/carbon/human/H, var/proximity)
-	if(!..())
+	. = ..()
+	if(!.)
 		return
 
 	if(!on)
@@ -84,6 +84,9 @@
 		return
 
 	if(H.stat == DEAD)
+		if(pAI)
+			to_chat(pAI.pai, SPAN_WARNING("\The [H] is dead, you cannot help them now."))
+			return
 		var/death_message = pick("No! NO!", "Live, damnit! LIVE!", "I... I've never lost a patient before. Not today, I mean.")
 		say(death_message)
 		patient = null
@@ -102,7 +105,7 @@
 		var/area/location = get_area(src)
 		broadcast_medical_hud_message("[src] is treating <b>[H]</b> in <b>[location]</b>", src)
 	currently_healing = 1
-	update_icons()
+	update_icon()
 	if(do_mob(src, H, 30))
 		if(t == 1)
 			reagent_glass.reagents.trans_to_mob(H, injection_amount, CHEM_BLOOD)
@@ -110,9 +113,9 @@
 			H.reagents.add_reagent(t, injection_amount)
 		visible_message("<span class='warning'>[src] injects [H] with the syringe!</span>")
 	currently_healing = 0
-	update_icons()
+	update_icon()
 
-/mob/living/bot/medbot/update_icons()
+/mob/living/bot/medbot/update_icon()
 	cut_overlays()
 	if(skin)
 		add_overlay("medskin_[skin]")
@@ -126,8 +129,7 @@
 		to_chat(user, "<span class='warning'>The unit's interface refuses to unlock!</span>")
 		return
 
-	var/dat
-	dat += "<TT><B>Automatic Medical Unit v1.1</B></TT><BR><BR>"
+	var/dat = ""
 	dat += "Status: <A href='?src=\ref[src];power=1'>[on ? "On" : "Off"]</A><BR>"
 	dat += "Maintenance panel is [open ? "opened" : "closed"]<BR>"
 	dat += "Beaker: "
@@ -155,15 +157,15 @@
 		dat += "<a href='?src=\ref[src];use_beaker=1'>[use_beaker ? "Loaded Beaker (When available)" : "Internal Synthesizer"]</a><br>"
 
 		dat += "Treatment report is [declare_treatment ? "on" : "off"]. <a href='?src=\ref[src];declaretreatment=[1]'>Toggle</a><br>"
+		dat += "The speaker switch is [speech ? "on" : "off"]. <a href='?src=\ref[src];speaker=[1]'>Toggle</a><br>"
+		dat += "Message is [message ? message : "unset"]. <a href='?src=\ref[src];msg=[1]'>Set</a><br>"
 
-		dat += "The speaker switch is [vocal ? "on" : "off"]. <a href='?src=\ref[src];togglevoice=[1]'>Toggle</a><br>"
-
-	user << browse("<HEAD><TITLE>Medibot v1.1 controls</TITLE></HEAD>[dat]", "window=automed")
-	onclose(user, "automed")
-	return
+	var/datum/browser/bot_win = new(user, "automed", "Automatic Medibot v1.2 Controls")
+	bot_win.set_content(dat)
+	bot_win.open()
 
 /mob/living/bot/medbot/attackby(var/obj/item/O, var/mob/user)
-	if(istype(O, /obj/item/weapon/reagent_containers/glass))
+	if(istype(O, /obj/item/reagent_containers/glass))
 		if(locked)
 			to_chat(user, "<span class='notice'>You cannot insert a beaker because the panel is locked.</span>")
 			return
@@ -220,11 +222,18 @@
 		else
 			to_chat(usr, "<span class='notice'>You cannot eject the beaker because the panel is locked.</span>")
 
-	else if (href_list["togglevoice"] && (!locked || issilicon(usr)))
-		vocal = !vocal
-
 	else if (href_list["declaretreatment"] && (!locked || issilicon(usr)))
 		declare_treatment = !declare_treatment
+
+	else if (href_list["msg"] && (!locked || issilicon(usr)))
+		var/I = sanitize(input(usr,"What will this medbot say?", "Set Message") as text|null)
+		if(!I)
+			return
+		message = I
+		speech = 1
+
+	else if (href_list["speaker"] && (!locked || issilicon(usr)))
+		speech = !speech
 
 	attack_hand(usr)
 	return
@@ -240,7 +249,7 @@
 		currently_healing = 0
 		emagged = 1
 		on = 1
-		update_icons()
+		update_icon()
 		. = 1
 	ignored |= user
 
@@ -249,7 +258,7 @@
 	visible_message("<span class='danger'>[src] blows apart!</span>")
 	var/turf/Tsec = get_turf(src)
 
-	new /obj/item/weapon/storage/firstaid(Tsec)
+	new /obj/item/storage/firstaid(Tsec)
 	new /obj/item/device/assembly/prox_sensor(Tsec)
 	new /obj/item/device/healthanalyzer(Tsec)
 	if (prob(50))
@@ -285,9 +294,10 @@
 
 	// If they're injured, we're using a beaker, and they don't have on of the chems in the beaker
 	if(reagent_glass && use_beaker && ((H.getBruteLoss() >= heal_threshold) || (H.getToxLoss() >= heal_threshold) || (H.getToxLoss() >= heal_threshold) || (H.getOxyLoss() >= (heal_threshold + 15))))
-		for(var/datum/reagent/R in reagent_glass.reagents.reagent_list)
+		for(var/_R in reagent_glass.reagents.reagent_volumes)
+			var/decl/reagent/R = decls_repository.get_decl(_R)
 			if(!H.reagents.has_reagent(R))
-				return 1
+				return TRUE
 			continue
 
 	if((H.getBruteLoss() >= heal_threshold) && (!H.reagents.has_reagent(treatment_brute)))
@@ -302,13 +312,9 @@
 	if((H.getToxLoss() >= heal_threshold) && (!H.reagents.has_reagent(treatment_tox)))
 		return treatment_tox
 
-	for(var/datum/disease2/disease/D in H.virus2)
-		if (!H.reagents.has_reagent(treatment_virus))
-			return treatment_virus // STOP DISEASE FOREVER
-
 /* Construction */
 
-/obj/item/weapon/storage/firstaid/attackby(var/obj/item/robot_parts/S, mob/user as mob)
+/obj/item/storage/firstaid/attackby(var/obj/item/robot_parts/S, mob/user as mob)
 	if ((!istype(S, /obj/item/robot_parts/l_arm)) && (!istype(S, /obj/item/robot_parts/r_arm)))
 		..()
 		return
@@ -317,20 +323,23 @@
 		to_chat(user, "<span class='notice'>You need to empty [src] out first.</span>")
 		return
 
-	var/obj/item/weapon/firstaid_arm_assembly/A = new /obj/item/weapon/firstaid_arm_assembly
-	if(istype(src, /obj/item/weapon/storage/firstaid/fire))
+	var/obj/item/firstaid_arm_assembly/A = new /obj/item/firstaid_arm_assembly
+	if(istype(src, /obj/item/storage/firstaid/fire))
 		A.skin = "ointment"
-	else if(istype(src, /obj/item/weapon/storage/firstaid/toxin))
+	else if(istype(src, /obj/item/storage/firstaid/toxin))
 		A.skin = "tox"
-	else if(istype(src, /obj/item/weapon/storage/firstaid/o2))
+	else if(istype(src, /obj/item/storage/firstaid/o2))
 		A.skin = "o2"
+
+	if(A.skin)
+		A.add_overlay("kit_skin_[A.skin]")
 
 	qdel(S)
 	user.put_in_hands(A)
 	to_chat(user, "<span class='notice'>You add the robot arm to the first aid kit.</span>")
 	qdel(src)
 
-/obj/item/weapon/firstaid_arm_assembly
+/obj/item/firstaid_arm_assembly
 	name = "first aid/robot arm assembly"
 	desc = "A first aid kit with a robot arm permanently grafted to it."
 	icon = 'icons/obj/aibots.dmi'
@@ -338,16 +347,11 @@
 	var/build_step = 0
 	var/created_name = "Medibot" //To preserve the name if it's a unique medbot I guess
 	var/skin = null //Same as medbot, set to tox or ointment for the respective kits.
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 
-/obj/item/weapon/firstaid_arm_assembly/Initialize()
-	. = ..()
-	if(skin)
-		add_overlay("kit_skin_[skin]")
-
-/obj/item/weapon/firstaid_arm_assembly/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/item/firstaid_arm_assembly/attackby(obj/item/W as obj, mob/user as mob)
 	..()
-	if(istype(W, /obj/item/weapon/pen))
+	if(W.ispen())
 		var/t = sanitizeSafe(input(user, "Enter new robot name", name, created_name), MAX_NAME_LEN)
 		if(!t)
 			return
@@ -375,5 +379,6 @@
 					var/mob/living/bot/medbot/S = new /mob/living/bot/medbot(T)
 					S.skin = skin
 					S.name = created_name
+					S.update_icon()
 					qdel(src)
 					return 1

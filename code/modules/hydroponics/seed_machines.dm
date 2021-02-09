@@ -1,19 +1,19 @@
-/obj/item/weapon/disk/botany
+/obj/item/disk/botany
 	name = "flora data disk"
 	desc = "A small disk used for carrying data on plant genetics."
 	icon = 'icons/obj/hydroponics_machines.dmi'
 	icon_state = "disk"
-	w_class = 1.0
+	w_class = ITEMSIZE_TINY
 
 	var/list/genes = list()
 	var/genesource = "unknown"
 
-/obj/item/weapon/disk/botany/New()
+/obj/item/disk/botany/New()
 	..()
 	pixel_x = rand(-5,5)
 	pixel_y = rand(-5,5)
 
-/obj/item/weapon/disk/botany/attack_self(var/mob/user as mob)
+/obj/item/disk/botany/attack_self(var/mob/user as mob)
 	if(genes.len)
 		var/choice = alert(user, "Are you sure you want to wipe the disk?", "Xenobotany Data", "No", "Yes")
 		if(src && user && genes && choice && choice == "Yes" && user.Adjacent(get_turf(src)))
@@ -23,14 +23,14 @@
 			genes = list()
 			genesource = "unknown"
 
-/obj/item/weapon/storage/box/botanydisk
+/obj/item/storage/box/botanydisk
 	name = "flora disk box"
 	desc = "A box of flora data disks, apparently."
 
-/obj/item/weapon/storage/box/botanydisk/fill()
+/obj/item/storage/box/botanydisk/fill()
 	..()
 	for(var/i = 0;i<7;i++)
-		new /obj/item/weapon/disk/botany(src)
+		new /obj/item/disk/botany(src)
 
 /obj/machinery/botany
 	icon = 'icons/obj/hydroponics_machines.dmi'
@@ -40,7 +40,7 @@
 	use_power = 1
 
 	var/obj/item/seeds/seed // Currently loaded seed packet.
-	var/obj/item/weapon/disk/botany/loaded_disk //Currently loaded data disk.
+	var/obj/item/disk/botany/loaded_disk //Currently loaded data disk.
 
 	var/open = 0
 	var/active = 0
@@ -59,6 +59,8 @@
 		finished_task()
 
 /obj/machinery/botany/attack_ai(mob/user as mob)
+	if(!ai_can_interact(user))
+		return
 	return attack_hand(user)
 
 /obj/machinery/botany/attack_hand(mob/user as mob)
@@ -68,18 +70,18 @@
 	active = 0
 	if(failed_task)
 		failed_task = 0
-		visible_message("\icon[src] [src] pings unhappily, flashing a red warning light.")
+		visible_message("[icon2html(src, viewers(get_turf(src)))] [src] pings unhappily, flashing a red warning light.")
 	else
-		visible_message("\icon[src] [src] pings happily.")
+		visible_message("[icon2html(src, viewers(get_turf(src)))] [src] pings happily.")
 
 	if(eject_disk)
 		eject_disk = 0
 		if(loaded_disk)
 			loaded_disk.forceMove(get_turf(src))
-			visible_message("\icon[src] [src] beeps and spits out [loaded_disk].")
+			visible_message("[icon2html(src, viewers(get_turf(src)))] [src] beeps and spits out [loaded_disk].")
 			loaded_disk = null
 
-/obj/machinery/botany/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/machinery/botany/attackby(obj/item/W as obj, mob/user as mob)
 	if(istype(W,/obj/item/seeds))
 		if(seed)
 			to_chat(user, "There is already a seed loaded.")
@@ -103,12 +105,12 @@
 			dismantle()
 			return
 
-	if(istype(W,/obj/item/weapon/disk/botany))
+	if(istype(W,/obj/item/disk/botany))
 		if(loaded_disk)
 			to_chat(user, "There is already a data disk loaded.")
 			return
 		else
-			var/obj/item/weapon/disk/botany/B = W
+			var/obj/item/disk/botany/B = W
 
 			if(B.genes && B.genes.len)
 				if(!disk_needs_genes)
@@ -190,14 +192,14 @@
 			SSplants.seeds[seed.seed.name] = seed.seed
 
 		seed.update_seed()
-		visible_message("\icon[src] [src] beeps and spits out [seed].")
+		visible_message("[icon2html(src, viewers(get_turf(src)))] [src] beeps and spits out [seed].")
 
 		seed = null
 
 	if(href_list["eject_disk"])
 		if(!loaded_disk) return
 		loaded_disk.forceMove(get_turf(src))
-		visible_message("\icon[src] [src] beeps and spits out [loaded_disk].")
+		visible_message("[icon2html(src, viewers(get_turf(src)))] [src] beeps and spits out [loaded_disk].")
 		loaded_disk = null
 
 	usr.set_machine(src)

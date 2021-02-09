@@ -3,7 +3,7 @@
 	desc = "It looks like it was tailored for a monkey."
 	icon_state = "punpun"
 	worn_state = "punpun"
-	species_restricted = list("Monkey")
+	species_restricted = list(BODYTYPE_MONKEY)
 
 /mob/living/carbon/human/monkey/punpun/Initialize()
 	..()
@@ -12,6 +12,7 @@
 /mob/living/carbon/human/monkey/punpun/LateInitialize()
 	name = "Pun Pun"
 	real_name = name
+	named = TRUE
 	w_uniform = new /obj/item/clothing/under/punpun(src)
 
 /obj/item/clothing/under/nupnup
@@ -19,7 +20,7 @@
 	desc = "The uniform of Nup Nup, the Christmas monkey."
 	icon_state = "punpun"
 	worn_state = "nupnup"
-	species_restricted = list("Monkey")
+	species_restricted = list(BODYTYPE_MONKEY)
 
 /mob/living/carbon/human/monkey/nupnup/Initialize()
 	..()

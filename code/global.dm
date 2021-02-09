@@ -1,6 +1,6 @@
 //#define TESTING
-#if DM_VERSION < 512
-#error Your version of BYOND is too old to compile the code. At least BYOND 512 is required.
+#if DM_VERSION < 513
+#error Your version of BYOND is too old to compile the code. At least BYOND 513 is required.
 #endif
 
 
@@ -40,6 +40,7 @@ var/host = null //only here until check @ code\modules\ghosttrap\trap.dm:112 is 
 var/list/jobMax        = list()
 var/list/bombers       = list()
 var/list/admin_log     = list()
+var/list/signal_log    = list()
 var/list/lastsignalers = list() // Keeps last 100 signals here in format: "[src] used \ref[src] @ location [src.loc]: [freq]/[code]"
 var/list/lawchanges    = list() // Stores who uploaded laws to which silicon-based lifeform, and what the law was.
 var/list/reg_dna       = list()
@@ -49,12 +50,13 @@ var/list/wizardstart     = list()
 var/turf/newplayer_start = null
 
 //Spawnpoints.
-var/list/latejoin          = list()
-var/list/latejoin_gateway  = list()
-var/list/latejoin_cryo     = list()
-var/list/latejoin_cyborg   = list()
-var/list/latejoin_merchant = list()
-var/list/kickoffsloc = list()
+var/list/latejoin              = list()
+var/list/latejoin_gateway      = list()
+var/list/latejoin_cryo         = list()
+var/list/latejoin_cryo_command = list()
+var/list/latejoin_cyborg       = list()
+var/list/latejoin_merchant     = list()
+var/list/kickoffsloc           = list()
 
 var/list/prisonwarp         = list() // Prisoners go to these
 var/list/holdingfacility    = list() // Captured people go here
@@ -90,8 +92,6 @@ var/datum/debug/debugobj
 var/datum/moduletypes/mods = new()
 
 var/gravity_is_on = 1
-
-var/datum/server_greeting/server_greeting = null
 
 var/list/awaydestinations = list() // Away missions. A list of landmarks that the warpgate can take you to.
 
@@ -131,11 +131,11 @@ var/static/list/scarySounds = list(
 	'sound/voice/hiss4.ogg',
 	'sound/voice/hiss5.ogg',
 	'sound/voice/hiss6.ogg',
-	'sound/effects/Glassbr1.ogg',
-	'sound/effects/Glassbr2.ogg',
-	'sound/effects/Glassbr3.ogg',
-	'sound/items/Welder.ogg',
-	'sound/items/Welder2.ogg',
+	'sound/effects/glass_break1.ogg',
+	'sound/effects/glass_break2.ogg',
+	'sound/effects/glass_break3.ogg',
+	'sound/items/welder.ogg',
+	'sound/items/welder_pry.ogg',
 	'sound/machines/airlock.ogg',
 	'sound/effects/clownstep1.ogg',
 	'sound/effects/clownstep2.ogg'
@@ -147,7 +147,17 @@ var/max_explosion_range = 14
 // Announcer intercom, because too much stuff creates an intercom for one message then hard del()s it.
 var/global/obj/item/device/radio/intercom/global_announcer = new(null)
 
-var/list/station_departments = list("Command", "Medical", "Engineering", "Science", "Security", "Cargo", "Civilian")
+// the number next to it denotes how much money the department receives when its account is generated
+var/list/department_funds = list(
+	"Command" = 10000,
+	"Medical" = 10000,
+	"Engineering" = 10000,
+	"Science" = 10000,
+	"Security" = 10000,
+	"Cargo" = 5000,
+	"Civilian" = 10000,
+	"Vendor" = 0
+	)
 
 //List of exosuit tracking beacons, to save performance
 var/global/list/exo_beacons = list()

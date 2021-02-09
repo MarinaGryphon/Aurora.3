@@ -3,8 +3,8 @@
 	name = "queen bee packet"
 	desc = "Place her into an apiary so she can get busy."
 	icon = 'icons/obj/seeds.dmi'
-	icon_state = "seed-kudzu"
-	w_class = 1
+	icon_state = "vine2"
+	w_class = ITEMSIZE_TINY
 
 
 
@@ -13,7 +13,7 @@
 	icon = 'icons/obj/apiary_bees_etc.dmi'
 	icon_state = "apiary_item"
 	item_state = "giftbag"
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 
 /obj/item/beezeez
 	name = "bottle of BeezEez"
@@ -23,31 +23,21 @@
 		src.pixel_x = rand(-5.0, 5)
 		src.pixel_y = rand(-5.0, 5)
 
-/obj/item/weapon/reagent_containers/food/snacks/honeycomb
+/obj/item/reagent_containers/food/snacks/honeycomb
 	name = "honeycomb"
 	icon_state = "honeycomb"
 	desc = "Dripping with sugary sweetness."
-
-	New()
-		..()
-
-/obj/item/weapon/reagent_containers/food/snacks/honeycomb/Initialize()
-	. = ..()
-	reagents.add_reagent("honey",10)
-	reagents.add_reagent("nutriment", 0.5)
-	reagents.add_reagent("sugar", 2)
+	reagents_to_add = list(
+		/decl/reagent/nutriment/honey = 10,
+		/decl/reagent/nutriment = 0.5,
+		/decl/reagent/sugar = 2
+	)
 	bitesize = 2
 
-/datum/reagent/honey
-	name = "Honey"
-	id = "honey"
-	description = "A golden yellow syrup, loaded with sugary sweetness."
-	color = "#FFFF00"
-	fallback_specific_heat = 0.75
-
-/obj/item/weapon/book/manual/hydroponics_beekeeping
+/obj/item/book/manual/hydroponics_beekeeping
 	name = "The Ins and Outs of Apiculture - A Precise Art"
-	icon_state ="bookHydroponicsBees"
+	icon_state ="bookbee"
+	icon_state ="book8"
 	author = "Beekeeper Dave"
 	title = "The Ins and Outs of Apiculture - A Precise Art"
 	dat = {"<html>

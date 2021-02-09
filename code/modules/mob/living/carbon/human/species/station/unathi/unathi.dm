@@ -1,11 +1,13 @@
 /datum/species/unathi
-	name = "Unathi"
+	name = SPECIES_UNATHI
 	short_name = "una"
 	name_plural = "Unathi"
-	bodytype = "Unathi"
+	category_name = "Unathi"
+	bodytype = BODYTYPE_UNATHI
 	icobase = 'icons/mob/human_races/unathi/r_lizard.dmi'
 	deform = 'icons/mob/human_races/unathi/r_def_lizard.dmi'
 	preview_icon = 'icons/mob/human_races/unathi/unathi_preview.dmi'
+	bandages_icon = 'icons/mob/bandage.dmi'
 	tail = "sogtail"
 	tail_animation = 'icons/mob/species/unathi/tail.dmi'
 	unarmed_types = list(
@@ -14,13 +16,17 @@
 		/datum/unarmed_attack/claws,
 		/datum/unarmed_attack/bite/sharp
 	)
-	primitive_form = "Stok"
+	primitive_form = SPECIES_MONKEY_UNATHI
 	darksight = 3
-	gluttonous = 1
+	gluttonous = GLUT_MESSY
+	stomach_capacity = 7
 	slowdown = 0.5
+
 	brute_mod = 0.8
-	grab_mod = 0.75
 	fall_mod = 1.2
+	grab_mod = 1.25 // Huge, usually have horns
+	resist_mod = 2.5 // Arguably our strongest organic species
+
 	ethanol_resistance = 0.4
 	taste_sensitivity = TASTE_SENSITIVE
 	economic_modifier = 7
@@ -28,13 +34,16 @@
 	num_alternate_languages = 2
 	secondary_langs = list(LANGUAGE_UNATHI, LANGUAGE_AZAZIBA)
 	name_language = LANGUAGE_UNATHI
+
 	stamina	=	120			  // Unathi have the shortest but fastest sprint of all
-	sprint_speed_factor = 3.2
 	stamina_recovery = 5
+
 	sprint_cost_factor = 1.45
+	sprint_speed_factor = 3.2
 	exhaust_threshold = 65
+
 	rarity_value = 3
-	breakcuffs = list(MALE)
+	break_cuffs = TRUE
 	mob_size = 10
 	climb_coeff = 1.35
 
@@ -55,8 +64,7 @@
 	heat_level_3 = 1100 //Default 1000
 
 	inherent_verbs = list(
-		/mob/living/proc/devour,
-		/mob/living/carbon/human/proc/regurgitate
+		/mob/living/carbon/human/proc/tongue_flick
 	)
 
 
@@ -82,13 +90,29 @@
 		"Your scales bristle against the cold."
 		)
 
+	pain_emotes_with_pain_level = list(
+			list(/decl/emote/audible/wheeze, /decl/emote/audible/roar, /decl/emote/audible/bellow) = 80,
+			list(/decl/emote/audible/grunt, /decl/emote/audible/groan, /decl/emote/audible/wheeze, /decl/emote/audible/hiss) = 50,
+			list(/decl/emote/audible/grunt, /decl/emote/audible/groan, /decl/emote/audible/hiss) = 20,
+		)
+
+	pain_messages = list("It hurts so much", "You really need some painkillers", "Ancestors, it hurts")
+
 	move_trail = /obj/effect/decal/cleanable/blood/tracks/claw
 
-	allowed_citizenships = list(CITIZENSHIP_IZWESKI, CITIZENSHIP_DOMINIA, CITIZENSHIP_BIESEL, CITIZENSHIP_SOL, CITIZENSHIP_FRONTIER, CITIZENSHIP_ELYRA, CITIZENSHIP_ERIDANI)
-	allowed_religions = list(RELIGION_THAKH, RELIGION_SKAKH, RELIGION_AUTAKH, RELIGION_MOROZ, RELIGION_NONE, RELIGION_OTHER, RELIGION_CHRISTIANITY, RELIGION_ISLAM)
+	allowed_citizenships = list(CITIZENSHIP_IZWESKI, CITIZENSHIP_DOMINIA, CITIZENSHIP_BIESEL, CITIZENSHIP_SOL, CITIZENSHIP_COALITION, CITIZENSHIP_ELYRA, CITIZENSHIP_ERIDANI)
+	allowed_religions = list(RELIGION_THAKH, RELIGION_SKAKH, RELIGION_SIAKH, RELIGION_AUTAKH, RELIGION_MOROZ, RELIGION_NONE, RELIGION_OTHER, RELIGION_CHRISTIANITY, RELIGION_ISLAM)
+	default_citizenship = CITIZENSHIP_IZWESKI
 
-/datum/species/unathi/before_equip(var/mob/living/carbon/human/H)
+	zombie_type = SPECIES_ZOMBIE_UNATHI
+
+	default_accent = ACCENT_HEGEMON_PEASANT
+	allowed_accents = list(ACCENT_HEGEMON_NOBLE, ACCENT_HEGEMON_PEASANT, ACCENT_TRAD_NOBLE, ACCENT_TRAD_PEASANT, ACCENT_WASTELAND, ACCENT_DOMINIA_HIGH, ACCENT_DOMINIA_VULGAR)
+
+/datum/species/unathi/after_equip(var/mob/living/carbon/human/H)
 	. = ..()
+	if(H.shoes)
+		return
 	var/obj/item/clothing/shoes/sandal/S = new /obj/item/clothing/shoes/sandal(H)
 	if(H.equip_to_slot_or_del(S,slot_shoes))
-		S.autodrobe_no_remove = 1
+		S.autodrobe_no_remove = TRUE

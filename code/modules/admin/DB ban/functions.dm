@@ -64,7 +64,7 @@
 			ip = query.item[3]
 	if(!validckey)
 		if(!banned_mob || (banned_mob && !IsGuestKey(banned_mob.key)))
-			message_admins("<font color='red'>[key_name_admin(usr)] attempted to ban [ckey], but [ckey] has not been seen yet. Please only ban actual players.</font>",1)
+			message_admins("<span class='warning'>[key_name_admin(usr)] attempted to ban [ckey], but [ckey] has not been seen yet. Please only ban actual players.</span>",1)
 			return
 
 	var/a_ckey
@@ -98,7 +98,7 @@
 
 	reason = sql_sanitize_text(reason)
 
-	var/sql = "INSERT INTO ss13_ban (`id`,`bantime`,`serverip`,`bantype`,`reason`,`job`,`duration`,`rounds`,`expiration_time`,`ckey`,`computerid`,`ip`,`a_ckey`,`a_computerid`,`a_ip`,`who`,`adminwho`,`edits`,`unbanned`,`unbanned_datetime`,`unbanned_ckey`,`unbanned_computerid`,`unbanned_ip`) VALUES (null, Now(), '[serverip]', '[bantype_str]', '[reason]', '[job]', [(duration)?"[duration]":"0"], [(rounds)?"[rounds]":"0"], Now() + INTERVAL [(duration>0) ? duration : 0] MINUTE, '[ckey]', '[computerid]', '[ip]', '[a_ckey]', '[a_computerid]', '[a_ip]', '[who]', '[adminwho]', '', null, null, null, null, null)"
+	var/sql = "INSERT INTO ss13_ban (`id`,`bantime`,`serverip`,`game_id`,`bantype`,`reason`,`job`,`duration`,`rounds`,`expiration_time`,`ckey`,`computerid`,`ip`,`a_ckey`,`a_computerid`,`a_ip`,`who`,`adminwho`,`edits`,`unbanned`,`unbanned_datetime`,`unbanned_ckey`,`unbanned_computerid`,`unbanned_ip`) VALUES (null, Now(), '[serverip]', '[game_id]','[bantype_str]', '[reason]', '[job]', [(duration)?"[duration]":"0"], [(rounds)?"[rounds]":"0"], Now() + INTERVAL [(duration>0) ? duration : 0] MINUTE, '[ckey]', '[computerid]', '[ip]', '[a_ckey]', '[a_computerid]', '[a_ip]', '[who]', '[adminwho]', '', null, null, null, null, null)"
 	var/DBQuery/query_insert = dbcon.NewQuery(sql)
 	query_insert.Execute()
 	to_chat(usr, "<span class='notice'>Ban saved to database.</span>")
@@ -411,13 +411,13 @@
 					cidsearch  = "AND computerid = '[playercid]' "
 					mirror_cid = "AND mirrors.computerid = '[playercid]'"
 			else
-				if(adminckey && lentext(adminckey) >= 3)
+				if(adminckey && length(adminckey) >= 3)
 					adminsearch = "AND a_ckey LIKE '[adminckey]%' "
-				if(playerckey && lentext(playerckey) >= 3)
+				if(playerckey && length(playerckey) >= 3)
 					playersearch = "AND ckey LIKE '[playerckey]%' "
-				if(playerip && lentext(playerip) >= 3)
+				if(playerip && length(playerip) >= 3)
 					ipsearch  = "AND ip LIKE '[playerip]%' "
-				if(playercid && lentext(playercid) >= 7)
+				if(playercid && length(playercid) >= 7)
 					cidsearch  = "AND computerid LIKE '[playercid]%' "
 
 			if(dbbantype)
@@ -507,7 +507,7 @@
 				var/typedesc =""
 				switch(bantype)
 					if("PERMABAN")
-						typedesc = "<font color='red'><b>PERMABAN</b></font>"
+						typedesc = "<span class='warning'><b>PERMABAN</b></span>"
 					if("TEMPBAN")
 						typedesc = "<b>TEMPBAN</b><br><font size='2'>([duration] minutes) [(unbanned || auto) ? "" : "(<a href=\"byond://?src=\ref[src];dbbanedit=duration;dbbanid=[banid]\">Edit</a>)"]<br>Expires [expiration]</font>"
 					if("JOB_PERMABAN")

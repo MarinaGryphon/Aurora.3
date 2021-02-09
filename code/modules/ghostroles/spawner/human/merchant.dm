@@ -10,9 +10,8 @@
 	max_count = 1
 
 	//Vars related to human mobs
-	outfit = /datum/outfit/job/merchant/assistant
-	possible_species = list("Human","Skrell","Tajara","Unathi")
-	possible_genders = list(MALE,FEMALE)
+	outfit = /datum/outfit/merchant_assistant
+	possible_species = list(SPECIES_HUMAN, SPECIES_HUMAN_OFFWORLD, SPECIES_TAJARA, SPECIES_TAJARA, SPECIES_TAJARA_MSAI, SPECIES_TAJARA_ZHAN, SPECIES_SKRELL, SPECIES_UNATHI, SPECIES_VAURCA_WARRIOR, SPECIES_VAURCA_WORKER, SPECIES_IPC, SPECIES_IPC_G1, SPECIES_IPC_G2, SPECIES_IPC_XION, SPECIES_IPC_ZENGHU, SPECIES_IPC_BISHOP, SPECIES_IPC_SHELL, SPECIES_DIONA)
 	allow_appearance_change = APPEARANCE_PLASTICSURGERY
 
 	assigned_role = "Merchants Assistant"

@@ -6,6 +6,8 @@
 	var/list/valid_species = list()
 	var/list/valid_hairstyles = list()
 	var/list/valid_facial_hairstyles = list()
+	var/list/valid_accents = list()
+	var/list/valid_languages = list()
 
 	var/check_whitelist
 	var/list/whitelist
@@ -34,9 +36,9 @@
 				return 1
 	if(href_list["skin_tone"])
 		if(can_change_skin_tone())
-			var/new_s_tone = input(usr, "Choose your character's skin-tone:\n(Light 1 - 220 Dark)", "Skin Tone", -owner.s_tone + 35) as num|null
+			var/new_s_tone = input(usr, "Choose your character's skin-tone:\n(Light 30 - 220 Dark)", "Skin Tone", -owner.s_tone + 35) as num|null
 			if(isnum(new_s_tone) && can_still_topic(state))
-				new_s_tone = 35 - max(min( round(new_s_tone), 220),1)
+				new_s_tone = 35 - max(min( round(new_s_tone), 220),30)
 				return owner.change_skin_tone(new_s_tone)
 	if(href_list["skin_color"])
 		if(can_change_skin_color())
@@ -45,6 +47,17 @@
 				var/r_skin = hex2num(copytext(new_skin, 2, 4))
 				var/g_skin = hex2num(copytext(new_skin, 4, 6))
 				var/b_skin = hex2num(copytext(new_skin, 6, 8))
+				if(owner.change_skin_color(r_skin, g_skin, b_skin))
+					update_dna()
+					return 1
+	if(href_list["skin_preset"])
+		if(can_change_skin_preset())
+			var/new_preset = input(usr, "Choose your character's body color preset:", "Character Preference", rgb(owner.r_skin, owner.g_skin, owner.b_skin)) as null|anything in owner.species.character_color_presets
+			if(new_preset && can_still_topic(state))
+				new_preset = owner.species.character_color_presets[new_preset]
+				var/r_skin = GetRedPart(new_preset)
+				var/g_skin = GetGreenPart(new_preset)
+				var/b_skin = GetBluePart(new_preset)
 				if(owner.change_skin_color(r_skin, g_skin, b_skin))
 					update_dna()
 					return 1
@@ -88,6 +101,16 @@
 				if(owner.change_eye_color(r_eyes, g_eyes, b_eyes))
 					update_dna()
 					return 1
+	if(href_list["accent"])
+		if(can_change(APPEARANCE_ACCENT) && (href_list["accent"] in valid_accents))
+			if(owner.set_accent(href_list["accent"]))
+				cut_and_generate_data()
+			return 1
+	if(href_list["language"])
+		if(can_change(APPEARANCE_LANGUAGE) && (href_list["language"] in valid_languages))
+			if(owner.add_or_remove_language(href_list["language"]))
+				cut_and_generate_data()
+			return 1
 
 	return 0
 
@@ -102,18 +125,38 @@
 	data["gender"] = owner.gender
 	data["change_race"] = can_change(APPEARANCE_RACE)
 	if(data["change_race"])
-		var/species[0]
+		var/list/species = list()
 		for(var/specimen in valid_species)
-			species[++species.len] =  list("specimen" = specimen)
+			species[++species.len] = list("specimen" = specimen)
 		data["species"] = species
 
 	data["change_gender"] = can_change(APPEARANCE_GENDER)
+	data["accent"] = owner.accent
+	data["change_accent"] = can_change(APPEARANCE_GENDER)
+	if(data["change_accent"])
+		var/list/accents = list()
+		for(var/accent in valid_accents)
+			accents[++accents.len] = list("accent" = accent)
+		data["accents"] = accents
+
+	var/list/owner_languages = list()
+	for(var/datum/language/L in owner.languages)
+		owner_languages += L.name
+	data["owner_languages"] = owner_languages
+	data["change_language"] = can_change(APPEARANCE_GENDER)
+	if(data["change_language"])
+		var/list/languages = list()
+		for(var/language in valid_languages)
+			languages[++languages.len] = list("language" = language)
+		data["languages"] = languages
+
 	data["change_skin_tone"] = can_change_skin_tone()
 	data["change_skin_color"] = can_change_skin_color()
+	data["change_skin_preset"] = can_change_skin_preset()
 	data["change_eye_color"] = can_change(APPEARANCE_EYE_COLOR)
 	data["change_hair"] = can_change(APPEARANCE_HAIR)
 	if(data["change_hair"])
-		var/hair_styles[0]
+		var/list/hair_styles = list()
 		for(var/hair_style in valid_hairstyles)
 			hair_styles[++hair_styles.len] = list("hairstyle" = hair_style)
 		data["hair_styles"] = hair_styles
@@ -121,7 +164,7 @@
 
 	data["change_facial_hair"] = can_change(APPEARANCE_FACIAL_HAIR)
 	if(data["change_facial_hair"])
-		var/facial_hair_styles[0]
+		var/list/facial_hair_styles = list()
 		for(var/facial_hair_style in valid_facial_hairstyles)
 			facial_hair_styles[++facial_hair_styles.len] = list("facialhairstyle" = facial_hair_style)
 		data["facial_hair_styles"] = facial_hair_styles
@@ -149,17 +192,26 @@
 /datum/nano_module/appearance_changer/proc/can_change_skin_color()
 	return owner && (flags & APPEARANCE_SKIN) && owner.species.appearance_flags & HAS_SKIN_COLOR
 
+/datum/nano_module/appearance_changer/proc/can_change_skin_preset()
+	return owner && (flags & APPEARANCE_SKIN) && owner.species.appearance_flags & HAS_SKIN_PRESET
+
 /datum/nano_module/appearance_changer/proc/cut_and_generate_data()
 	// Making the assumption that the available species remain constant
 	valid_facial_hairstyles.Cut()
 	valid_facial_hairstyles.Cut()
+	valid_accents.Cut()
+	valid_languages.Cut()
 	generate_data()
 
 /datum/nano_module/appearance_changer/proc/generate_data()
 	if(!owner)
 		return
-	if(!valid_species.len)
+	if(!length(valid_species))
 		valid_species = owner.generate_valid_species(check_whitelist, whitelist, blacklist)
-	if(!valid_hairstyles.len || !valid_facial_hairstyles.len)
-		valid_hairstyles = owner.generate_valid_hairstyles(check_gender = 0)
+	if(!length(valid_hairstyles) || !length(valid_facial_hairstyles))
+		valid_hairstyles = owner.generate_valid_hairstyles(check_gender = 1)
 		valid_facial_hairstyles = owner.generate_valid_facial_hairstyles()
+	if(!length(valid_accents))
+		valid_accents = owner.generate_valid_accent()
+	if(!length(valid_languages))
+		valid_languages = owner.generate_valid_languages()

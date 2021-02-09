@@ -56,14 +56,14 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 			continue
 		if(amount && send_count >= amount)
 			break
-		if(!machine.loc.z in listening_level)
+		if(!(machine.loc.z in listening_level))
 			if(long_range_link == 0 && machine.long_range_link == 0)
 				continue
 		// If we're sending a copy, be sure to create the copy for EACH machine and paste the data
 		var/datum/signal/copy
 		if(copysig)
 			copy = new
-			copy.transmission_method = 2
+			copy.transmission_method = TRANSMISSION_SUBSPACE
 			copy.frequency = signal.frequency
 			copy.data = signal.data.Copy()
 
@@ -94,7 +94,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 
 /obj/machinery/telecomms/proc/receive_information(datum/signal/signal, obj/machinery/telecomms/machine_from)
 	// receive information from linked machinery
-	..()
+	return
 
 /obj/machinery/telecomms/proc/is_freq_listening(datum/signal/signal)
 	// return 1 if found, 0 if not found
@@ -252,7 +252,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	idle_power_usage = 600
 	machinetype = 1
 	produces_heat = 0
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/receiver"
+	circuitboard = "/obj/item/circuitboard/telecomms/receiver"
 
 /obj/machinery/telecomms/receiver/receive_signal(datum/signal/signal)
 
@@ -263,10 +263,8 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	if(!check_receive_level(signal))
 		return
 
-	if(signal.transmission_method == 2)
-
+	if(signal.transmission_method == TRANSMISSION_SUBSPACE)
 		if(is_freq_listening(signal)) // detect subspace signals
-
 			//Remove the level and then start adding levels that it is being broadcasted in.
 			signal.data["level"] = list()
 
@@ -307,7 +305,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	use_power = 1
 	idle_power_usage = 1600
 	machinetype = 7
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/hub"
+	circuitboard = "/obj/item/circuitboard/telecomms/hub"
 	long_range_link = 1
 	netspeed = 40
 
@@ -341,10 +339,10 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	idle_power_usage = 600
 	machinetype = 8
 	produces_heat = 0
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/relay"
+	circuitboard = "/obj/item/circuitboard/telecomms/relay"
 	netspeed = 5
 	long_range_link = 1
-	var/broadcasting = 1
+	var/broadcasting = TRUE
 	var/receiving = 1
 
 /obj/machinery/telecomms/relay/receive_information(datum/signal/signal, obj/machinery/telecomms/machine_from)
@@ -391,7 +389,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	use_power = 1
 	idle_power_usage = 1000
 	machinetype = 2
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/bus"
+	circuitboard = "/obj/item/circuitboard/telecomms/bus"
 	netspeed = 40
 	var/change_frequency = 0
 
@@ -443,7 +441,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	idle_power_usage = 600
 	machinetype = 3
 	delay = 5
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/processor"
+	circuitboard = "/obj/item/circuitboard/telecomms/processor"
 	var/process_mode = 1 // 1 = Uncompress Signals, 0 = Compress Signals
 
 	receive_information(datum/signal/signal, obj/machinery/telecomms/machine_from)
@@ -479,7 +477,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	use_power = 1
 	idle_power_usage = 300
 	machinetype = 4
-	circuitboard = "/obj/item/weapon/circuitboard/telecomms/server"
+	circuitboard = "/obj/item/circuitboard/telecomms/server"
 	var/list/log_entries = list()
 	var/list/stored_names = list()
 	var/list/TrafficActions = list()
@@ -488,7 +486,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 
 	var/list/memory = list()	// stored memory
 	var/rawcode = ""	// the code to compile (raw text)
-	var/datum/TCS_Compiler/ntsl2/Compiler	// the compiler that compiles and runs the code
+	var/datum/ntsl2_program/tcomm/Program // NTSL2++ datum responsible for script execution
 	var/autoruncode = 0		// 1 if the code is set to run every time a signal is picked up
 
 	var/encryption = "null" // encryption key: ie "password"
@@ -499,8 +497,7 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 
 /obj/machinery/telecomms/server/Initialize()
 	. = ..()
-	Compiler = new()
-	Compiler.Holder = src
+	Program = SSntsl2.new_program_tcomm(src)
 	server_radio = new()
 
 /obj/machinery/telecomms/server/receive_information(datum/signal/signal, obj/machinery/telecomms/machine_from)
@@ -546,6 +543,8 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 					race = "Slime"
 				else if(isanimal(M))
 					race = "Domestic Animal"
+				else if(istype(M, /mob/living/announcer))
+					race = "Announcer"
 
 				log.parameters["race"] = race
 
@@ -574,30 +573,24 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 				var/identifier = num2text( rand(-1000,1000) + world.time )
 				log.name = "data packet ([md5(identifier)])"
 
-				if(Compiler && autoruncode)
-					Compiler.Run(signal)	// execute the code
+				if(istype(Program))
+					Program.process_message(signal, CALLBACK(src, .proc/program_receive_information, signal))
 
-			var/can_send = relay_information(signal, "/obj/machinery/telecomms/hub")
-			if(!can_send)
-				relay_information(signal, "/obj/machinery/telecomms/broadcaster")
+			finish_receive_information(signal)
+
+/obj/machinery/telecomms/server/proc/program_receive_information(datum/signal/signal)
+	Program.retrieve_messages(CALLBACK(src, .proc/finish_receive_information, signal))
+
+/obj/machinery/telecomms/server/proc/finish_receive_information(datum/signal/signal)
+	var/can_send = relay_information(signal, "/obj/machinery/telecomms/hub")
+	if(!can_send)
+		relay_information(signal, "/obj/machinery/telecomms/broadcaster")
 
 
 /obj/machinery/telecomms/server/machinery_process()
 	. = ..()
-	if(Compiler)
-		Compiler.update_code()
-
-/obj/machinery/telecomms/server/proc/setcode(var/t)
-	if(t)
-		if(istext(t))
-			rawcode = t
-
-/obj/machinery/telecomms/server/proc/compile()
-	if(Compiler)
-		var/er = Compiler.Compile(rawcode)
-		if(istype(Compiler.running_code))
-			Compiler.running_code.S = src
-		return er
+	if(istype(Program))
+		Program.retrieve_messages()
 
 /obj/machinery/telecomms/server/proc/update_logs()
 	// start deleting the very first log entry
@@ -629,6 +622,9 @@ var/global/list/obj/machinery/telecomms/telecomms_list = list()
 	var/garbage_collector = 1 // if set to 0, will not be garbage collected
 	var/input_type = "Speech File"
 
+
+
+// NTSL2++ code
 
 
 

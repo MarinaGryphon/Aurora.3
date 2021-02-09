@@ -1,16 +1,21 @@
 /datum/antagonist/proc/can_become_antag(var/datum/mind/player, var/ignore_role)
-	if (!player.current)
-		return 0
+	if(!player.current)
+		return FALSE
 	if(jobban_isbanned(player.current, bantype))
-		return 0
+		return FALSE
 	if(!ignore_role)
+		if(establish_db_connection(dbcon)) //no database, no age restriction
+			if(required_age && required_age > player.current.client.player_age)
+				return FALSE
 		if(player.assigned_role in restricted_jobs)
-			return 0
+			return FALSE
 		if(config.protect_roles_from_antagonist && (player.assigned_role in protected_jobs))
-			return 0
-		if(player.current.client.prefs && player.current.client.prefs.species in restricted_species)
-			return 0
-	return 1
+			return FALSE
+		if(player.current.client.prefs && (player.current.client.prefs.species in restricted_species))
+			return FALSE
+		if(player.current && (player.current.status_flags & NO_ANTAG))
+			return FALSE
+	return TRUE
 
 /datum/antagonist/proc/antags_are_dead()
 	for(var/datum/mind/antag in current_antagonists)
@@ -52,6 +57,9 @@
 
 /datum/antagonist/proc/is_latejoin_template()
 	return (flags & (ANTAG_OVERRIDE_MOB|ANTAG_OVERRIDE_JOB))
+
+/datum/antagonist/proc/handle_latelogin(var/mob/user)
+	return
 
 /proc/all_random_antag_types()
 	// No caching as the ANTAG_RANDOM_EXCEPTED flag can be added/removed mid-round.

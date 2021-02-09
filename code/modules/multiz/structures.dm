@@ -17,7 +17,18 @@
 	var/base_icon = "ladder"
 
 	var/const/climb_time = 2 SECONDS
-	var/static/list/climbsounds = list('sound/effects/ladder1.ogg','sound/effects/ladder2.ogg','sound/effects/ladder3.ogg','sound/effects/ladder4.ogg')
+	var/list/climbsounds = list('sound/effects/ladder1.ogg','sound/effects/ladder2.ogg','sound/effects/ladder3.ogg','sound/effects/ladder4.ogg')
+	var/climb_sound_vol = 50
+	var/climb_sound_vary = FALSE
+
+	var/list/destroy_tools
+
+/obj/structure/ladder/mining
+	icon = 'icons/obj/mining.dmi'
+	climbsounds = list('sound/effects/stonedoor_openclose.ogg')
+	climb_sound_vol = 30
+	climb_sound_vary = TRUE
+	destroy_tools = list(/obj/item/pickaxe, /obj/item/gun/energy/plasmacutter)
 
 /obj/structure/ladder/Initialize()
 	. = ..()
@@ -42,7 +53,14 @@
 		target_up = null
 	return ..()
 
-/obj/structure/ladder/attackby(obj/item/C as obj, mob/user as mob)
+/obj/structure/ladder/attackby(obj/item/C, mob/user)
+	if(LAZYLEN(destroy_tools))
+		if(is_type_in_list(C, destroy_tools))
+			user.visible_message("<b>[user]</b> starts breaking down \the [src] with \the [C]!", SPAN_NOTICE("You start breaking down \the [src] with \the [C]."))
+			if(do_after(user, 10 SECONDS, TRUE))
+				user.visible_message("<b>[user]</b> breaks down \the [src] with \the [C]!", SPAN_NOTICE("You break down \the [src] with \the [C]."))
+				qdel(src)
+			return
 	attack_hand(user)
 
 /obj/structure/ladder/attack_robot(mob/user)
@@ -56,7 +74,7 @@
 	if(!target_ladder)
 		return
 
-	var/obj/item/weapon/grab/G = M.l_hand
+	var/obj/item/grab/G = M.l_hand
 	if (!istype(G))
 		G = M.r_hand
 
@@ -130,6 +148,8 @@
 	return TRUE
 
 /obj/structure/ladder/proc/climbLadder(var/mob/M, var/target_ladder)
+	if(!target_ladder)
+		return
 	var/turf/T = get_turf(target_ladder)
 	var/turf/LAD = get_turf(src)
 	var/direction = UP
@@ -142,17 +162,18 @@
 		to_chat(M, "<span class='notice'>\The [T] is blocking \the [src].</span>")
 		return FALSE
 	for(var/atom/A in T)
-		if(!A.CanPass(M, M.loc, 1.5, 0))
-			to_chat(M, "<span class='notice'>\The [A] is blocking \the [src].</span>")
-			return FALSE
-	playsound(src, pick(climbsounds), 50)
-	playsound(target_ladder, pick(climbsounds), 50)
-	var/obj/item/weapon/grab/G = M.l_hand
+		if(!isliving(A))
+			if(!A.CanPass(M, M.loc, 1.5, 0))
+				to_chat(M, "<span class='notice'>\The [A] is blocking \the [src].</span>")
+				return FALSE
+	playsound(src, pick(climbsounds), climb_sound_vol, climb_sound_vary)
+	playsound(target_ladder, pick(climbsounds), climb_sound_vol, climb_sound_vary)
+	var/obj/item/grab/G = M.l_hand
 	if (!istype(G))
 		G = M.r_hand
 	if (istype(G))
 		G.affecting.forceMove(T)
-	return M.Move(T)
+	return M.forceMove(T)
 
 /obj/structure/ladder/CanPass(obj/mover, turf/source, height, airflow)
 	return airflow || !density
@@ -164,13 +185,20 @@
 	allowed_directions = UP
 	icon_state = "ladder10"
 
+/obj/structure/ladder/up/mining
+	icon = 'icons/obj/mining.dmi'
+	climbsounds = list('sound/effects/stonedoor_openclose.ogg')
+	climb_sound_vol = 30
+	climb_sound_vary = TRUE
+	destroy_tools = list(/obj/item/pickaxe, /obj/item/gun/energy/plasmacutter)
+
 /obj/structure/ladder/updown
 	allowed_directions = UP|DOWN
 	icon_state = "ladder11"
 
 /obj/structure/stairs
 	name = "stairs"
-	desc = "Stairs leading to another deck.  Not too useful if the gravity goes out."
+	desc = "Stairs leading to another level.  Not too useful if the gravity goes out."
 	icon = 'icons/obj/stairs.dmi'
 	density = 0
 	opacity = 0
@@ -187,12 +215,14 @@
 		if(!istype(above))
 			above.ChangeToOpenturf()
 
-/obj/structure/stairs/CheckExit(atom/movable/mover as mob|obj, turf/target as turf)
+/obj/structure/stairs/CheckExit(atom/movable/mover, turf/target)
 	if(get_dir(loc, target) == dir && upperStep(mover.loc))
 		return FALSE
 
-	if (mover.loc == loc && get_dir(mover, target) != reverse_dir[dir])
-		addtimer(CALLBACK(src, .proc/mob_fall, mover), 0)
+	var/obj/structure/stairs/staircase = locate() in target
+	var/target_dir = get_dir(mover, target)
+	if(!staircase && (target_dir != dir && target_dir != reverse_dir[dir]))
+		INVOKE_ASYNC(src, .proc/mob_fall, mover)
 
 	return ..()
 
@@ -205,6 +235,9 @@
 			var/mob/living/L = A
 			if(L.pulling)
 				L.pulling.forceMove(target)
+			if(ishuman(A))
+				playsound(src, 'sound/effects/stairs_step.ogg', 50)
+				playsound(target, 'sound/effects/stairs_step.ogg', 50)
 
 /obj/structure/stairs/proc/upperStep(var/turf/T)
 	return (T == loc)
@@ -220,7 +253,7 @@
 	return !density
 
 /obj/structure/stairs/proc/mob_fall(mob/living/L)
-	if (isopenturf(L.loc) || L.loc == loc || !ishuman(L))
+	if(isopenturf(L.loc) || get_turf(L) == get_turf(src) || !ishuman(L))
 		return
 
 	L.Weaken(2)
@@ -230,8 +263,6 @@
 			"<span class='danger'>You step off [src] and faceplant onto [L.loc].</span>",
 			"<span class='alert'>You hear a thump.</span>"
 		)
-		var/snd = pick('sound/weapons/genhit1.ogg', 'sound/weapons/genhit2.ogg', 'sound/weapons/genhit3.ogg')
-		playsound(L.loc, snd, 75, 1)
 
 // type paths to make mapping easier.
 /obj/structure/stairs/north

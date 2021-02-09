@@ -23,7 +23,7 @@ var/controlling
 /mob/living/parasite
 	var/mob/living/carbon/host // the host that this parasite occupies
 
-/mob/living/parasite/Login()
+/mob/living/parasite/LateLogin()
 	..()
 	// make the client see through the host instead
 	client.eye = host
@@ -77,7 +77,7 @@ var/controlling
 	meme_points = min(meme_points + gain, MAXIMUM_MEME_POINTS)
 
 	// if there are sleep toxins in the host's body, that's bad
-	if(host.reagents.has_reagent("stoxin"))
+	if(host.reagents.has_reagent(/decl/reagent/soporific))
 		to_chat(src, "<span class='danger'>Something in your host's blood makes you lose consciousness, you fade away...</span>")
 		src.death()
 		return
@@ -204,30 +204,7 @@ var/controlling
 		to_chat(M, "[message]")
 		to_chat(src, "You said: \"[message]\" to [M]")
 	return
-/*
-	var/list/candidates = indoctrinated.Copy()
-	if(!(src.host in candidates))
-		candidates.Add(src.host)
 
-	var/mob/target = select_indoctrinated("Thought", "Select a target which will hear your thought.")
-
-	if(!target) return
-
-	var/speaker = input("Select the voice in which you would like to make yourself heard.", "Voice") as text
-	//if(!speaker) return
-
-	var/message = input("What would you like to say?", "Message") as text
-	if(!message) return
-
-	// Use the points at the end rather than the beginning, because the user might cancel
-	if(!use_points(150)) return
-
-	message = say_quote(message)
-	var/rendered = "<span class='game say'><span class='name'>[speaker]</span> <span class='message'>[message]</span></span>"
-	target.show_message(rendered)
-
-	to_chat(usr, "<i>You make [target] hear:</i> [rendered]")
-*/
 // Mutes the host
 /mob/living/parasite/meme/verb/Mute()
 	set category = "Meme"
@@ -294,7 +271,7 @@ var/controlling
 
 		host.paralysis = max(host.paralysis, 2)
 
-		host.flash_weak_pain()
+		host.flash_pain(10)
 		to_chat(host, "<span class='danger'><font size=5>You feel excrutiating pain all over your body! It is so bad you can't think or articulate yourself properly.</font></span>")
 
 		to_chat(usr, "<span class='notice'>You send a jolt of agonizing pain through [host], they should be unable to concentrate on anything else for half a minute.</span>")
@@ -304,7 +281,7 @@ var/controlling
 		for(var/i=0, i<10, i++)
 			host.stuttering = 2
 			sleep(50)
-			if(prob(80)) host.flash_weak_pain()
+			if(prob(80)) host.flash_pain(10)
 			if(prob(10)) host.paralysis = max(host.paralysis, 2)
 			if(prob(15)) host.emote("twitch")
 			else if(prob(15)) host.emote("scream")
@@ -390,7 +367,7 @@ var/controlling
 		M.show_message("<B>[host]</B> whispers something incoherent.",2) // 2 stands for hearable message
 
 	// Find out whether the target can hear
-	if(target.disabilities & 32 || target.ear_deaf)
+	if(target.disabilities & 32 || isdeaf(target))
 		to_chat(src, "<span class='warning'>Your target doesn't seem to hear you.</span>")
 		return
 
@@ -434,7 +411,7 @@ var/controlling
 		M.show_message("<B>[host]</B> screams something incoherent!",2) // 2 stands for hearable message
 
 	// Find out whether the target can hear
-	if(target.disabilities & 32 || target.ear_deaf)
+	if(target.disabilities & 32 || isdeaf(target))
 		to_chat(src, "<span class='warning'>Your target doesn't seem to hear you.</span>")
 		return
 
@@ -490,7 +467,7 @@ var/controlling
 
 	if(!host) return
 
-	for (var/obj/item/weapon/implant/loyalty/I in host)
+	for (var/obj/item/implant/mindshield/I in host)
 		if (I.implanted)
 			to_chat(src, "<span class='warning'>Your host's mind is shielded!</span>")
 			return
@@ -543,7 +520,7 @@ var/controlling
 		to_chat(src, "<span class='warning'>You cannot do that in your current state.</span>")
 		return
 
-	for (var/obj/item/weapon/implant/loyalty/I in host)
+	for (var/obj/item/implant/mindshield/I in host)
 		if (I.implanted)
 			to_chat(src, "<span class='warning'>Your host's mind is shielded!</span>")
 			return
@@ -607,7 +584,7 @@ var/controlling
 
 	if(istype(host,/mob/living/carbon/human))
 		var/mob/living/carbon/human/H = host
-		var/obj/item/organ/external/head = H.get_organ("head")
+		var/obj/item/organ/external/head = H.get_organ(BP_HEAD)
 		head.implants -= src
 
 	controlling = 0

@@ -12,7 +12,7 @@ log transactions
 #define TRANSFER_FUNDS 2
 #define VIEW_TRANSACTION_LOGS 3
 
-/obj/item/weapon/card/id/var/money = 2000
+/obj/item/card/id/var/money = 2000
 
 /obj/machinery/atm
 	name = "Idris SelfServ Teller"
@@ -29,13 +29,14 @@ log transactions
 	var/ticks_left_locked_down = 0
 	var/ticks_left_timeout = 0
 	var/machine_id = ""
-	var/obj/item/weapon/card/held_card
+	var/obj/item/card/held_card
 	var/editing_security_level = 0
 	var/view_screen = NO_SCREEN
 
 /obj/machinery/atm/Initialize()
 	. = ..()
 	machine_id = "Idris SelfServ #[SSeconomy.num_financial_terminals++]"
+	update_icon()
 
 /obj/machinery/atm/Destroy()
 	authenticated_account = null
@@ -45,9 +46,28 @@ log transactions
 
 	return ..()
 
+/obj/machinery/atm/power_change()
+	..()
+	update_icon()
+
+/obj/machinery/atm/update_icon()
+	cut_overlays()
+	if(stat & NOPOWER)
+		set_light(FALSE)
+		return
+
+	var/mutable_appearance/screen_overlay = mutable_appearance(icon, "atm-active", EFFECTS_ABOVE_LIGHTING_LAYER)
+	add_overlay(screen_overlay)
+	set_light(1.4, 1, COLOR_CYAN)
+
+	if(held_card)
+		var/mutable_appearance/card_overlay = mutable_appearance(icon, "atm-cardin", EFFECTS_ABOVE_LIGHTING_LAYER)
+		add_overlay(card_overlay)
 
 /obj/machinery/atm/machinery_process()
 	if(stat & NOPOWER)
+		cut_overlays()
+		set_light(FALSE)
 		return
 
 	if(ticks_left_timeout > 0)
@@ -59,7 +79,7 @@ log transactions
 		if(ticks_left_locked_down <= 0)
 			number_incorrect_tries = 0
 
-	for(var/obj/item/weapon/spacecash/S in src)
+	for(var/obj/item/spacecash/S in src)
 		S.forceMove(src.loc)
 		if(prob(50))
 			playsound(loc, 'sound/items/polaroid1.ogg', 50, 1)
@@ -80,27 +100,28 @@ log transactions
 
 	//display a message to the user
 	var/response = pick("Initiating withdraw. Have a nice day!", "CRITICAL ERROR: Activating cash chamber panic siphon.","PIN Code accepted! Emptying account balance.", "Jackpot!")
-	to_chat(user, "<span class='warning'>\icon[src] The [src] beeps: \"[response]\"</span>")
+	to_chat(user, "<span class='warning'>[icon2html(src, user)] The [src] beeps: \"[response]\"</span>")
 	return 1
 
 /obj/machinery/atm/attackby(obj/item/I as obj, mob/user as mob)
-	if(istype(I, /obj/item/weapon/card))
+	if(istype(I, /obj/item/card))
 		if(emagged)
 			//prevent inserting id into an emagged ATM
-			to_chat(user, "<span class='warning'>\icon[src] CARD READER ERROR. This system has been compromised!</span>")
+			to_chat(user, "<span class='warning'>[icon2html(src, user)] CARD READER ERROR. This system has been compromised!</span>")
 			return
-		else if(istype(I,/obj/item/weapon/card/emag))
+		else if(istype(I,/obj/item/card/emag))
 			I.resolve_attackby(src, user)
 			return
 
-		var/obj/item/weapon/card/id/idcard = I
+		var/obj/item/card/id/idcard = I
 		if(!held_card)
 			usr.drop_from_inventory(idcard,src)
 			held_card = idcard
 			if(authenticated_account && held_card.associated_account_number != authenticated_account.account_number)
 				authenticated_account = null
+			update_icon()
 	else if(authenticated_account)
-		if(istype(I,/obj/item/weapon/spacecash))
+		if(istype(I,/obj/item/spacecash))
 			//consume the money
 			authenticated_account.money += I:worth
 			if(prob(50))
@@ -127,7 +148,7 @@ log transactions
 
 /obj/machinery/atm/attack_hand(mob/user as mob)
 	if(istype(user, /mob/living/silicon))
-		to_chat(user, "<span class='warning'>\icon[src] Artificial unit recognized. Artificial units do not currently receive monetary compensation, as per system banking regulation #1005.</span>")
+		to_chat(user, "<span class='warning'>[icon2html(src, user)] Artificial unit recognized. Artificial units do not currently receive monetary compensation, as per system banking regulation #1005.</span>")
 		return
 	if(get_dist(src,user) <= 1)
 
@@ -219,7 +240,8 @@ log transactions
 				dat += "<input type='submit' value='Submit'><br>"
 				dat += "</form>"
 
-		user << browse(dat,"window=atm;size=550x650")
+		send_theme_resources(user)
+		user << browse(enable_ui_theme(user, dat),"window=atm;size=550x650")
 	else
 		user << browse(null,"window=atm")
 
@@ -237,7 +259,7 @@ log transactions
 						var/target_account_number = text2num(href_list["target_acc_number"])
 						var/transfer_purpose = href_list["purpose"]
 						if(SSeconomy.charge_to_account(target_account_number, authenticated_account.owner_name, transfer_purpose, machine_id, transfer_amount))
-							to_chat(usr, "\icon[src]<span class='info'>Funds transfer successful.</span>")
+							to_chat(usr, "[icon2html(src, usr)]<span class='info'>Funds transfer successful.</span>")
 							authenticated_account.money -= transfer_amount
 
 							//create an entry in the account transaction log
@@ -250,10 +272,10 @@ log transactions
 							T.amount = "([transfer_amount])"
 							SSeconomy.add_transaction_log(authenticated_account,T)
 						else
-							to_chat(usr, "\icon[src]<span class='warning'>Funds transfer failed.</span>")
+							to_chat(usr, "[icon2html(src, usr)]<span class='warning'>Funds transfer failed.</span>")
 
 					else
-						to_chat(usr, "\icon[src]<span class='warning'>You don't have enough funds to do that!</span>")
+						to_chat(usr, "[icon2html(src, usr)]<span class='warning'>You don't have enough funds to do that!</span>")
 			if("view_screen")
 				view_screen = text2num(href_list["view_screen"])
 			if("change_security_level")
@@ -272,7 +294,7 @@ log transactions
 				var/tried_pin = text2num(href_list["account_pin"])
 				var/datum/money_account/potential_account = SSeconomy.get_account(tried_account_num)
 				if (!potential_account)
-					to_chat(usr, "<span class='warning'>\icon[src] Account number not found.</span>")
+					to_chat(usr, "<span class='warning'>[icon2html(src, usr)] Account number not found.</span>")
 					number_incorrect_tries++
 					handle_lockdown()
 					return
@@ -289,7 +311,7 @@ log transactions
 						else to_chat(usr, "<span class='warning'>Account card not found.</span>")
 				if (!authenticated_account)
 					number_incorrect_tries++
-					to_chat(usr, "<span class='warning'>\icon[src] Incorrect pin/account combination entered, [(max_pin_attempts+1) - number_incorrect_tries] attempts remaining.</span>")
+					to_chat(usr, "<span class='warning'>[icon2html(src, usr)] Incorrect pin/account combination entered, [(max_pin_attempts+1) - number_incorrect_tries] attempts remaining.</span>")
 					handle_lockdown(tried_account_num)
 				else
 					SSeconomy.bank_log_access(authenticated_account, machine_id)
@@ -297,7 +319,7 @@ log transactions
 					playsound(src, 'sound/machines/twobeep.ogg', 50, 1)
 					ticks_left_timeout = 120
 					view_screen = NO_SCREEN
-					to_chat(usr, "<span class='notice'> \icon[src] Access granted. Welcome user '[authenticated_account.owner_name].'</span>")
+					to_chat(usr, "<span class='notice'> [icon2html(src, usr)] Access granted. Welcome user '[authenticated_account.owner_name].'</span>")
 				previous_account_number = tried_account_num
 
 			if("e_withdrawal")
@@ -325,7 +347,7 @@ log transactions
 						T.time = worldtime2text()
 						SSeconomy.add_transaction_log(authenticated_account,T)
 					else
-						to_chat(usr, "\icon[src]<span class='warning'>You don't have enough funds to do that!</span>")
+						to_chat(usr, "[icon2html(src, usr)]<span class='warning'>You don't have enough funds to do that!</span>")
 			if("withdrawal")
 				var/amount = max(text2num(href_list["funds_amount"]),0)
 				amount = round(amount, 0.01)
@@ -350,10 +372,10 @@ log transactions
 						T.time = worldtime2text()
 						SSeconomy.add_transaction_log(authenticated_account,T)
 					else
-						to_chat(usr, "\icon[src]<span class='warning'>You don't have enough funds to do that!</span>")
+						to_chat(usr, "[icon2html(src, usr)]<span class='warning'>You don't have enough funds to do that!</span>")
 			if("balance_statement")
 				if(authenticated_account)
-					var/obj/item/weapon/paper/R = new()
+					var/obj/item/paper/R = new()
 					var/pname = "Account balance: [authenticated_account.owner_name]"
 					var/info = "<b>Idris Automated Teller Account Statement</b><br><br>"
 					info += "<i>Account holder:</i> [authenticated_account.owner_name]<br>"
@@ -368,7 +390,7 @@ log transactions
 					stampoverlay.icon_state = "paper_stamp-cent"
 					if(!R.stamped)
 						R.stamped = new
-					R.stamped += /obj/item/weapon/stamp
+					R.stamped += /obj/item/stamp
 					R.add_overlay(stampoverlay)
 					R.stamps += "<HR><i>This paper has been stamped by the Automatic Teller Machine.</i>"
 					print(R)
@@ -381,7 +403,7 @@ log transactions
 					playsound(loc, 'sound/items/polaroid2.ogg', 50, 1)
 			if ("print_transaction")
 				if(authenticated_account)
-					var/obj/item/weapon/paper/R = new()
+					var/obj/item/paper/R = new()
 					var/pname = "Transaction logs: [authenticated_account.owner_name]"
 					var/info = "<b>Transaction logs</b><br>"
 					info += "<i>Account holder:</i> [authenticated_account.owner_name]<br>"
@@ -415,7 +437,7 @@ log transactions
 					stampoverlay.icon_state = "paper_stamp-cent"
 					if(!R.stamped)
 						R.stamped = new
-					R.stamped += /obj/item/weapon/stamp
+					R.stamped += /obj/item/stamp
 					R.add_overlay(stampoverlay)
 					R.stamps += "<HR><i>This paper has been stamped by the Automatic Teller Machine.</i>"
 					print(R)
@@ -430,12 +452,13 @@ log transactions
 				if(!held_card)
 					//this might happen if the user had the browser window open when somebody emagged it
 					if(emagged)
-						to_chat(usr, "<span class='warning'>\icon[src] The ATM card reader rejected your ID because this machine has been sabotaged!</span>")
+						to_chat(usr, "<span class='warning'>[icon2html(src, usr)] The ATM card reader rejected your ID because this machine has been sabotaged!</span>")
 					else
 						var/obj/item/I = usr.get_active_hand()
-						if (istype(I, /obj/item/weapon/card/id))
+						if (istype(I, /obj/item/card/id))
 							usr.drop_from_inventory(I,src)
 							held_card = I
+							update_icon()
 				else
 					release_held_id(usr)
 			if("logout")
@@ -447,17 +470,12 @@ log transactions
 //stolen wholesale and then edited a bit from newscasters, which are awesome and by Agouri
 /obj/machinery/atm/proc/scan_user(mob/living/carbon/human/human_user as mob)
 	if(!authenticated_account)
-		if(human_user.wear_id)
-			var/obj/item/weapon/card/id/I
-			if(istype(human_user.wear_id, /obj/item/weapon/card/id) )
-				I = human_user.wear_id
-			else if(istype(human_user.wear_id, /obj/item/device/pda) )
-				var/obj/item/device/pda/P = human_user.wear_id
-				I = P.id
-			if(I)
+		if(istype(human_user))
+			var/obj/item/card/id/I = human_user.GetIdCard()
+			if(istype(I))
 				authenticated_account = SSeconomy.attempt_account_access(I.associated_account_number)
 				if(authenticated_account)
-					to_chat(human_user, "<span class='notice'>\icon[src] Access granted. Welcome user '[authenticated_account.owner_name].'</span>")
+					to_chat(human_user, "<span class='notice'>[icon2html(src, usr)] Access granted. Welcome user '[authenticated_account.owner_name].'</span>")
 
 					//create a transaction log entry
 					var/datum/transaction/T = new()
@@ -504,10 +522,11 @@ log transactions
 	if(!human_user.get_active_hand())
 		human_user.put_in_hands(held_card)
 	held_card = null
+	update_icon()
 
 
 /obj/machinery/atm/proc/spawn_ewallet(var/sum, loc, mob/living/carbon/human/human_user as mob)
-	var/obj/item/weapon/spacecash/ewallet/E = new /obj/item/weapon/spacecash/ewallet(loc)
+	var/obj/item/spacecash/ewallet/E = new /obj/item/spacecash/ewallet(loc)
 	if(ishuman(human_user) && !human_user.get_active_hand())
 		human_user.put_in_hands(E)
 	E.worth = sum

@@ -1,12 +1,14 @@
 /obj/structure/grille
 	name = "grille"
 	desc = "A flimsy lattice of metal rods, with screws to secure it to the floor."
+	desc_info = "A powered and knotted wire underneath this will cause the grille to shock anyone not wearing insulated gloves.<br>\
+	Wirecutters will turn the grille into metal rods instantly.  Grilles are made with metal rods.<br>\
+	Can be fixed with a single metal rod if damaged."
 	icon = 'icons/obj/structures.dmi'
 	icon_state = "grille"
-	density = 1
-	anchored = 1
+	density = TRUE
+	anchored = TRUE
 	flags = CONDUCT
-	layer = 2.9
 	explosion_resistance = 1
 	var/health = 10
 	var/destroyed = 0
@@ -92,18 +94,27 @@
 	src.health -= damage*0.2
 	spawn(0) healthcheck() //spawn to make sure we return properly if the grille is deleted
 
-/obj/structure/grille/attackby(obj/item/weapon/W as obj, mob/user as mob)
+/obj/structure/grille/attackby(obj/item/W, mob/user)
 	if(W.iswirecutter())
 		if(!shock(user, 100))
-			playsound(loc, 'sound/items/Wirecutter.ogg', 100, 1)
+			playsound(loc, 'sound/items/wirecutter.ogg', 100, 1)
 			new /obj/item/stack/rods(get_turf(src), destroyed ? 1 : 2)
 			qdel(src)
+	else if(istype(W, /obj/item/gun/energy/plasmacutter))
+		var/obj/item/gun/energy/plasmacutter/PC = W
+		if(!PC.power_supply)
+			to_chat(user, SPAN_WARNING("\The [src] doesn't have a power supply installed!"))
+			return
+		playsound(get_turf(src), PC.fire_sound, 100, TRUE)
+		new /obj/item/stack/rods(get_turf(src), destroyed ? 1 : 2)
+		qdel(src)
 	else if((W.isscrewdriver()) && (istype(loc, /turf/simulated) || anchored))
 		if(!shock(user, 90))
-			playsound(loc, 'sound/items/Screwdriver.ogg', 100, 1)
+			playsound(loc, 'sound/items/screwdriver.ogg', 100, 1)
 			anchored = !anchored
 			user.visible_message("<span class='notice'>[user] [anchored ? "fastens" : "unfastens"] the grille.</span>", \
 								 "<span class='notice'>You have [anchored ? "fastened the grille to" : "unfastened the grill from"] the floor.</span>")
+		return
 	else if(istype(W,/obj/item/stack/rods) && destroyed == 1)
 		if(!shock(user, 90))
 			var/obj/item/stack/rods/ROD = W
@@ -236,6 +247,9 @@
 		health = rand(-5, -1) //In the destroyed but not utterly threshold.
 		healthcheck() //Send this to healthcheck just in case we want to do something else with it.
 
+/obj/structure/grille/diagonal
+	icon_state = "grille_diagonal"
+
 /obj/structure/grille/cult
 	name = "cult grille"
 	desc = "A matrice built out of an unknown material, with some sort of force field blocking air around it"
@@ -247,3 +261,21 @@
 	if(air_group)
 		return 0 //Make sure air doesn't drain
 	..()
+
+/obj/structure/grille/crescent/attack_hand()
+	return
+
+/obj/structure/grille/crescent/attackby()
+	return
+
+/obj/structure/grille/crescent/attack_generic()
+	return
+
+/obj/structure/grille/crescent/ex_act(var/severity = 2.0)
+	return
+
+/obj/structure/grille/crescent/hitby()
+	return
+
+/obj/structure/grille/crescent/bullet_act()
+	return

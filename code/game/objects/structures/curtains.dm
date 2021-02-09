@@ -8,6 +8,14 @@
 	layer = SHOWER_OPEN_LAYER
 	opacity = 1
 	density = 0
+	anchored = TRUE //curtains start secured in place
+	build_amt = 2
+	var/manipulating = FALSE //prevents queuing up multiple deconstructs and returning a bunch of cloth
+	var/curtain_material = MATERIAL_CLOTH
+
+/obj/structure/curtain/Initialize()
+	. = ..()
+	material = SSmaterials.get_material_by_name(curtain_material)
 
 /obj/structure/curtain/open
 	icon_state = "open"
@@ -30,6 +38,31 @@
 	if(istype(user, /mob/living/silicon/robot) && Adjacent(user)) // Robots can open/close it, but not the AI.
 		attack_hand(user)
 
+/obj/structure/curtain/attackby(obj/item/W, mob/user)
+
+	if(W.iswirecutter() || W.sharp && !W.noslice)
+		if(manipulating)	return
+		manipulating = TRUE
+		visible_message(SPAN_NOTICE("[user] begins cutting down \the [src]."),
+					SPAN_NOTICE("You begin cutting down \the [src]."))
+		if(!do_after(user, 30/W.toolspeed))
+			manipulating = FALSE
+			return
+		playsound(src.loc, 'sound/items/wirecutter.ogg', 50, 1)
+		visible_message(SPAN_NOTICE("[user] cuts down \the [src]."),
+					SPAN_NOTICE("You cut down \the [src]."))
+		dismantle()
+
+	if(W.isscrewdriver()) //You can anchor/unanchor curtains
+		anchored = !anchored
+		var/obj/structure/curtain/C
+		for(C in src.loc)
+			if(C != src && C.anchored) //Can't secure more than one curtain in a tile
+				to_chat(user, "There is already a curtain secured here!")
+				return
+		playsound(src.loc, W.usesound, 50, 1)
+		visible_message(SPAN_NOTICE("\The [src] has been [anchored ? "secured in place" : "unsecured"] by \the [user]."))
+
 /obj/structure/curtain/proc/toggle()
 	src.set_opacity(!src.opacity)
 	if(opacity)
@@ -46,12 +79,16 @@
 /obj/structure/curtain/medical
 	name = "plastic curtain"
 	color = "#B8F5E3"
+	anchored = FALSE
 	alpha = 200
+	curtain_material = MATERIAL_PLASTIC
 
 /obj/structure/curtain/open/medical
 	name = "plastic curtain"
 	color = "#B8F5E3"
+	anchored = FALSE
 	alpha = 200
+	curtain_material = MATERIAL_PLASTIC
 
 /obj/structure/curtain/open/bed
 	name = "bed curtain"
@@ -60,6 +97,7 @@
 /obj/structure/curtain/open/privacy
 	name = "privacy curtain"
 	color = "#B8F5E3"
+	anchored = FALSE
 
 /obj/structure/curtain/open/shower
 	name = "shower curtain"

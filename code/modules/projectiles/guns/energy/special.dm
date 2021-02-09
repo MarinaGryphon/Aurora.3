@@ -1,34 +1,28 @@
-/obj/item/weapon/gun/energy/rifle/ionrifle
+/obj/item/gun/energy/rifle/ionrifle
 	name = "ion rifle"
-	desc = "The NT Mk70 EW Halicon is a man portable anti-armor weapon designed to disable mechanical threats, produced by NT. Has two settings: stun and kill"
+	desc = "The NT Mk70 EW Halicon is a man portable anti-armor weapon designed to disable mechanical threats, produced by Nanotrasen."
+	icon = 'icons/obj/guns/ionrifle.dmi'
 	icon_state = "ionriflestun100"
 	item_state = "ionriflestun100" // so the human update icon uses the icon_state instead.
 	modifystate = "ionriflestun"
 	projectile_type = /obj/item/projectile/ion/stun
-	fire_sound = 'sound/weapons/Laser.ogg'
+	fire_sound = 'sound/weapons/laser1.ogg'
 	origin_tech = list(TECH_COMBAT = 2, TECH_MAGNET = 4)
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	accuracy = 1
 	force = 10
-	flags =  CONDUCT
+	flags = CONDUCT
 	slot_flags = SLOT_BACK
 	charge_cost = 300
-	max_shots = 10
-	secondary_projectile_type =  /obj/item/projectile/ion
-	secondary_fire_sound = 'sound/weapons/Laser.ogg'
+	max_shots = 4
 	can_turret = 1
-	can_switch_modes = 1
 	turret_sprite_set = "ion"
+	firemodes = list()
 
-	firemodes = list(
-		list(mode_name="stun", projectile_type=/obj/item/projectile/ion/stun, modifystate="ionriflestun", fire_sound='sound/weapons/Laser.ogg', charge_cost = 300),
-		list(mode_name="lethal", projectile_type=/obj/item/projectile/ion, modifystate="ionriflekill", fire_sound='sound/weapons/Laser.ogg', charge_cost = 450)
-		)
-
-/obj/item/weapon/gun/energy/rifle/ionrifle/emp_act(severity)
+/obj/item/gun/energy/rifle/ionrifle/emp_act(severity)
 	..(max(severity, 2)) //so it doesn't EMP itself, I guess
 
-/obj/item/weapon/gun/energy/rifle/ionrifle/update_icon()
+/obj/item/gun/energy/rifle/ionrifle/update_icon()
 	if(charge_meter && power_supply && power_supply.maxcharge)
 		var/ratio = power_supply.charge / power_supply.maxcharge
 
@@ -38,36 +32,36 @@
 		else
 			ratio = max(round(ratio, 0.25) * 100, 25)
 
-		if(modifystate)
-			icon_state = "[modifystate][ratio]"
-			item_state = "[modifystate][ratio]"
-		else
-			icon_state = "[initial(icon_state)][ratio]"
-			item_state = "[initial(icon_state)][ratio]"
+		icon_state = "[modifystate][ratio]"
+		item_state = "[modifystate][ratio]"
 	update_held_icon()
 
-/obj/item/weapon/gun/energy/rifle/ionrifle/mounted
+/obj/item/gun/energy/rifle/ionrifle/mounted
 	name = "mounted ion rifle"
 	self_recharge = 1
 	use_external_power = 1
 	recharge_time = 10
 	can_turret = 0
 
-/obj/item/weapon/gun/energy/decloner
+/obj/item/gun/energy/decloner
 	name = "biological demolecularisor"
 	desc = "A gun that discharges high amounts of controlled radiation to slowly break a target into component elements."
+	icon = 'icons/obj/guns/decloner.dmi'
 	icon_state = "decloner"
 	item_state = "decloner"
+	has_item_ratio = FALSE
 	fire_sound = 'sound/weapons/pulse3.ogg'
 	origin_tech = list(TECH_COMBAT = 5, TECH_MATERIAL = 4, TECH_POWER = 3)
 	max_shots = 10
 	projectile_type = /obj/item/projectile/energy/declone
 
-/obj/item/weapon/gun/energy/floragun
+/obj/item/gun/energy/floragun
 	name = "floral somatoray"
 	desc = "A tool that discharges controlled radiation which induces mutation in plant cells."
+	icon = 'icons/obj/guns/flora.dmi'
 	icon_state = "floramut100"
 	item_state = "floramut"
+	has_item_ratio = FALSE
 	fire_sound = 'sound/effects/stealthoff.ogg'
 	charge_cost = 100
 	max_shots = 10
@@ -83,7 +77,7 @@
 
 	needspin = FALSE
 
-/obj/item/weapon/gun/energy/floragun/afterattack(obj/target, mob/user, adjacent_flag)
+/obj/item/gun/energy/floragun/afterattack(obj/target, mob/user, adjacent_flag)
 	//allow shooting into adjacent hydrotrays regardless of intent
 	if(adjacent_flag && istype(target,/obj/machinery/portable_atmospherics/hydroponics))
 		user.visible_message("<span class='danger'>\The [user] fires \the [src] into \the [target]!</span>")
@@ -91,13 +85,15 @@
 		return
 	..()
 
-/obj/item/weapon/gun/energy/meteorgun
+/obj/item/gun/energy/meteorgun
 	name = "meteor gun"
 	desc = "For the love of god, make sure you're aiming this the right way!"
+	icon = 'icons/obj/guns/meteor_gun.dmi'
 	icon_state = "meteor_gun"
-	item_state = "c20r"
+	item_state = "meteor_gun"
+	has_item_ratio = FALSE
 	slot_flags = SLOT_BELT|SLOT_BACK
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	max_shots = 10
 	projectile_type = /obj/item/projectile/meteor
 	self_recharge = 1
@@ -106,45 +102,54 @@
 	can_turret = 1
 	turret_sprite_set = "meteor"
 
-/obj/item/weapon/gun/energy/meteorgun/pen
+/obj/item/gun/energy/meteorgun/pen
 	name = "meteor pen"
 	desc = "The pen is mightier than the sword."
 	icon = 'icons/obj/bureaucracy.dmi'
+	contained_sprite = FALSE
 	icon_state = "pen"
 	item_state = "pen"
-	w_class = 1
+	w_class = ITEMSIZE_TINY
 	slot_flags = SLOT_BELT
 	can_turret = 0
 
 
-/obj/item/weapon/gun/energy/mindflayer
+/obj/item/gun/energy/mindflayer
 	name = "mind flayer"
 	desc = "A custom-built weapon of some kind."
+	icon = 'icons/obj/guns/xray.dmi'
 	icon_state = "xray"
+	item_state = "xray"
+	has_item_ratio = FALSE
 	projectile_type = /obj/item/projectile/beam/mindflayer
-	fire_sound = 'sound/weapons/Laser.ogg'
+	fire_sound = 'sound/weapons/laser1.ogg'
 	can_turret = 1
 	turret_sprite_set = "xray"
 
-/obj/item/weapon/gun/energy/toxgun
+/obj/item/gun/energy/toxgun
 	name = "phoron pistol"
 	desc = "A specialized firearm designed to fire lethal bolts of phoron."
+	icon = 'icons/obj/guns/toxgun.dmi'
 	icon_state = "toxgun"
+	item_state = "toxgun"
+	has_item_ratio = FALSE
 	fire_sound = 'sound/effects/stealthoff.ogg'
-	w_class = 3.0
+	w_class = ITEMSIZE_NORMAL
 	origin_tech = list(TECH_COMBAT = 5, TECH_PHORON = 4)
 	projectile_type = /obj/item/projectile/energy/phoron
 	can_turret = 1
 	turret_is_lethal = 0
 	turret_sprite_set = "net"
 
-/obj/item/weapon/gun/energy/beegun
+/obj/item/gun/energy/beegun
 	name = "\improper NanoTrasen Portable Apiary"
 	desc = "An experimental firearm that converts energy into bees, for purely botanical purposes."
+	icon = 'icons/obj/guns/gyrorifle.dmi'
 	icon_state = "gyrorifle"
-	item_state = "arifle"
+	item_state = "gyrorifle"
+	has_item_ratio = FALSE
 	charge_meter = 0
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	fire_sound = 'sound/effects/Buzz2.ogg'
 	force = 5
 	projectile_type = /obj/item/projectile/energy/bee
@@ -157,69 +162,86 @@
 	fire_delay = 0
 	dispersion = list(0, 8)
 
-/obj/item/weapon/gun/energy/mousegun
-	name = "\improper NT \"Arodentia\" Exterminator ray"
-	desc = "A highly sophisticated and certainly experimental raygun designed for rapid pest-control."
-	icon_state = "floramut100"
-	item_state = "floramut"
-	charge_meter = 0
-	w_class = 3
+/obj/item/gun/energy/mousegun
+	name = "pest gun"
+	desc = "The NT \"Arodentia\" Pesti-Shock is a highly sophisticated and probably safe beamgun designed for rapid pest-control."
+	desc_antag = "This gun can be emagged to make it fire damaging beams and get more max shots. It doesn't do a lot of damage, but it is concealable."
+	icon = 'icons/obj/guns/pestishock.dmi'
+	icon_state = "pestishock"
+	item_state = "pestishock"
+	has_item_ratio = FALSE
+	w_class = ITEMSIZE_NORMAL
 	fire_sound = 'sound/weapons/taser2.ogg'
 	force = 5
 	projectile_type = /obj/item/projectile/beam/mousegun
 	slot_flags = SLOT_HOLSTER | SLOT_BELT
 	max_shots = 6
 	sel_mode = 1
-	burst = 3
-	burst_delay = 1
-	move_delay = 0
-	fire_delay = 3
-	dispersion = list(0, 15, 15)
-
+	var/emagged = FALSE
 	needspin = FALSE
 
-	var/lightfail = 0
-
-/obj/item/weapon/gun/energy/mousegun/handle_post_fire(mob/user, atom/target, var/pointblank=0, var/reflex=0, var/playemote = 1)
+/obj/item/gun/energy/mousegun/handle_post_fire(mob/user, atom/target, var/pointblank=0, var/reflex=0, var/playemote = 1)
 	var/T = get_turf(user)
 	spark(T, 3, alldirs)
 	..()
 
-/obj/item/weapon/gun/energy/net
+/obj/item/gun/energy/mousegun/emag_act(var/remaining_charges, var/mob/user)
+	if(!emagged)
+		to_chat(user, SPAN_WARNING("You overload \the [src]'s shock modulator."))
+		max_shots = initial(max_shots) + 4
+		projectile_type = /obj/item/projectile/beam/mousegun/emag
+		emagged = TRUE
+		QDEL_NULL(power_supply)
+		power_supply = new /obj/item/cell/device/variable(src, max_shots * charge_cost)
+		return TRUE
+
+/obj/item/gun/energy/mousegun/xenofauna
+	name = "xenofauna gun"
+	desc = "The NT \"Xenovermino\" Zap-Blast is a highly sophisticated and probably safe beamgun designed to deal with hostile xenofauna."
+	projectile_type = /obj/item/projectile/beam/mousegun/xenofauna
+	max_shots = 12
+
+/obj/item/gun/energy/net
 	name = "net gun"
 	desc = "A gun designed to deploy energy nets to capture animals or unruly crew members."
+	icon = 'icons/obj/guns/netgun.dmi'
 	icon_state = "netgun"
+	item_state = "netgun"
+	has_item_ratio = FALSE
 	projectile_type = /obj/item/projectile/beam/energy_net
 	fire_sound = 'sound/weapons/plasma_cutter.ogg'
 	slot_flags = SLOT_HOLSTER | SLOT_BELT
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	max_shots = 4
 	fire_delay = 25
 	can_turret = 1
 	turret_is_lethal = 0
 	turret_sprite_set = "net"
 
-/obj/item/weapon/gun/energy/net/mounted
+/obj/item/gun/energy/net/mounted
 	max_shots = 1
-	self_recharge = 1
-	use_external_power = 1
+	self_recharge = TRUE
+	use_external_power = TRUE
+	has_safety = FALSE
 	recharge_time = 40
-	can_turret = 0
+	can_turret = FALSE
 
 /* Vaurca Weapons */
 
-/obj/item/weapon/gun/energy/vaurca
+/obj/item/gun/energy/vaurca
 	name = "Alien Firearm"
 	desc = "Vaurcae weapons tend to be specialized and highly lethal. This one doesn't do much"
 	var/is_charging = 0 //special var for sanity checks in the three guns that currently use charging as a special_check
 
-/obj/item/weapon/gun/energy/vaurca/bfg
+/obj/item/gun/energy/vaurca/bfg
 	name = "BFG 9000"
 	desc = "'Bio-Force Gun'. Yeah, right."
+	icon = 'icons/obj/guns/bfg.dmi'
 	icon_state = "bfg"
 	item_state = "bfg"
+	has_item_ratio = FALSE
 	charge_meter = 0
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	fire_sound = 'sound/magic/LightningShock.ogg'
 	force = 30
 	projectile_type = /obj/item/projectile/energy/bfg
@@ -233,16 +255,18 @@
 #define GATLINGLASER_DISPERSION_CONCENTRATED list(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 #define GATLINGLASER_DISPERSION_SPRAY list(0, 5, 5, 10, 10, 15, 15, 20, 20, 25, 25, 30, 30, 35, 40, 45)
 
-/obj/item/weapon/gun/energy/vaurca/gatlinglaser
+/obj/item/gun/energy/vaurca/gatlinglaser
 	name = "gatling laser"
 	desc = "A highly sophisticated rapid fire laser weapon."
+	icon = 'icons/obj/guns/gatling.dmi'
 	icon_state = "gatling"
 	item_state = "gatling"
-	fire_sound = 'sound/weapons/Laser.ogg'
+	has_item_ratio = FALSE
+	fire_sound = 'sound/weapons/laser1.ogg'
 	origin_tech = list(TECH_COMBAT = 6, TECH_PHORON = 5, TECH_MATERIAL = 6)
 	charge_meter = 0
 	slot_flags = SLOT_BACK
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	force = 10
 	projectile_type = /obj/item/projectile/beam/gatlinglaser
 	max_shots = 80
@@ -261,7 +285,7 @@
 
 	charge_cost = 50
 
-/obj/item/weapon/gun/energy/vaurca/gatlinglaser/special_check(var/mob/user)
+/obj/item/gun/energy/vaurca/gatlinglaser/special_check(var/mob/user)
 	if(is_charging)
 		to_chat(user, "<span class='danger'>\The [src] is already spinning!</span>")
 		return 0
@@ -276,6 +300,7 @@
 					)
 	is_charging = 1
 	if(!do_after(user, 30))
+		is_charging = 0
 		return 0
 	is_charging = 0
 	if(!istype(user.get_active_hand(), src))
@@ -284,15 +309,17 @@
 
 	return ..()
 
-/obj/item/weapon/gun/energy/vaurca/blaster
+/obj/item/gun/energy/vaurca/blaster
 	name = "\improper Zo'ra Blaster"
 	desc = "An elegant weapon for a more civilized time."
+	icon = 'icons/obj/guns/blaster.dmi'
 	icon_state = "blaster"
 	item_state = "blaster"
+	has_item_ratio = FALSE
 	origin_tech = list(TECH_COMBAT = 2, TECH_PHORON = 4)
-	fire_sound = 'sound/weapons/Laser.ogg'
+	fire_sound = 'sound/weapons/laser1.ogg'
 	slot_flags = SLOT_BACK | SLOT_HOLSTER | SLOT_BELT
-	w_class = 3
+	w_class = ITEMSIZE_NORMAL
 	accuracy = 1
 	force = 10
 	projectile_type = /obj/item/projectile/energy/blaster/incendiary
@@ -308,7 +335,7 @@
 		list(mode_name="concentrated burst", burst=3, burst_delay = 1, fire_delay = 5)
 		)
 
-/obj/item/weapon/gun/energy/vaurca/typec
+/obj/item/gun/energy/vaurca/typec
 	name = "thermal lance"
 	desc = "A powerful piece of Zo'rane energy artillery, converted to be portable...if you weigh a metric tonne, that is."
 	icon = 'icons/mob/species/breeder/inventory.dmi'
@@ -322,7 +349,7 @@
 	fire_sound = 'sound/magic/lightningbolt.ogg'
 	attack_verb = list("sundered", "annihilated", "sliced", "cleaved", "slashed", "pulverized")
 	slot_flags = SLOT_BACK
-	w_class = 5
+	w_class = ITEMSIZE_HUGE
 	accuracy = 3 // It's a massive beam, okay.
 	force = 60
 	projectile_type = /obj/item/projectile/beam/megaglaive
@@ -345,16 +372,16 @@
 
 	action_button_name = "Wield thermal lance"
 
-/obj/item/weapon/gun/energy/vaurca/typec/attack(mob/living/carbon/human/M as mob, mob/living/carbon/user as mob)
+/obj/item/gun/energy/vaurca/typec/attack(mob/living/carbon/human/M as mob, mob/living/carbon/user as mob)
 	user.setClickCooldown(16)
 	..()
 
-/obj/item/weapon/gun/energy/vaurca/typec/pre_attack(var/mob/living/target, var/mob/living/user)
+/obj/item/gun/energy/vaurca/typec/pre_attack(var/mob/living/target, var/mob/living/user)
 	if(istype(target))
 		cleave(user, target)
 	..()
 
-/obj/item/weapon/gun/energy/vaurca/typec/special_check(var/mob/user)
+/obj/item/gun/energy/vaurca/typec/special_check(var/mob/user)
 	if(is_charging)
 		to_chat(user, "<span class='danger'>\The [src] is already charging!</span>")
 		return 0
@@ -368,6 +395,7 @@
 					)
 	is_charging = 1
 	if(!do_after(user, 20))
+		is_charging = 0
 		return 0
 	is_charging = 0
 	if(!istype(user.get_active_hand(), src))
@@ -376,7 +404,7 @@
 
 	return ..()
 
-/obj/item/weapon/gun/energy/vaurca/typec/attack_hand(mob/user as mob)
+/obj/item/gun/energy/vaurca/typec/attack_hand(mob/user as mob)
 	if(loc != user)
 		var/mob/living/carbon/human/H = user
 		if(H.mob_size >= 30)
@@ -389,27 +417,27 @@
 		to_chat(user, "<span class='warning'>\The [src] is far too large for you to pick up.</span>")
 		return
 
-/obj/item/weapon/gun/energy/vaurca/typec/dropped(var/mob/user)
+/obj/item/gun/energy/vaurca/typec/dropped(var/mob/user)
 	..()
 	if(!istype(loc,/mob))
 		playsound(user, 'sound/weapons/saberoff.ogg', 50, 1)
 		icon_state = "megaglaive0"
 		anchored = 0
 
-/obj/item/weapon/gun/energy/vaurca/typec/update_icon()
+/obj/item/gun/energy/vaurca/typec/update_icon()
 	return
 
-/obj/item/weapon/gun/energy/vaurca/thermaldrill
+/obj/item/gun/energy/vaurca/thermaldrill
 	name = "thermal drill"
 	desc = "Pierce the heavens? Son, there won't <i>be</i> any heavens when you're through with it."
-	contained_sprite = 1
 	icon = 'icons/obj/vaurca_items.dmi'
 	icon_state = "thermaldrill"
 	item_state = "thermaldrill"
+	has_item_ratio = FALSE
 	origin_tech = list(TECH_COMBAT = 6, TECH_PHORON = 8)
 	fire_sound = 'sound/magic/lightningbolt.ogg'
 	slot_flags = SLOT_BACK
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	accuracy = 0 // Overwrite just in case.
 	force = 15
 	projectile_type = /obj/item/projectile/beam/thermaldrill
@@ -430,14 +458,17 @@
 	firemodes = list(
 		list(mode_name="2 second burst", burst=10, burst_delay = 1, fire_delay = 20),
 		list(mode_name="4 second burst", burst=20, burst_delay = 1, fire_delay = 40),
-		list(mode_name="6 second burst", burst=30, burst_delay = 1, fire_delay = 60)
+		list(mode_name="6 second burst", burst=30, burst_delay = 1, fire_delay = 60),
+		list(mode_name="point-burst auto", can_autofire = TRUE, burst = 1, fire_delay = 1, burst_accuracy = list(0,-1,-1,-2,-2,-2,-3,-3), dispersion = list(1.0, 1.0, 1.0, 1.0, 1.2))
 		)
 
 	action_button_name = "Wield thermal drill"
 
 	needspin = FALSE
 
-/obj/item/weapon/gun/energy/vaurca/thermaldrill/special_check(var/mob/user)
+/obj/item/gun/energy/vaurca/thermaldrill/special_check(var/mob/user)
+	if(can_autofire)
+		return ..()
 	if(is_charging)
 		to_chat(user, "<span class='danger'>\The [src] is already charging!</span>")
 		return 0
@@ -460,17 +491,17 @@
 
 	return ..()
 
-/obj/item/weapon/gun/energy/vaurca/mountedthermaldrill
+/obj/item/gun/energy/vaurca/mountedthermaldrill
 	name = "mounted thermal drill"
 	desc = "Pierce the heavens? Son, there won't <i>be</i> any heavens when you're through with it."
-	contained_sprite = 1
 	icon = 'icons/obj/vaurca_items.dmi'
 	icon_state = "thermaldrill"
 	item_state = "thermaldrill"
-	origin_tech = "combat=6;phorontech=8,"
+	has_item_ratio = FALSE
+	origin_tech = list(TECH_COMBAT = 6, TECH_PHORON = 8)
 	fire_sound = 'sound/magic/lightningbolt.ogg'
 	slot_flags = SLOT_BACK
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	force = 15
 	projectile_type = /obj/item/projectile/beam/thermaldrill
 	max_shots = 90
@@ -484,7 +515,7 @@
 	use_external_power = 1
 	charge_cost = 25
 
-/obj/item/weapon/gun/energy/vaurca/mountedthermaldrill/special_check(var/mob/user)
+/obj/item/gun/energy/vaurca/mountedthermaldrill/special_check(var/mob/user)
 	if(is_charging)
 		to_chat(user, "<span class='danger'>\The [src] is already charging!</span>")
 		return 0
@@ -495,19 +526,20 @@
 					)
 	is_charging = 1
 	if(!do_after(user, 20))
+		is_charging = 0
 		return 0
 	is_charging = 0
 	msg_admin_attack("[key_name_admin(user)] shot with \a [src.type] [key_name_admin(src)]'s target (<A HREF='?_src_=holder;adminplayerobservecoodjump=1;X=[src.x];Y=[src.y];Z=[src.z]'>JMP</a>)",ckey=key_name(user),ckey_target=key_name(src))
 
 	return ..()
 
-/obj/item/weapon/gun/energy/vaurca/tachyon
+/obj/item/gun/energy/vaurca/tachyon
 	name = "tachyon carbine"
 	desc = "A Vaurcan carbine that fires a beam of concentrated faster than light particles, capable of passing through most forms of matter."
-	contained_sprite = 1
 	icon = 'icons/obj/vaurca_items.dmi'
 	icon_state = "tachyoncarbine"
 	item_state = "tachyoncarbine"
+	has_item_ratio = FALSE
 	fire_sound = 'sound/weapons/laser3.ogg'
 	projectile_type = /obj/item/projectile/beam/tachyon
 	origin_tech = list(TECH_COMBAT = 5, TECH_MATERIAL = 3, TECH_MAGNET = 2, TECH_ILLEGAL = 2)
@@ -516,17 +548,18 @@
 	fire_delay = 1
 	can_turret = 0
 
-/obj/item/weapon/gun/energy/tesla
+/obj/item/gun/energy/tesla
 	name = "tesla gun"
 	desc = "A gun that shoots a projectile that bounces from living thing to living thing. Keep your distance from whatever you are shooting at."
+	icon = 'icons/obj/guns/tesla.dmi'
 	icon_state = "tesla"
 	item_state = "tesla"
-	icon = 'icons/obj/gun.dmi'
+	has_item_ratio = FALSE
 	charge_meter = 0
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	fire_sound = 'sound/magic/LightningShock.ogg'
 	force = 30
-	projectile_type = /obj/item/projectile/energy/tesla
+	projectile_type = /obj/item/projectile/beam/tesla
 	slot_flags = SLOT_BACK
 	max_shots = 3
 	sel_mode = 1
@@ -534,21 +567,22 @@
 	accuracy = 80
 	muzzle_flash = 15
 
-/obj/item/weapon/gun/energy/tesla/mounted
+/obj/item/gun/energy/tesla/mounted
 	name = "mounted tesla carbine"
 	self_recharge = 1
 	use_external_power = 1
 	recharge_time = 10
 	can_turret = 0
 
-/obj/item/weapon/gun/energy/gravity_gun
+/obj/item/gun/energy/gravity_gun
 	name = "gravity gun"
 	desc = "This nifty gun disables the gravity in the area you shoot at. Use with caution."
+	icon = 'icons/obj/guns/gravity_gun.dmi'
 	icon_state = "gravity_gun"
 	item_state = "gravity_gun"
-	icon = 'icons/obj/gun.dmi'
+	has_item_ratio = FALSE
 	charge_meter = 0
-	w_class = 4
+	w_class = ITEMSIZE_LARGE
 	fire_sound = 'sound/magic/Repulse.ogg'
 	force = 30
 	projectile_type = /obj/item/projectile/energy/gravitydisabler

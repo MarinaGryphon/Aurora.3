@@ -16,7 +16,7 @@ em						{font-style: normal;font-weight: bold;}
 
 /* OOC */
 .ooc					{font-weight: bold;}
-.ooc img.text_tag		{width: 32px; height: 10px;}
+.ooc img.text_tag		{width: 32px; height: 10px; vertical-align: middle;}
 
 .ooc .everyone			{color: #002eb8;}
 .ooc .looc				{color: #6699CC;}
@@ -35,8 +35,8 @@ em						{font-style: normal;font-weight: bold;}
 .mod_channel			{color: #735638;	font-weight: bold;}
 .mod_channel .admin		{color: #b82e00;	font-weight: bold;}
 .admin_channel			{color: #9611D4;	font-weight: bold;}
-.cciaasay				{color: #22a9b4;}
-.devsay					{color: #5C7463;}
+.cciaasay				{color: #22a9b4;	font-weight: bold;}
+.devsay					{color: #1b521f;	font-weight: bold;}
 
 /* Radio: Misc */
 .deadsay				{color: #530FAD;}
@@ -47,13 +47,15 @@ em						{font-style: normal;font-weight: bold;}
 /* Radio Channels */
 .comradio				{color: #193A7A;}
 .syndradio				{color: #6D3F40;}
+.bluespaceradio			{color: #1883A3;}
 .centradio				{color: #5C5C8A;}
 .airadio				{color: #FF00FF;}
-.entradio				{color: #339966;}
+.entradio				{color: #bd893c;}
 
 .secradio				{color: #A30000;}
+.penradio				{color: #DB1270;}
 .engradio				{color: #A66300;}
-.medradio				{color: #008160;}
+.medradio				{color: #0a5c47;}
 .sciradio				{color: #993399;}
 .supradio				{color: #5F4519;}
 .srvradio				{color: #6eaa2c;}
@@ -80,6 +82,7 @@ h1.alert, h2.alert		{color: #000000;}
 .rose					{color: #ff5050;}
 .info					{color: #0000CC;}
 .notice					{color: #000099;}
+.subtle					{color: #000099; font-size: 75%; font-style: italic;}
 .alium					{color: #00ff00;}
 .cult					{color: #800080; font-weight: bold; font-style: italic;}
 
@@ -96,7 +99,6 @@ h1.alert, h2.alert		{color: #000000;}
 .solcom					{color: #22228B;}
 .soghun_alt				{color: #024402;}
 .changeling				{color: #800080;}
-.vox					{color: #AA00AA;}
 .rough					{font-family: "Trebuchet MS", cursive, sans-serif;}
 .say_quote				{font-family: Georgia, Verdana, sans-serif;}
 .yassa					{color: #400987;}

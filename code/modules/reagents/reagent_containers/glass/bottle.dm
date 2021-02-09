@@ -1,44 +1,44 @@
 
-//Not to be confused with /obj/item/weapon/reagent_containers/food/drinks/bottle
+//Not to be confused with /obj/item/reagent_containers/food/drinks/bottle
 
-/obj/item/weapon/reagent_containers/glass/bottle
+/obj/item/reagent_containers/glass/bottle
 	name = "bottle"
 	desc = "A small bottle."
 	icon = 'icons/obj/chemical.dmi'
+	item_icons = list(
+		slot_l_hand_str = 'icons/mob/items/stacks/lefthand_medical.dmi',
+		slot_r_hand_str = 'icons/mob/items/stacks/righthand_medical.dmi',
+		)
 	icon_state = null
-	item_state = "atoxinbottle"
-	amount_per_transfer_from_this = 10
+	item_state = "bottle"
+	amount_per_transfer_from_this = 5
 	possible_transfer_amounts = list(5,10,15,25,30,60)
 	flags = 0
 	volume = 60
-	var/list/reagents_to_add
 
-/obj/item/weapon/reagent_containers/glass/bottle/on_reagent_change()
+/obj/item/reagent_containers/glass/bottle/on_reagent_change()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bottle/pickup(mob/user)
+/obj/item/reagent_containers/glass/bottle/pickup(mob/user)
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bottle/dropped(mob/user)
+/obj/item/reagent_containers/glass/bottle/dropped(mob/user)
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bottle/attack_hand()
+/obj/item/reagent_containers/glass/bottle/attack_hand()
 	..()
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bottle/Initialize()
+/obj/item/reagent_containers/glass/bottle/Initialize()
 	. = ..()
 	if(!icon_state)
 		icon_state = "bottle-[rand(1,4)]"
 
-	for(var/v in reagents_to_add)
-		reagents.add_reagent(v, reagents_to_add[v])
-
 	update_icon()
 
-/obj/item/weapon/reagent_containers/glass/bottle/update_icon()
+/obj/item/reagent_containers/glass/bottle/update_icon()
 	cut_overlays()
 
 	if(reagents.total_volume && (icon_state == "bottle-1" || icon_state == "bottle-2" || icon_state == "bottle-3" || icon_state == "bottle-4"))
@@ -60,206 +60,153 @@
 	if (!is_open_container())
 		add_overlay("lid_bottle")
 
-/obj/item/weapon/reagent_containers/glass/bottle/inaprovaline
+/obj/item/reagent_containers/glass/bottle/inaprovaline
 	name = "inaprovaline bottle"
 	desc = "A small bottle. Contains inaprovaline - used to stabilize patients."
 	icon_state = "bottle-4"
-	reagents_to_add = list("inaprovaline" = 60)
-	
+	reagents_to_add = list(/decl/reagent/inaprovaline = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/toxin
+/obj/item/reagent_containers/glass/bottle/toxin
 	name = "toxin bottle"
 	desc = "A small bottle of toxins. Do not drink, it is poisonous."
 	icon_state = "bottle-3"
-	reagents_to_add = list("toxin" = 60)
+	reagents_to_add = list(/decl/reagent/toxin = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/cyanide
+/obj/item/reagent_containers/glass/bottle/cyanide
 	name = "cyanide bottle"
 	desc = "A small bottle of cyanide. Bitter almonds?"
 	icon_state = "bottle-3"
-	reagents_to_add = list("cyanide" = 30)
+	reagents_to_add = list(/decl/reagent/toxin/cyanide = 30)
 
-/obj/item/weapon/reagent_containers/glass/bottle/stoxin
+/obj/item/reagent_containers/glass/bottle/stoxin
 	name = "soporific bottle"
 	desc = "A small bottle of soporific. Just the fumes make you sleepy."
 	icon_state = "bottle-3"
-	reagents_to_add = list("stoxin" = 60)
+	reagents_to_add = list(/decl/reagent/soporific = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/chloralhydrate
+/obj/item/reagent_containers/glass/bottle/polysomnine
 	name = "chloral hydrate bottle"
 	desc = "A small bottle of Choral Hydrate. Mickey's Favorite!"
 	icon_state = "bottle-3"
-	reagents_to_add = list("chloralhydrate" = 30)
+	reagents_to_add = list(/decl/reagent/polysomnine = 30)
 
-/obj/item/weapon/reagent_containers/glass/bottle/antitoxin
+/obj/item/reagent_containers/glass/bottle/antitoxin
 	name = "dylovene bottle"
 	desc = "A small bottle of dylovene. Counters poisons, and repairs damage. A wonder drug."
 	icon_state = "bottle-4"
-	reagents_to_add = list("anti_toxin" = 60)
+	reagents_to_add = list(/decl/reagent/dylovene = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/mutagen
+/obj/item/reagent_containers/glass/bottle/saline
+	name = "saline bottle"
+	desc = "A small bottle of saline for attaching to drips. Re-hydrates a patient and helps with increasing blood volume."
+	icon_state = "bottle-3"
+	reagents_to_add = list(/decl/reagent/saline = 60)
+
+/obj/item/reagent_containers/glass/bottle/mutagen
 	name = "unstable mutagen bottle"
 	desc = "A small bottle of unstable mutagen. Randomly changes the DNA structure of whoever comes in contact."
 	icon_state = "bottle-1"
-	reagents_to_add = list("mutagen" = 60)
+	reagents_to_add = list(/decl/reagent/mutagen = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/ammonia
+/obj/item/reagent_containers/glass/bottle/ammonia
 	name = "ammonia bottle"
 	desc = "A small bottle."
 	icon_state = "bottle-1"
-	reagents_to_add = list("ammonia" = 60)
+	reagents_to_add = list(/decl/reagent/ammonia = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/diethylamine
+/obj/item/reagent_containers/glass/bottle/diethylamine
 	name = "diethylamine bottle"
 	desc = "A small bottle."
 	icon_state = "bottle-4"
-	reagents_to_add = list("diethylamine" = 60)
+	reagents_to_add = list(/decl/reagent/diethylamine = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus
-	name = "virus bottle"
-	desc = "A small bottle. Contains some virus."
-	icon_state = "bottle-4"
-	var/datum/disease/disease
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/Initialize()
-	var/datum/disease/F = new disease(0)
-	var/list/data = list("viruses"= list(F))
-	if(!icon_state)
-		icon_state = "bottle-[rand(1,4)]"
-	reagents.add_reagent("blood", 20, data)
-	
-	update_icon()
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/flu_virion
-	name = "Flu virion culture bottle"
-	desc = "A small bottle. Contains H13N1 flu virion culture in synthblood medium."
-	disease = /datum/disease/advance/flu	
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/epiglottis_virion
-	name = "Epiglottis virion culture bottle"
-	desc = "A small bottle. Contains Epiglottis virion culture in synthblood medium."
-	disease = /datum/disease/advance/voice_change
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/liver_enhance_virion
-	name = "Liver enhancement virion culture bottle"
-	desc = "A small bottle. Contains liver enhancement virion culture in synthblood medium."
-	disease = /datum/disease/advance/heal
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/hullucigen_virion
-	name = "Hullucigen virion culture bottle"
-	desc = "A small bottle. Contains hullucigen virion culture in synthblood medium."
-	icon = 'icons/obj/chemical.dmi'
-	disease =  /datum/disease/advance/hullucigen
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/pierrot_throat
-	name = "Pierrot's Throat culture bottle"
-	desc = "A small bottle. Contains H0NI<42 virion culture in synthblood medium."
-	disease = /datum/disease/pierrot_throat
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/cold
-	name = "Rhinovirus culture bottle"
-	desc = "A small bottle. Contains XY-rhinovirus culture in synthblood medium."
-	disease = /datum/disease/advance/cold
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/random
-	name = "Random culture bottle"
-	desc = "A small bottle. Contains a random disease."
-	disease = /datum/disease/advance
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/retrovirus
-	name = "Retrovirus culture bottle"
-	desc = "A small bottle. Contains a retrovirus culture in a synthblood medium."
-	disease = /datum/disease/dna_retrovirus
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/gbs
-	name = "GBS culture bottle"
-	desc = "A small bottle. Contains Gravitokinetic Bipotential SADS+ culture in synthblood medium."//Or simply - General BullShit
-	disease = /datum/disease/gbs
-	amount_per_transfer_from_this = 5
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/fake_gbs
-	name = "GBS culture bottle"
-	desc = "A small bottle. Contains Gravitokinetic Bipotential SADS- culture in synthblood medium."//Or simply - General BullShit
-	disease = /datum/disease/fake_gbs
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/brainrot
-	name = "Brainrot culture bottle"
-	desc = "A small bottle. Contains Cryptococcus Cosmosis culture in synthblood medium."
-	disease = /datum/disease/brainrot
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/magnitis
-	name = "Magnitis culture bottle"
-	desc = "A small bottle. Contains a small dosage of Fukkos Miracos."
-	disease = /datum/disease/magnitis
-
-/obj/item/weapon/reagent_containers/glass/bottle/with_virus/wizarditis
-	name = "Wizarditis culture bottle"
-	desc = "A small bottle. Contains a sample of Rincewindus Vulgaris."
-	disease = /datum/disease/wizarditis
-
-/obj/item/weapon/reagent_containers/glass/bottle/pacid
-	name = "Polytrinic Acid Bottle"
+/obj/item/reagent_containers/glass/bottle/pacid
+	name = "polytrinic acid bottle"
 	desc = "A small bottle. Contains a small amount of Polytrinic Acid"
 	icon_state = "bottle-4"
-	reagents_to_add = list("pacid" = 60)
+	reagents_to_add = list(/decl/reagent/acid/polyacid = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/adminordrazine
-	name = "Adminordrazine Bottle"
+/obj/item/reagent_containers/glass/bottle/adminordrazine
+	name = "adminordrazine bottle"
 	desc = "A small bottle. Contains the liquid essence of the gods."
 	icon = 'icons/obj/drinks.dmi'
 	icon_state = "holyflask"
-	reagents_to_add = list("adminordrazine" = 60)
+	reagents_to_add = list(/decl/reagent/adminordrazine = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/capsaicin
+/obj/item/reagent_containers/glass/bottle/capsaicin
 	name = "capsaicin bottle"
 	desc = "A small bottle. Contains hot sauce."
 	icon_state = "bottle-4"
-	reagents_to_add = list("capsaicin" = 60)
+	reagents_to_add = list(/decl/reagent/capsaicin = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/frostoil
+/obj/item/reagent_containers/glass/bottle/frostoil
 	name = "frost oil bottle"
 	desc = "A small bottle. Contains cold sauce."
 	icon_state = "bottle-4"
-	reagents_to_add = list("frostoil" = 60)
+	reagents_to_add = list(/decl/reagent/frostoil = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/pyrosilicate
+/obj/item/reagent_containers/glass/bottle/pyrosilicate
 	name = "pyrosilicate bottle"
 	desc = "A small bottle. Contains pyrosilicate - used to heat up reagents."
 	icon_state = "bottle-4"
-	reagents_to_add = list("pyrosilicate" = 60)
+	reagents_to_add = list(/decl/reagent/pyrosilicate = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/cryosurfactant
+/obj/item/reagent_containers/glass/bottle/cryosurfactant
 	name = "cryosurfactant bottle"
 	desc = "A small bottle. Contains cryosurfactant - used to cool down reagents."
 	icon_state = "bottle-4"
-	reagents_to_add = list("cryosurfactant" = 60)
+	reagents_to_add = list(/decl/reagent/cryosurfactant = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/phoron_salt
-	name = "phoron salt bottle"
-	desc = "A small bottle. Contains phoron salt - a mysterious and unstable chemical."
-	icon_state = "bottle-4"
-	reagents_to_add = list("phoron_salt" = 60)
-
-/obj/item/weapon/reagent_containers/glass/bottle/epinephrine
+/obj/item/reagent_containers/glass/bottle/epinephrine
 	name = "epinephrine bottle"
-	desc = "A small bottle. Contains epinephrine, also known as adrenaline, is a super strength stimulant and painkiller intended to keep a patient alive while in critical condition. Overdose causes heart damage and an energy boost equivelent to hyperzine."
+	desc = "A small bottle. Contains epinephrine. Epinephrine, also known as adrenaline, is a super strength stimulant and painkiller intended to keep a patient alive while in critical condition. Overdose causes heart damage and an energy boost equivelent to hyperzine."
 	icon_state = "bottle-4"
-	reagents_to_add = list("epinephrine" = 60)
+	reagents_to_add = list(/decl/reagent/adrenaline = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/dexalin_plus
+/obj/item/reagent_containers/glass/bottle/dexalin_plus
 	name = "dexalin plus bottle"
 	desc = "A small bottle. Contains Dexalin Plus that is used in the treatment of oxygen deprivation. It is highly effective, and is twice as powerful and lasts twice as long when inhaled."
 	icon_state = "bottle-4"
-	reagents_to_add = list("dexalinp" = 60)
+	reagents_to_add = list(/decl/reagent/dexalin/plus = 60)
 
-/obj/item/weapon/reagent_containers/glass/bottle/spaceacillin
-	name = "spaceacillin bottle"
-	desc = "A small bottle. Contains spaceacillin. An all-purpose antiviral agent."
-	icon_state = "bottle-4"
-	reagents_to_add = list("spaceacillin" = 60)
-
-/obj/item/weapon/reagent_containers/glass/bottle/coughsyrup
+/obj/item/reagent_containers/glass/bottle/coughsyrup
 	name = "cough syrup bottle"
 	desc = "A small bottle of cough syrup. Don't take too much!"
 	icon_state = "bottle-3"
-	reagents_to_add = list("coughsyrup" = 60)
+	reagents_to_add = list(/decl/reagent/coughsyrup = 60)
+
+/obj/item/reagent_containers/glass/bottle/thetamycin
+	name = "thetamycin bottle"
+	desc = "A small bottle of thetamycin. Used for disinfecting whatever wounds security caused."
+	icon_state = "bottle-4"
+	reagents_to_add = list(/decl/reagent/thetamycin = 60)
+
+/obj/item/reagent_containers/glass/bottle/bicaridine
+	name = "bicaridine bottle"
+	desc = "A small bottle. Contains bicaridine - treats damaged tissues."
+	icon_state = "bottle-1"
+	reagents_to_add = list(/decl/reagent/bicaridine = 60)
+
+/obj/item/reagent_containers/glass/bottle/dermaline
+	name = "dermaline bottle"
+	desc = "A small bottle. Contains dermaline - treats burnt tissues."
+	icon_state = "bottle-2"
+	reagents_to_add = list(/decl/reagent/dermaline = 60)
+
+/obj/item/reagent_containers/glass/bottle/peridaxon
+	name = "peridaxon bottle"
+	desc = "A small bottle. Contains peridaxon - treats damaged organs."
+	icon_state = "bottle-2"
+	reagents_to_add = list(/decl/reagent/peridaxon = 60)
+
+/obj/item/reagent_containers/glass/bottle/mortaphenyl
+	name = "mortaphenyl bottle"
+	desc = "A small bottle. Contains mortaphenyl - treats mild-severe pain as a result of severe, physical injury."
+	icon_state = "bottle-3"
+	reagents_to_add = list(/decl/reagent/mortaphenyl = 60)
+
+/obj/item/reagent_containers/glass/bottle/perconol
+	name = "perconol bottle"
+	desc = "A small bottle. Contains perconol - treats minor-moderate pain as a result of physical injury."
+	icon_state = "bottle-3"
+	reagents_to_add = list(/decl/reagent/perconol = 60)
